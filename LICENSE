@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2020 Pandora-Protocol
+Pandora-Protocol
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,20 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+DISCLAIMER:
+
+This source code is released for educational and research purposes only, with
+the intent of researching and studying a decentralized p2p protocol for binary
+data streams.
+
+PANDORA PROTOCOL IS AN OPEN SOURCE COMMUNITY DRIVEN RESEARCH PROJECT. THIS IS
+RESEARCH CODE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. IN NO
+EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES. USE AT YOUR OWN RISK.
+
+You may not use this source code for any illegal or unethical purpose;
+including activities which would give rise to criminal or civil liability.
+
+Under no event shall the Licensor be responsible for the activities, or
+any misdeeds, conducted by the Licensee.

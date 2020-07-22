@@ -1,0 +1,30 @@
+{
+  "name": "pandora-protocol-kad-reference",
+  "scripts": {
+    "build": "webpack --config bin/webpack/webpack-config-node.js --mode production",
+    "build-browser": "node --max_old_space_size=4096 ./node_modules/webpack/bin/webpack.js --config bin/webpack/webpack-config-browser.js --es6 true --mode production",
+    "start": "examples/simple-example.js"
+  },
+  "main": "src/index",
+  "dependencies": {
+    "async": "^3.2.0",
+    "bencode": "^2.0.1",
+    "isomorphic-ws": "^4.0.1",
+    "uuid": "^8.2.0",
+    "ws": "^7.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.0",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
+    "@babel/plugin-transform-instanceof": "^7.7.4",
+    "@babel/plugin-transform-runtime": "^7.4.3",
+    "@babel/preset-env": "^7.1.0",
+    "babel-loader": "^8.0.5",
+    "babel-polyfill": "^6.26.0",
+    "raw-loader": "^0.5.1",
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
+  }
+}
