@@ -29,7 +29,6 @@ module.exports = function (kademliaRules){
 
         const ws = new IsomorphicWebSocket(address, data);
         ws._kadInitialized = true;
-        ws._queue = [];
         ws.contact = srcContact;
 
         return ws;
@@ -61,6 +60,7 @@ module.exports = function (kademliaRules){
         ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
         ws.address = address;
         ws.socketsQueue = {};
+        ws._queue = [];
 
         this.webSocketActiveConnectionsMap[address] = ws;
         this.webSocketActiveConnections.push(ws);
@@ -75,6 +75,8 @@ module.exports = function (kademliaRules){
             }
 
         }
+
+        ws.onerror =
         ws.onclose = () => {
 
             if (this.webSocketActiveConnectionsMap[ws.address] === ws) {
@@ -85,11 +87,18 @@ module.exports = function (kademliaRules){
                     }
 
                 for (const id in ws.socketsQueue) {
-                    ws.socketsQueue[id].resolve(new Error('Disconnected'));
+                    ws.socketsQueue[id].error(new Error('Disconnected or Error'));
                     delete this._pending['ws'+ws.id+':'+id];
                 }
 
                 ws.socketsQueue = {};
+
+                if (ws._queue.length) {
+                    const copy = [...ws._queue];
+                    ws._queue = [];
+                    for (const data of copy)
+                        data.cb(new Error('Disconnected or Error'))
+                }
 
                 delete this.webSocketActiveConnectionsMap[ws.address];
             }
@@ -199,8 +208,12 @@ module.exports = function (kademliaRules){
         try{
             ws = this.initializeWebSocket(destContact, undefined );
         }catch(err){
-            return cb(err, null);
+            return cb(new Error(err),);
         }
+
+        if (!ws)
+            return cb( new Error("Couldn't create web socket"), null);
+
         this.sendWebSocketWaitAnswer(ws, id, buffer, cb);
 
     }
