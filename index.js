@@ -24,6 +24,7 @@ const ECCUtils = require('./src/helpers/ecc-utils')
 
 const async = require('async');
 const bencode = require('bencode');
+const blobToBuffer = require('blob-to-buffer')
 
 module.exports = {
 
@@ -67,6 +68,7 @@ module.exports = {
     library: {
         async,
         bencode,
+        blobToBuffer
     }
 
 }

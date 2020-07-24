@@ -3,6 +3,7 @@ const IsomorphicWebSocket = require('isomorphic-ws')
 const Contact = require('../../contact/contact')
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
+const blobToBuffer = require('blob-to-buffer')
 
 module.exports = function (kademliaRules){
 
@@ -12,7 +13,10 @@ module.exports = function (kademliaRules){
     //Node.js
     if ( typeof BROWSER === "undefined" && kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP') ){
         const WebSocketServer = require('./web-socket-server')
-        kademliaRules._webSocketServer = new WebSocketServer(kademliaRules._kademliaNode, { server: kademliaRules._httpServer.server });
+        kademliaRules._webSocketServer = new WebSocketServer(kademliaRules._kademliaNode, {
+            server: kademliaRules._httpServer.server,
+            'Access-Control-Allow-Origin': "*",
+        });
     }
 
     kademliaRules.createWebSocket = createWebSocket;
@@ -63,7 +67,7 @@ module.exports = function (kademliaRules){
 
         ws.onopen = () => {
 
-            if (ws._queue) {
+            if (ws._queue.length) {
                 const copy = [...ws._queue];
                 ws._queue = [];
                 for (const data of copy)
@@ -98,35 +102,49 @@ module.exports = function (kademliaRules){
             if (data.type !== "message") return;
             const message = data.data;
 
-            const decoded = bencode.decode(message);
-            const status = decoded[0];
-            const id = decoded[1];
+            if (typeof Blob !== 'undefined' && message instanceof Blob){
+                blobToBuffer(message, (err, buffer)=>{
+                    if (err) throw err;
 
-            if ( status === 1 ){ //received an answer
+                    processWebSocketMessage.call(this, ws, buffer);
+                })
+            }else
+                processWebSocketMessage.call(this, ws, message );
 
-                if (ws.socketsQueue[id]){ //in case it was not deleted
-
-                    ws.socketsQueue[id].resolve( null, decoded[2] );
-                    delete ws.socketsQueue[id];
-                    delete this._pending['ws'+ws.id+':'+id];
-
-                }
-
-            } else {
-
-                this._kademliaNode.rules.receiveSerialized( id, ws.contact, decoded[2], (err, buffer )=>{
-
-                    if (err) return;
-
-                    ws.send(buffer);
-
-                });
-
-            }
 
         };
 
         return ws;
+    }
+
+    function processWebSocketMessage(ws, message){
+
+        const decoded = bencode.decode(message);
+        const status = decoded[0];
+        const id = decoded[1];
+
+        if ( status === 1 ){ //received an answer
+
+            if (ws.socketsQueue[id]){ //in case it was not deleted
+
+                ws.socketsQueue[id].resolve( null, decoded[2] );
+                delete ws.socketsQueue[id];
+                delete this._pending['ws'+ws.id+':'+id];
+
+            }
+
+        } else {
+
+            this._kademliaNode.rules.receiveSerialized( id, ws.contact, decoded[2], (err, buffer )=>{
+
+                if (err) return;
+
+                ws.send(buffer);
+
+            });
+
+        }
+
     }
 
     function sendWebSocketWaitAnswer(ws, id, buffer, cb){
