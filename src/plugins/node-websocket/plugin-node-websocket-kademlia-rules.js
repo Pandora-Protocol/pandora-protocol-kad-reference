@@ -33,6 +33,7 @@ module.exports = function (kademliaRules){
         ws.contact = srcContact;
 
         return ws;
+
     }
 
     function initializeWebSocket( srcContact, ws) {
@@ -54,9 +55,8 @@ module.exports = function (kademliaRules){
             return ws;
         }
 
-        if (!ws) {
+        if (!ws)
             ws = this.createWebSocket(address, srcContact);
-        }
 
         ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
         ws.address = address;
@@ -96,7 +96,6 @@ module.exports = function (kademliaRules){
 
         }
 
-        //ws.on('message',  (message) => {
         ws.onmessage =  (data) => {
 
             if (data.type !== "message") return;
@@ -195,7 +194,13 @@ module.exports = function (kademliaRules){
 
         const buffer = bencode.encode( [0, id, data] );
 
-        const ws = this.initializeWebSocket(destContact, undefined );
+        let ws;
+
+        try{
+            ws = this.initializeWebSocket(destContact, undefined );
+        }catch(err){
+            return cb(err, null);
+        }
         this.sendWebSocketWaitAnswer(ws, id, buffer, cb);
 
     }
