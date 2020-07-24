@@ -11,33 +11,6 @@ module.exports = function (kademliaRules) {
     const _stop = kademliaRules.stop.bind(kademliaRules);
     kademliaRules.stop = stop;
 
-    if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK === undefined) throw new Error('Mock protocol was not initialized.');
-    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK] = {
-        sendSerialize: (destContact, command, data) => {
-            const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-            return {
-                id,
-                buffer: bencode.encode( BufferHelper.serializeData([ id, kademliaRules._kademliaNode.contact, command, data ]) ),
-            }
-        },
-        sendSerialized: (id, destContact, command, buffer, cb) => {
-
-            //fake some unreachbility
-            if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
-                console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.address.hostname, destContact.address.port );
-                return cb(new Error("Message couldn't be sent"), null);
-            }
-
-            setTimeout(()=>{
-                global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized( undefined, undefined, buffer, cb );
-            }, Math.floor( Math.random() * 100) + 10)
-
-        },
-        receiveSerialize: (id, srcContact, out ) => {
-            return bencode.encode( BufferHelper.serializeData(out) );
-        }
-    }
-
 
     function start() {
 
@@ -51,6 +24,42 @@ module.exports = function (kademliaRules) {
     function stop(){
         _stop(...arguments);
         delete global.KAD_MOCKUP[this._kademliaNode.contact.identityHex];
+    }
+
+
+
+
+    if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK === undefined) throw new Error('Mock protocol was not initialized.');
+    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK] = {
+        sendSerialize: sendSerialize.bind(this),
+        sendSerialized: sendSerialized.bind(this),
+        receiveSerialize: receiveSerialize.bind(this),
+    }
+
+    function sendSerialize (destContact, command, data) {
+        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+        return {
+            id,
+            buffer: bencode.encode( BufferHelper.serializeData([ id, kademliaRules._kademliaNode.contact, command, data ]) ),
+        }
+    }
+
+    function sendSerialized (id, destContact, command, buffer, cb)  {
+
+        //fake some unreachbility
+        if (!global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
+            console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.address.hostname, destContact.address.port );
+            return cb(new Error("Message couldn't be sent"), null);
+        }
+
+        setTimeout(()=>{
+            global.KAD_MOCKUP[destContact.address.hostname+':'+destContact.address.port].receiveSerialized( undefined, undefined, buffer, cb );
+        }, Math.floor( Math.random() * 100) + 10)
+
+    }
+
+    function receiveSerialize (id, srcContact, out ) {
+        return bencode.encode( BufferHelper.serializeData(out) );
     }
 
 }

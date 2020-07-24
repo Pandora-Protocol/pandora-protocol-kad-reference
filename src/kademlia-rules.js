@@ -29,6 +29,8 @@ module.exports = class KademliaRules {
 
         }
 
+        this._pending = {}
+
     }
 
     start(){
@@ -40,10 +42,17 @@ module.exports = class KademliaRules {
             next => this._replicatedStoreToNewNodeExpire(next),
             global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY +  preventConvoy(global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
         );
+
+        this._asyncIntervalPending = setAsyncInterval(
+            next => this._timeoutPending(next),
+            global.KAD_OPTIONS.T_RESPONSE_TIMEOUT
+        );
+
     }
 
     stop(){
         clearAsyncInterval(this._asyncIntervalReplicatedStoreToNewNodeExpire)
+        clearAsyncInterval(this._asyncIntervalPending);
     }
 
     send(destContact, command, data, cb){
@@ -315,6 +324,25 @@ module.exports = class KademliaRules {
 
         }
 
+    }
+
+
+    /**
+     * Every T_RESPONSETIMEOUT, we destroy any open sockets that are still
+     * waiting
+     * @private
+     */
+    _timeoutPending(next) {
+
+        const now = Date.now();
+
+        for (const key in this._pending)
+            if (now >= this._pending[key].timestamp + global.KAD_OPTIONS.T_RESPONSE_TIMEOUT) {
+                this._pending[key].error.call(this, key, this._pending[key]);
+                delete this._pending[key];
+            }
+
+        next(null)
     }
 
 }

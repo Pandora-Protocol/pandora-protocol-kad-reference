@@ -9,9 +9,9 @@ KAD.plugins.PluginKademliaNodeMock.initialize();
 KAD.plugins.PluginKademliaNodeHTTP.initialize();
 KAD.plugins.PluginKademliaNodeWebSocket.initialize();
 
-const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
+//const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
 //const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
-//const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
+const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
 
 const COUNT = 6;
 

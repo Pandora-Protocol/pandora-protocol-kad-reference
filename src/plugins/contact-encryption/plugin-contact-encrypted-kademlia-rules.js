@@ -15,7 +15,7 @@ module.exports = function (kademliaRules) {
     kademliaRules.receiveSerialized = receiveSerialized;
 
     if (kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP')){
-        kademliaRules._server.onReceive = receiveSerialized.bind(kademliaRules);
+        kademliaRules._httpServer.onReceive = receiveSerialized.bind(kademliaRules);
     }
 
     function send(destContact, command, data, cb){

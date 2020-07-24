@@ -10,49 +10,14 @@ module.exports = function (kademliaRules){
     kademliaRules.webSocketActiveConnectionsMap = {};
 
     //Node.js
-    if ( typeof window === "undefined" && kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP') ){
-
+    if ( typeof BROWSER === "undefined" && kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP') ){
         const WebSocketServer = require('./web-socket-server')
-        kademliaRules._webSocketServer = new WebSocketServer(kademliaRules._kademliaNode, { server: kademliaRules._server.server });
-
-    }
-
-    if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET === undefined) throw new Error('WebSocket protocol was not initialized.');
-    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET] =
-    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET] = {
-        sendSerialize: sendSerialize.bind(kademliaRules),
-        sendSerialized: sendSerialized.bind(kademliaRules),
-        receiveSerialize: receiveSerialize.bind(kademliaRules),
+        kademliaRules._webSocketServer = new WebSocketServer(kademliaRules._kademliaNode, { server: kademliaRules._httpServer.server });
     }
 
     kademliaRules.createWebSocket = createWebSocket;
     kademliaRules.sendWebSocketWaitAnswer = sendWebSocketWaitAnswer;
     kademliaRules.initializeWebSocket = initializeWebSocket;
-
-
-    function sendSerialize (destContact, command, data) {
-        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-        return {
-            id,
-            buffer: bencode.encode( BufferHelper.serializeData([ command, data ] ) ),
-        }
-    }
-
-    function sendSerialized (id, destContact, command, data, cb)  {
-
-        const buffer = bencode.encode( [0, id, data] );
-
-        const ws = this.initializeWebSocket(destContact, undefined );
-        this.sendWebSocketWaitAnswer(ws, id, buffer, cb);
-
-    }
-
-    function receiveSerialize (id, srcContact, out ) {
-        return bencode.encode( BufferHelper.serializeData([ 1, id, out] ) )
-    }
-
-
-
 
     function createWebSocket(address, srcContact ) {
 
@@ -87,6 +52,7 @@ module.exports = function (kademliaRules){
             ws = this.createWebSocket(address, srcContact);
         }
 
+        ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
         ws.address = address;
         ws.socketsQueue = {};
 
@@ -99,7 +65,7 @@ module.exports = function (kademliaRules){
                 const copy = [...ws._queue];
                 ws._queue = [];
                 for (const data of copy)
-                    sendWebSocketWaitAnswer(ws, data.id, data.buffer, data.cb);
+                    this.sendWebSocketWaitAnswer(ws, data.id, data.buffer, data.cb);
             }
 
         }
@@ -112,8 +78,10 @@ module.exports = function (kademliaRules){
                         break;
                     }
 
-                for (const key in ws.socketsQueue)
-                    ws.socketsQueue[key].resolve(new Error('Disconnected') );
+                for (const id in ws.socketsQueue) {
+                    ws.socketsQueue[id].resolve(new Error('Disconnected'));
+                    delete this._pending['ws'+ws.id+':'+id];
+                }
 
                 ws.socketsQueue = {};
 
@@ -130,8 +98,13 @@ module.exports = function (kademliaRules){
 
             if ( status === 1 ){ //received an answer
 
-                ws.socketsQueue[id].resolve( null, decoded[2] );
-                delete ws.socketsQueue[id];
+                if (ws.socketsQueue[id]){ //in case it was not deleted
+
+                    ws.socketsQueue[id].resolve( null, decoded[2] );
+                    delete ws.socketsQueue[id];
+                    delete this._pending['ws'+ws.id+':'+id];
+
+                }
 
             } else {
 
@@ -157,13 +130,54 @@ module.exports = function (kademliaRules){
         else {
 
             ws.socketsQueue[id] = {
+                resolve: cb,
+            };
+
+            this._pending['ws'+ws.id+':'+id] = {
                 time: new Date(),
+                error: ()=>{
+                    cb(new Error('Timeout'));
+                    delete ws.socketsQueue[id];
+                },
                 resolve: cb,
             }
 
             ws.send( buffer )
         }
 
+    }
+
+
+
+
+    if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET === undefined) throw new Error('WebSocket protocol was not initialized.');
+    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET] =
+    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET] = {
+        sendSerialize: sendSerialize.bind(kademliaRules),
+        sendSerialized: sendSerialized.bind(kademliaRules),
+        receiveSerialize: receiveSerialize.bind(kademliaRules),
+    }
+
+
+    function sendSerialize (destContact, command, data) {
+        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+        return {
+            id,
+            buffer: bencode.encode( BufferHelper.serializeData([ command, data ] ) ),
+        }
+    }
+
+    function sendSerialized (id, destContact, command, data, cb)  {
+
+        const buffer = bencode.encode( [0, id, data] );
+
+        const ws = this.initializeWebSocket(destContact, undefined );
+        this.sendWebSocketWaitAnswer(ws, id, buffer, cb);
+
+    }
+
+    function receiveSerialize (id, srcContact, out ) {
+        return bencode.encode( BufferHelper.serializeData([ 1, id, out] ) )
     }
 
 }
