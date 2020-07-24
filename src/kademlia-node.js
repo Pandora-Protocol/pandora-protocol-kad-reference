@@ -64,28 +64,33 @@ module.exports = class KademliaNode extends EventEmitter {
      * be in the occupied bucket with the lowest index
      */
     join(contact, first = false, cb = ()=>{} ) {
+
         this.routingTable.addContact(contact);
 
         this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{
 
-            if (err) return cb(err, out);
+            if (err) {
+                this.routingTable.removeContact( contact );
+                this.emit('join', err);
+                return cb(err, out);
+            }
 
             this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, ()=> {
+            });
 
-                if (!first && this.routingTable.count === 1){
-                    this.routingTable.removeContact( contact );
 
-                    err = new Error("Failed to discover nodes")
-                    this.emit('join', err );
-                    return cb( err );
+            if (!first && this.routingTable.count === 1){
+                this.routingTable.removeContact( contact );
 
-                }
-                else{
-                    this.emit('join', out );
-                    cb(err, out);
-                }
+                err = new Error("Failed to discover nodes")
+                this.emit('join', err );
+                return cb( err );
 
-            })
+            }
+            else{
+                this.emit('join', out );
+                cb(err, out);
+            }
 
         } );
     }
