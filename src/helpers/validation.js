@@ -13,7 +13,7 @@ module.exports.validatePath = (path) => {
 }
 
 module.exports.validatePort = (port) => {
-    if (typeof port !== "number" || port < 1000 || port > 65535) throw "invalid port";
+    if (typeof port !== "number" || (port !== 80 && ( port < 1000 || port > 65535))) throw "invalid port";
 }
 
 

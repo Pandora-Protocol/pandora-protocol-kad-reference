@@ -1,5 +1,5 @@
 const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
-const WebSocket = require('isomorphic-ws')
+const IsomorphicWebSocket = require('isomorphic-ws')
 const Contact = require('../../contact/contact')
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
@@ -21,7 +21,9 @@ module.exports = function (kademliaRules){
 
     function createWebSocket(address, srcContact ) {
 
-        const ws = new WebSocket(address, bencode.encode(this._kademliaNode.contact.toArray()).toString('base64'));
+        const data = bencode.encode(this._kademliaNode.contact.toArray()).toString('hex');
+
+        const ws = new IsomorphicWebSocket(address, data);
         ws._kadInitialized = true;
         ws._queue = [];
         ws.contact = srcContact;
@@ -90,7 +92,11 @@ module.exports = function (kademliaRules){
 
         }
 
-        ws.on('message',  (message) => {
+        //ws.on('message',  (message) => {
+        ws.onmessage =  (data) => {
+
+            if (data.type !== "message") return;
+            const message = data.data;
 
             const decoded = bencode.decode(message);
             const status = decoded[0];
@@ -118,7 +124,7 @@ module.exports = function (kademliaRules){
 
             }
 
-        });
+        };
 
         return ws;
     }

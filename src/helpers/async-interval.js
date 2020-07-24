@@ -1,11 +1,10 @@
-const uuid = require('uuid').v1;
 const NextTick = require('./next-tick')
 
 const map = {};
 
 module.exports.setAsyncInterval = (func, time )=>{
 
-    const id = uuid();
+    const id = Math.random().toString() + Math.random().toString() + Math.random().toString();
     const timeout = NextTick( ()=>processTimeout( id), time );
 
     map[id] = {

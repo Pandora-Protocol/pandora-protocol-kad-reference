@@ -14,7 +14,7 @@ module.exports = function (kademliaRules) {
     const _receiveSerialized = kademliaRules.receiveSerialized.bind(kademliaRules);
     kademliaRules.receiveSerialized = receiveSerialized;
 
-    if (kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP')){
+    if (typeof window === "undefined" && kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP')){
         kademliaRules._httpServer.onReceive = receiveSerialized.bind(kademliaRules);
     }
 

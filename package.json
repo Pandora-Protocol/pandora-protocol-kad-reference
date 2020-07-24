@@ -10,7 +10,6 @@
     "async": "^3.2.0",
     "bencode": "^2.0.1",
     "isomorphic-ws": "^4.0.1",
-    "uuid": "^8.2.0",
     "ws": "^7.3.1"
   },
   "devDependencies": {

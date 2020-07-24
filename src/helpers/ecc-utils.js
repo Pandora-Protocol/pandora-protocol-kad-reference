@@ -24,13 +24,9 @@ module.exports =  {
 
     sign(privateKey, msg){
 
-        try{
-            const out = eccrypto.sign(privateKey, msg);
-            if (out.length !== 64) throw "invalid args";
-            return out;
-        }catch(err){
-
-        }
+        const out = eccrypto.sign(privateKey, msg);
+        if (out.length !== 64) throw "invalid args";
+        return out;
 
     },
 

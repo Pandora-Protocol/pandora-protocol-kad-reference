@@ -15,7 +15,7 @@ module.exports = class WebSocketServer extends WebSocket.Server {
     newClientConnection(ws){
 
         try{
-            const decoded = bencode.decode( Buffer.from( ws.protocol, "base64") );
+            const decoded = bencode.decode( Buffer.from( ws.protocol, "hex") );
             const contact = Contact.fromArray(this._kademliaNode, decoded);
             ws._kadInitialized = true;
             ws.contact = contact;
