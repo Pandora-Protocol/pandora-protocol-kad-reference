@@ -3,8 +3,8 @@ const Validation = require ('./../helpers/validation')
 
 module.exports = class StoreMemory extends Store{
 
-    constructor() {
-        super("memory");
+    constructor(id ) {
+        super("memory", id);
         this._memory = new Map();
         this._memoryExpiration = new Map();
     }

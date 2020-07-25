@@ -59,20 +59,20 @@ const contacts = [ [
     ]
 ]
 
-function newStore(){
-    return new KAD.StoreMemory();
+function newStore(id){
+    return new KAD.StoreMemory(id);
 }
 
 //creating kad nodes
 const nodes = contacts.map(
-    contact => new KAD.KademliaNode(
+    (contact, index) => new KAD.KademliaNode(
         [
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
             KAD.plugins.PluginKademliaNodeWebSocket.plugin,
         ],
         contact,
-        newStore()
+        newStore(index)
     ) )
 
 nodes.map( it => it.start() );

@@ -3,7 +3,8 @@ const Utils = require('./../helpers/utils')
 
 module.exports = class Store{
 
-    constructor(type = "interface") {
+    constructor(type = "interface", id = 1) {
+        this.id = id;
         this.type = "memory";
         this._started = false;
     }
@@ -35,21 +36,27 @@ module.exports = class Store{
     }
 
     get(table = '', key, cb){
+        throw "interface";
     }
 
     put(table = '', key, value, cb){
+        throw "interface";
     }
 
     del(table = '', key, cb){
+        throw "interface";
     }
 
     getExpiration(table = '', key, cb){
+        throw "interface";
     }
 
     putExpiration(table = '', key, time, cb){
+        throw "interface";
     }
 
     delExpiration(table = '', key, cb){
+        throw "interface";
     }
 
     //plugin

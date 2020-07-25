@@ -31,19 +31,19 @@ for (let i=0; i < dataCount; i++)
         value: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ).toString('hex')
     })
 
-function newStore(){
-    return new KAD.StoreMemory();
+function newStore(index){
+    return new KAD.StoreMemory(index);
 }
 
 //creating kad nodes
 const nodes = contacts.map(
-    contact => new KAD.KademliaNode(
+    (contact, index) => new KAD.KademliaNode(
         [
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
         ],
         contact,
-        newStore()
+        newStore(index)
     ) )
 
 

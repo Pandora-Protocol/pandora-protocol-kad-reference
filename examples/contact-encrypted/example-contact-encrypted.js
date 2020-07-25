@@ -40,13 +40,13 @@ for (let i=0; i < COUNT; i++)
         true,
     ]
 
-function newStore(){
-    return new KAD.StoreMemory();
+function newStore(index){
+    return new KAD.StoreMemory(index);
 }
 
 //creating kad nodes
 const nodes = contacts.map(
-    contact => new KAD.KademliaNode(
+    (contact, index) => new KAD.KademliaNode(
         [
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
@@ -55,7 +55,7 @@ const nodes = contacts.map(
             KAD.plugins.PluginContactSpartacus.plugin,
         ],
         contact,
-        newStore()
+        newStore(index)
     ) )
 
 nodes.forEach( (it, index) => {
