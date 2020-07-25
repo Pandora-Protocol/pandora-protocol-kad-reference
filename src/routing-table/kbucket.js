@@ -1,28 +1,28 @@
-const KBucket = require('./kbucket')
 const BufferUtils = require('../helpers/buffer-utils')
 
-module.exports = class KBucket extends Array {
+//KBucket can't extend Array as we have an issue with Vue2
+module.exports = class KBucket {
 
     constructor( bucketIndex) {
-        super();
         this.bucketIndex = bucketIndex;
+        this.array = [];
     }
 
     get tail(){
-        return this[this.length-1];
+        return this.array[this.array.length-1];
     }
 
     get head(){
-        return this[0];
+        return this.array[0];
     }
 
     getBucketClosestToKey( key, count =  global.KAD_OPTIONS.BUCKET_COUNT_K ){
 
         const contacts = [], distances = {};
 
-        for (let i=0; i < this.length; i++ ){
-            contacts.push( this[i].contact )
-            distances[this[i].contact.identityHex] = BufferUtils.xorDistance(this[i].contact.identity, key );
+        for (let i=0; i < this.array.length; i++ ){
+            contacts.push( this.array[i].contact )
+            distances[this.array[i].contact.identityHex] = BufferUtils.xorDistance(this.array[i].contact.identity, key );
         }
 
         return contacts.sort((a,b)=> BufferUtils.compareKeyBuffers( distances[a.identityHex], distances[b.identityHex]) )
@@ -33,8 +33,8 @@ module.exports = class KBucket extends Array {
 
     findContactByIdentity(identity){
 
-        for (let i=0; i < this.length; i++)
-            if (this[i].contact.identity.equals(identity) )
+        for (let i=0; i < this.array.length; i++)
+            if (this.array[i].contact.identity.equals(identity) )
                 return i
 
         return -1;

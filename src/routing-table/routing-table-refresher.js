@@ -66,7 +66,7 @@ module.exports = class RoutingTableRefresher {
         let results = new Set(), consecutiveUnimprovedLookups = 0, finished = false;
         async.each(  this._routingTable.buckets, (bucket, next) => {
 
-            if (finished) return next();
+            if ( bucket.bucketIndex < startIndex || finished) return next();
 
             if (consecutiveUnimprovedLookups >= global.KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES){
                 finished = true;
@@ -76,7 +76,7 @@ module.exports = class RoutingTableRefresher {
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
             const needsRefresh = lastBucketLookup + global.KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
 
-            if (bucket.length > 0 && needsRefresh)
+            if (bucket.array.length > 0 && needsRefresh)
                 return this._kademliaNode.crawler.iterativeFindNode(
                     BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex),
                     (err, contacts )=>{

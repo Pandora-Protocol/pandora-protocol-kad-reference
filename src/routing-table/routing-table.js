@@ -34,12 +34,12 @@ module.exports = class RoutingTable {
 
         if (this.map[contact.identityHex]) {  //already have it
             this._refreshContactItem(this.map[contact.identityHex]);
-            return [false, this.map[contact.identityHex].bucketIndex, -1, true];
+            return [false, this.map[contact.identityHex].bucketIndex,  true];
         }
 
         const bucketIndex = this.getBucketIndex( contact.identity );
 
-        if (this.buckets[bucketIndex].length === global.KAD_OPTIONS.BUCKET_COUNT_K)
+        if (this.buckets[bucketIndex].array.length === global.KAD_OPTIONS.BUCKET_COUNT_K)
             return [false, bucketIndex, -1, false]; //I have already too many in the bucket
 
         const newContact = {
@@ -48,11 +48,11 @@ module.exports = class RoutingTable {
             pingLastCheck: Date.now(),
             pingResponded: null,
         }
-        this.buckets[bucketIndex].push( newContact );
+        this.buckets[bucketIndex].array.push( newContact );
         this.map[contact.identityHex] = newContact;
         this.count += 1;
 
-        return [true, bucketIndex, this.buckets, this.buckets[bucketIndex].length-1 ];
+        return [true, bucketIndex, true ];
     }
 
 
@@ -65,7 +65,7 @@ module.exports = class RoutingTable {
         const index = this.buckets[item.bucketIndex].findContactByIdentity(item.contact.identity);
 
         if (index !== -1) {
-            this.buckets[item.bucketIndex].splice(index, 1);
+            this.buckets[item.bucketIndex].array.splice(index, 1);
             delete this.map[item.contact.identityHex];
             this.count -= 1;
         }
@@ -78,7 +78,7 @@ module.exports = class RoutingTable {
     }
 
     _sortBucket(bucketIndex){
-        this.buckets[ bucketIndex ].sort( (a,b) => a.pingLastCheck - b.pingLastCheck  );
+        this.buckets[ bucketIndex ].array.sort( (a,b) => a.pingLastCheck - b.pingLastCheck  );
     }
 
     getBucketIndex(foreignNodeKey){
@@ -112,7 +112,7 @@ module.exports = class RoutingTable {
 
         const _addNearestFromBucket = bucket => {
 
-            if (!this.buckets[bucket].length) return; //optimization, some buckets might be empty
+            if (!this.buckets[bucket].array.length) return; //optimization, some buckets might be empty
 
             const entries = this.buckets[bucket].getBucketClosestToKey( key, count  );
 
@@ -145,9 +145,9 @@ module.exports = class RoutingTable {
      */
     getClosestBucket() {
 
-        for (let i=0; i < this.buckets.length-1; i++ )
-            if ( this.buckets[i].length !== 0)
-                return this.buckets[i];
+        for (let i=0; i < this.buckets.length; i++ )
+            if ( this.buckets[i].array.length )
+                return this.buckets[i].array;
 
     }
 
@@ -161,7 +161,7 @@ module.exports = class RoutingTable {
 
         if (closestBucket)
             for (let i = closestBucket.bucketIndex + 1; i < this.buckets.length; i++)
-                if (this.buckets[i].length !== 0)
+                if (this.buckets[i].array.length )
                     furtherBuckets.push( this.buckets[i] );
 
         return furtherBuckets;

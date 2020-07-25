@@ -75,8 +75,10 @@ module.exports = class KademliaNode extends EventEmitter {
                 return cb(err, out);
             }
 
-            this.routingTable.refresher.refresh(this.routingTable.getBucketsBeyondClosest().bucketIndex, ()=> {
-            });
+            const bucketsClosest = this.routingTable.getBucketsBeyondClosest();
+            if (bucketsClosest.length)
+                this.routingTable.refresher.refresh( bucketsClosest[0].bucketIndex, ()=> {
+                });
 
 
             if (!first && this.routingTable.count === 1){

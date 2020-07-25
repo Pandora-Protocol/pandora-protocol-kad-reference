@@ -227,7 +227,7 @@ module.exports = class Crawler {
         if (contact.identity.equals( this._kademliaNode.contact.identity) )
             return cb(null, null);
 
-        const [result, bucketIndex, bucketPosition, refreshed ] = this._kademliaNode.routingTable.addContact(contact);
+        const [result, bucketIndex, refreshed ] = this._kademliaNode.routingTable.addContact(contact);
         if (result || refreshed || (!result && !refreshed))
             return cb(null, true);
 
