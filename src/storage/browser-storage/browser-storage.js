@@ -44,7 +44,7 @@ module.exports = class BrowserStorage {
     }
 
     setItem(key, value, callback) {
-        return this._store.removeItem(key, value, callback)
+        return this._store.setItem(key, value, callback)
     }
 
     getItem(key, callback) {
