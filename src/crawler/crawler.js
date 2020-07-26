@@ -66,7 +66,7 @@ module.exports = class Crawler {
 
         this._kademliaNode._store.get(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
-            if (out) return cb(null, out);
+            if (out) return cb(null, {  result: out, contact: this._kademliaNode.contact });
             this._iterativeFind( table,'FIND_VALUE', 'STORE', key, cb);
 
         });

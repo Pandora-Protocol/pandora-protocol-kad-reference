@@ -7,7 +7,10 @@ console.log("Simple KAD");
 
 KAD.plugins.PluginKademliaNodeMock.initialize();
 KAD.plugins.PluginKademliaNodeHTTP.initialize();
+KAD.plugins.PluginKademliaNodeWebSocket.initialize();
+
 const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
+//const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
 
 //addresses
 const contacts = [ [
@@ -55,28 +58,40 @@ const contacts = [ [
     ]
 ]
 
-function newStore(){
-    return new KAD.StoreMemory();
+function newStore(id){
+    return new KAD.storage.StoreMemory(id);
 }
 
 //creating kad nodes
 const nodes = contacts.map(
-    contact => new KAD.KademliaNode(
+    (contact, index) => new KAD.KademliaNode(
         [
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
+            KAD.plugins.PluginKademliaNodeWebSocket.plugin,
             KAD.plugins.PluginSortedList.plugin,
         ],
         contact,
-        newStore()
+        newStore(index)
     ) )
+
 
 nodes.map( it => it.start() );
 
 //encountering
 const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];
-async.each( connections, ( connection, next) =>{
-    nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, next );
+async.eachLimit( connections, 1, ( connection, next) =>{
+
+    nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, ()=>{
+
+        console.log("BOOTSTRAPING...");
+        //fix for websockets
+        setTimeout( ()=>{
+            next()
+        }, 200 );
+
+    } );
+
 }, (err, out)=> {
 
     let query = KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH);

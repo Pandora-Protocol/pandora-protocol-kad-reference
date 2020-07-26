@@ -54,7 +54,7 @@ module.exports = function (kademliaRules) {
     }
 
     function sendSerialized (id, destContact, command, data, cb) {
-        const buffer = bencode.encode( data );
+        const buffer = Buffer.isBuffer(data) ? data : bencode.encode( data );
         this._httpRequest.request( id, destContact, buffer, cb )
     }
 

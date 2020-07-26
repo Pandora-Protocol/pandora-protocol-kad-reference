@@ -306,7 +306,8 @@ module.exports = class KademliaRules {
         try{
 
             let decoded;
-            if (Buffer.isBuffer(buffer)) decoded = bencode.decode(buffer);
+            if (Buffer.isBuffer(buffer))
+                decoded = bencode.decode(buffer);
             else decoded = buffer;
 
             let c = 0;

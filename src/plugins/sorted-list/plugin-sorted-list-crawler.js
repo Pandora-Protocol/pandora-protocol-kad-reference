@@ -14,7 +14,7 @@ module.exports = function PluginSortedListCrawler (crawler) {
 
         this._kademliaNode._store.getSortedList(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
-            if (out) return cb(null, out);
+            if (out) return cb(null, {  result: out, contact: this._kademliaNode.contact });
             this._iterativeFind(table, 'FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', key, cb);
 
         });
