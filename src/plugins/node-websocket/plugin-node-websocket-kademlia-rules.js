@@ -163,13 +163,14 @@ module.exports = function (kademliaRules){
 
             ws.socketsQueue[id] = {
                 resolve: cb,
+                error: ()=> cb(new Error('Disconnected or Error')),
             };
 
             this._pending['ws'+ws.id+':'+id] = {
                 time: new Date(),
                 error: ()=>{
-                    cb(new Error('Timeout'));
                     delete ws.socketsQueue[id];
+                    cb(new Error('Timeout'));
                 },
                 resolve: cb,
             }

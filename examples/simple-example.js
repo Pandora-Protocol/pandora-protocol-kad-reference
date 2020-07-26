@@ -60,7 +60,7 @@ const contacts = [ [
 ]
 
 function newStore(id){
-    return new KAD.StoreMemory(id);
+    return new KAD.storage.StoreMemory(id);
 }
 
 //creating kad nodes

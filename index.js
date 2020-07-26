@@ -3,6 +3,8 @@ const Store = require('./src/store/store')
 const StoreMemory = require('./src/store/store-memory')
 const Config = require('./src/config')
 
+const Storage = require('./src/storage/storage')
+
 const Contact = require('./src/contact/contact')
 const ContactAddress = require('./src/contact/contact-address')
 const ContactAddressProtocolType = require('./src/contact/contact-address-protocol-type')
@@ -45,8 +47,11 @@ module.exports = {
     ContactAddress,
     ContactAddressProtocolType,
 
-    Store,
-    StoreMemory,
+    storage: {
+        Storage,
+        Store,
+        StoreMemory,
+    },
 
     helpers:{
         BufferUtils,
@@ -68,7 +73,7 @@ module.exports = {
     library: {
         async,
         bencode,
-        blobToBuffer
+        blobToBuffer,
     }
 
 }

@@ -41,7 +41,7 @@ for (let i=0; i < COUNT; i++)
     ]
 
 function newStore(index){
-    return new KAD.StoreMemory(index);
+    return new KAD.storage.StoreMemory(index);
 }
 
 //creating kad nodes
