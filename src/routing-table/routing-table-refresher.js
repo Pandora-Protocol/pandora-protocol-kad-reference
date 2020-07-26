@@ -76,11 +76,14 @@ module.exports = class RoutingTableRefresher {
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
             const needsRefresh = lastBucketLookup + global.KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
 
-            if (bucket.array.length > 0 && needsRefresh)
-                return this._kademliaNode.crawler.iterativeFindNode(
+            if (bucket.array.length > 0 && needsRefresh){
+
+                this._kademliaNode.crawler.iterativeFindNode(
                     BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex),
                     (err, contacts )=>{
-                        if (err) return next(err);
+
+                        if (err) return next();
+
                         let discoveredNewContacts = false;
 
                         for (let contact of contacts)
@@ -97,7 +100,8 @@ module.exports = class RoutingTableRefresher {
                     },
                 );
 
-            next();
+            } else
+                next();
 
         }, (err, out ) => {
             cb(err, out);

@@ -283,18 +283,16 @@ module.exports = class KademliaRules {
     decodeSendAnswer(destContact, command, data){
 
         let decoded;
-        if (!Buffer.isBuffer(data) ) decoded = data;
-        else decoded = bencode.decode(data);
+        if ( Buffer.isBuffer(data) ) decoded = bencode.decode(data);
+        else decoded = data;
 
         if (command === 'FIND_VALUE'  || command === 'FIND_NODE'  ){
 
             if (command === 'FIND_VALUE' && decoded[0] === 1 ){
                 decoded[1] = decoded[1].toString();
-                return decoded;
             } else {
                 for (let i = 0; i < decoded[1].length; i++)
                     decoded[1][i] = Contact.fromArray(this._kademliaNode, decoded[1][i]);
-                return decoded;
             }
         }
 

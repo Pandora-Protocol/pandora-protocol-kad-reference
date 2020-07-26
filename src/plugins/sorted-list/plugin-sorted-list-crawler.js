@@ -22,7 +22,7 @@ module.exports = function PluginSortedListCrawler (crawler) {
     }
 
     function iterativeStoreSortedListValue(table, key, value, score, cb){
-        return this._iterativeStoreValue( [table, key, value, score], 'storeSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), key.toString('hex'), value, score, next ), cb)
+        return this._iterativeStoreValue( [table, key, value, score], 'sendStoreSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), key.toString('hex'), value.toString('ascii'), score, next ), cb)
     }
 
 

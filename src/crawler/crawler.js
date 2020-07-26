@@ -95,14 +95,14 @@ module.exports = class Crawler {
 
         function dispatchFindNode(contact, next){
 
-            if (finished) return next(null, null)
+            if (finished) return next(new Error('finished'))
 
             //mark this node as contacted so as to avoid repeats
             shortlist.contacted(contact);
 
             this._kademliaNode.rules.send(contact, method, data , (err, result) => {
 
-                if (finished || err) return next(null, null);
+                if ( err ) return next();
 
                 // mark this node as active to include it in any return values
                 shortlist.responded(contact);
@@ -113,10 +113,14 @@ module.exports = class Crawler {
                 //If the result is a contact/node list, just keep track of it
                 if ( result[0] === 0 ){
                     const added = shortlist.add( result[1] );
+
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
-                    added.forEach(contact => this._updateContactFound(contact, () => null ));
-                    next(null,  result[1]);
-                } else {
+                    async.eachLimit(added, global.KAD_OPTIONS.ALPHA_CONCURRENCY,
+                        ( contact, next ) => this._updateContactFound(contact, () => next() ),
+                        ()=> next(null,  result[1])
+                    );
+
+                } else if ( result[0] === 1 ){
 
                     //If we did get an item back, get the closest node we contacted
                     //who is missing the value and store a copy with them
@@ -126,7 +130,7 @@ module.exports = class Crawler {
                         if (Array.isArray(result[1])){
 
                             async.eachLimit(result[1], global.KAD_OPTIONS.ALPHA_CONCURRENCY,
-                                ( data, next ) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, next ),
+                                ( data, next ) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
                                 ()=>{});
 
                         } else
@@ -136,13 +140,14 @@ module.exports = class Crawler {
                     //  we found a value, so stop searching
                     finished = true;
                     cb(null, {  result: result[1], contact });
-                    next(null,  result[1] );
+                    next( new Error('finished') );
                 }
 
             })
         }
 
         function iterativeLookup(selection, continueLookup = true) {
+
 
             //nothing new to do
             if ( !selection.length )
@@ -203,7 +208,7 @@ module.exports = class Crawler {
     }
 
     iterativeStoreValue(table, key, value, cb){
-        return this._iterativeStoreValue(  [table, key, value], 'store', (data, next) => this._kademliaNode._store.put( table.toString('hex'), key.toString('hex'), value, next ), cb)
+        return this._iterativeStoreValue(  [table, key, value], 'sendStore', (data, next) => this._kademliaNode._store.put( table.toString('hex'), key.toString('hex'), value, next ), cb)
     }
 
     _updateContactFound(contact, cb){
@@ -216,8 +221,7 @@ module.exports = class Crawler {
                 this._kademliaNode.routingTable.removeContact(tail.contact);
                 this._kademliaNode.routingTable.addContact(contact);
                 return cb(null, contact);
-            }
-            cb(null, null);
+            } else cb(null, contact);
 
         })
     }
