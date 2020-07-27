@@ -107,6 +107,8 @@ module.exports = class Crawler {
                 // mark this node as active to include it in any return values
                 shortlist.responded(contact);
 
+                if (finished) return next(new Error('finished'))
+
                 if (!result || (Array.isArray(result) && !result.length)) {
                     next(null, result);
                 } else
