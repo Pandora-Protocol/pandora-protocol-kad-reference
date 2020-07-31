@@ -13,6 +13,10 @@ module.exports = function(kademliaNode) {
 
     function create(  ){
 
+        const timestamp = arguments[this._additionalParameters++];
+        if (typeof timestamp !== "number") throw "Invalid timestamp";
+        this.timestamp = timestamp;
+
         const nonce = arguments[this._additionalParameters++];
         if (!Buffer.isBuffer(nonce) || nonce.length !== 64) throw "Invalid Contact Public Key";
         this.nonce = nonce;
@@ -49,6 +53,7 @@ module.exports = function(kademliaNode) {
         function toArray(notIncludeSignature){
 
             const out = _toArray(...arguments);
+            out.push(this.timestamp);
             out.push(this.nonce);
 
             if (!notIncludeSignature)
@@ -60,6 +65,7 @@ module.exports = function(kademliaNode) {
         function toJSON(){
             return {
                 ..._toJSON(),
+                timestamp: this.timestamp,
                 nonce: this.nonce,
                 signature: this.signature,
             }
