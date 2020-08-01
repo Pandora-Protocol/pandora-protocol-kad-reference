@@ -35,7 +35,7 @@ for (let i=0; i < COUNT; i++)
         8000+i,
         '',
         keyPairs[i].publicKey,
-        new Date().getTime(),
+        Math.floor( new Date().getTime()/1000 ),
         KAD.helpers.BufferUtils.genBuffer( 64 ),
         Buffer.alloc(64), //empty signature
         true,
