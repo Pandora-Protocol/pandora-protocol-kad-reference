@@ -5,6 +5,7 @@ module.exports = function (kademliaRules){
 
     function _welcomeIfNewNode(contact, cb = ()=>{} ){
 
+
         const oldContact = this._kademliaNode.routingTable.map[ contact.identityHex ];
         if (oldContact ){
 

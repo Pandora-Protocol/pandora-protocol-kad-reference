@@ -24,6 +24,8 @@ const StringUtils = require('./src/helpers/string-utils')
 const Validation = require('./src/helpers/validation')
 const AsyncInterval = require('./src/helpers/async-interval')
 const ECCUtils = require('./src/helpers/ecc-utils')
+const CryptoUtils = require('./src/helpers/crypto-utils')
+const Utils = require('./src/helpers/utils')
 
 const async = require('async');
 const bencode = require('bencode');
@@ -33,10 +35,7 @@ module.exports = {
 
     init(config ={} ) {
 
-        global.KAD_OPTIONS = {
-            config,
-            ...Config,
-        };
+        global.KAD_OPTIONS = Utils.mergeDeep(Config, config);
 
     },
 
@@ -60,6 +59,7 @@ module.exports = {
         Validation,
         AsyncInterval,
         ECCUtils,
+        CryptoUtils,
     },
 
     plugins: {

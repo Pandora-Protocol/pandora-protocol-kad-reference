@@ -1,13 +1,23 @@
 const KAD = require('../../index');
 const async = require('async');
 
-KAD.init({});
-
 console.log("Simple Encrypted Contact KAD");
+
+const sybilKeys = KAD.helpers.ECCUtils.createPair();
+
+KAD.init({
+    PLUGINS:{
+        CONTACT_SYBIL_PROTECT: {
+            SYBIL_PUBLIC_KEYS: [ sybilKeys.publicKey ],
+        }
+    }
+});
+
 
 KAD.plugins.PluginKademliaNodeMock.initialize();
 KAD.plugins.PluginKademliaNodeHTTP.initialize();
 KAD.plugins.PluginKademliaNodeWebSocket.initialize();
+
 
 //const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
 //const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
@@ -17,29 +27,32 @@ const COUNT = 6;
 
 //addresses
 const keyPairs = [];
-for (let i=0; i < COUNT; i++) {
-    const privateKey = KAD.helpers.ECCUtils.createPrivateKey();
-    keyPairs[i] = {
-        publicKey: KAD.helpers.ECCUtils.getPublicKey(privateKey),
-        privateKey
-    }
-}
+for (let i=0; i < COUNT; i++)
+    keyPairs[i] = KAD.helpers.ECCUtils.createPair();
 
 const contacts = [];
-for (let i=0; i < COUNT; i++)
+for (let i=0; i < COUNT; i++) {
+
+    const sybilSignature = KAD.helpers.ECCUtils.sign( sybilKeys.privateKey, KAD.helpers.CryptoUtils.sha256( keyPairs[i].publicKey ) );
+    const nonce = Buffer.concat([
+        Buffer.from("00", "hex"),
+        sybilSignature,
+    ]);
+
     contacts[i] = [
         0,
-        Buffer.alloc( global.KAD_OPTIONS.NODE_ID_LENGTH ), //empty identity
+        Buffer.alloc(global.KAD_OPTIONS.NODE_ID_LENGTH), //empty identity
         protocol,
         '127.0.0.1',
-        8000+i,
+        8000 + i,
         '',
         keyPairs[i].publicKey,
-        KAD.helpers.BufferUtils.genBuffer( 65 ),
-        Math.floor( new Date().getTime()/1000 ),
+        nonce,
+        Math.floor(new Date().getTime() / 1000),
         Buffer.alloc(64), //empty signature
         true,
     ]
+}
 
 function newStore(index){
     return new KAD.storage.StoreMemory(index);
@@ -61,7 +74,9 @@ const nodes = contacts.map(
     ) )
 
 nodes.forEach( (it, index) => {
+
     it.contact.privateKey = keyPairs[index].privateKey
+
     it.contact.identity = it.contact.computeContactIdentity();
     it.contact.signature = it.contact.sign( );
     it.start()

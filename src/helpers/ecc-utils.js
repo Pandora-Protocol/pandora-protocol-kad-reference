@@ -2,6 +2,14 @@ const eccrypto = require("pandora-protocol-eccrypto");
 
 module.exports =  {
 
+    createPair(){
+        const privateKey = this.createPrivateKey();
+        return {
+            privateKey,
+            publicKey: this.getPublicKey(privateKey),
+        }
+    },
+
     createPrivateKey(){
         return eccrypto.generatePrivate();
     },
