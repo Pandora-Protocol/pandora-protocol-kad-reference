@@ -73,7 +73,7 @@ module.exports = class Store{
         const itValue =  this._expireOldKeysIterator.next();
         if (itValue.value && !itValue.done){
             const time = itValue.value[1];
-            if (time < Date.now() ){
+            if (time < new Date().getTime() ){
                 const key = itValue.value[0].splice(0, itValue[0].length-4 );
                 this.del(key, next )
             }

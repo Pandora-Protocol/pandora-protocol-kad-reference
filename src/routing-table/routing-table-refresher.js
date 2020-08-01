@@ -52,7 +52,7 @@ module.exports = class RoutingTableRefresher {
      * @param {number} startIndex
      */
     refresh(startIndex = 0, cb) {
-        const now = Date.now();
+        const now = new Date().getTime();
 
         /**
          *  We want to avoid high churn during refresh and prevent further
@@ -111,7 +111,7 @@ module.exports = class RoutingTableRefresher {
 
     _replicate(iterator, next){
 
-        const now = Date.now();
+        const now = new Date().getTime();
         if ( !iterator  )
             iterator = this._kademliaNode._store.iterator();
 

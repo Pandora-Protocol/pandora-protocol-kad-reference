@@ -86,7 +86,7 @@ module.exports = class Crawler {
 
         const data = ( method === 'FIND_NODE' ) ? [key] : [table, key];
 
-        this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = Date.now();
+        this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = new Date().getTime();
 
         const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, global.KAD_OPTIONS.ALPHA_CONCURRENCY ) );
         let closest = shortlist.closest;
@@ -238,11 +238,11 @@ module.exports = class Crawler {
             return cb(null, true);
 
         const tail = this._kademliaNode.routingTable.buckets[bucketIndex].tail;
-        if (tail.pingResponded && tail.pingLastCheck > ( Date.now() - 600000 ) )
+        if (tail.pingResponded && tail.pingLastCheck > ( new Date().getTime() - 600000 ) )
             return cb( new Error("bucket full"),)
 
         this._kademliaNode.rules.sendPing(tail.contact, (err, out)=>{
-            tail.pingLastCheck = Date.now();
+            tail.pingLastCheck = new Date().getTime();
             if (out){
                 tail.pingResponded = true;
                 cb(null, tail );

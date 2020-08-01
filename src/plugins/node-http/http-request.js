@@ -52,7 +52,7 @@ module.exports = class HTTPRequest {
         const request = this._createRequest(destContact.address.protocol, reqopts);
 
         this._kademliaRules._pending['http'+id] = {
-            timestamp: Date.now(),
+            timestamp: new Date().getTime(),
             response: (out)=> callback(null, out ),
             error: ()=> callback(new Error('Timeout'))
         };

@@ -208,7 +208,7 @@ module.exports = class KademliaRules {
         if (this._replicatedStoreToNewNodesAlready[contact.identityHex])
             return cb(null, "skipped");
 
-        this._replicatedStoreToNewNodesAlready[contact.identityHex] = Date.now();
+        this._replicatedStoreToNewNodesAlready[contact.identityHex] = new Date().getTime();
         this._replicateStoreToNewNode(contact, undefined, cb )
 
     }
@@ -332,11 +332,13 @@ module.exports = class KademliaRules {
      */
     _timeoutPending(next) {
 
-        const now = Date.now();
+        const now = new Date().getTime();
 
         for (const key in this._pending)
             if (now >= this._pending[key].timestamp + global.KAD_OPTIONS.T_RESPONSE_TIMEOUT) {
+
                 this._pending[key].error.call(this, key, this._pending[key]);
+
                 delete this._pending[key];
             }
 

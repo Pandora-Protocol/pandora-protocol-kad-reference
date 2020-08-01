@@ -45,7 +45,7 @@ module.exports = class RoutingTable {
         const newContact = {
             contact,
             bucketIndex: bucketIndex,
-            pingLastCheck: Date.now(),
+            pingLastCheck: new Date().getTime(),
             pingResponded: null,
         }
         this.buckets[bucketIndex].array.push( newContact );
@@ -73,7 +73,7 @@ module.exports = class RoutingTable {
 
 
     _refreshContactItem(contactItem){
-        contactItem.pingLastCheck = Date.now();
+        contactItem.pingLastCheck = new Date().getTime();
         this._sortBucket( contactItem.bucketIndex );
     }
 

@@ -135,9 +135,11 @@ module.exports = function (kademliaRules){
 
             if (ws.socketsQueue[id]){ //in case it was not deleted
 
-                ws.socketsQueue[id].resolve( null, decoded[2] );
+                const socketQueue = ws.socketsQueue[id];
                 delete ws.socketsQueue[id];
                 delete this._pending['ws'+ws.id+':'+id];
+
+                socketQueue.resolve( null, decoded[2] );
 
             }
 
@@ -167,7 +169,7 @@ module.exports = function (kademliaRules){
             };
 
             this._pending['ws'+ws.id+':'+id] = {
-                time: new Date(),
+                timestamp: new Date().getTime(),
                 error: ()=>{
                     delete ws.socketsQueue[id];
                     cb(new Error('Timeout'));

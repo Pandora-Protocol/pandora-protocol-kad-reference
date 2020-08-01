@@ -41,6 +41,7 @@ const processTimeout = (id) => {
                 delete map[id];
                 return;
             }
+
             map[id].processing = false;
 
             map[id].timeout = NextTick( ()=>processTimeout( id ), map[id].time );
@@ -49,6 +50,6 @@ const processTimeout = (id) => {
 
 
     }catch(err){
-        console.error(err);
+        console.error("async interval raised an error", err);
     }
 }
