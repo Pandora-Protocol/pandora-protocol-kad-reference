@@ -35,8 +35,8 @@ for (let i=0; i < COUNT; i++)
         8000+i,
         '',
         keyPairs[i].publicKey,
+        KAD.helpers.BufferUtils.genBuffer( 65 ),
         Math.floor( new Date().getTime()/1000 ),
-        KAD.helpers.BufferUtils.genBuffer( 64 ),
         Buffer.alloc(64), //empty signature
         true,
     ]
@@ -54,6 +54,7 @@ const nodes = contacts.map(
             KAD.plugins.PluginKademliaNodeWebSocket.plugin,
             KAD.plugins.PluginContactEncrypted.plugin,
             KAD.plugins.PluginContactSpartacus.plugin,
+            KAD.plugins.PluginContactSybilProtect.plugin,
         ],
         contact,
         newStore(index)

@@ -8,10 +8,19 @@ module.exports = function(kademliaNode) {
         throw "PluginContactEncrypted is required";
 
     kademliaNode.plugins.contactPlugins.push({
+        createInitialize,
         create,
     })
 
+    function createInitialize(){
+        this._spartacusNonceLength = 0;
+    }
+
     function create(  ){
+
+        const nonce = arguments[this._additionalParameters++];
+        if (!Buffer.isBuffer(nonce) || nonce.length !== this._spartacusNonceLength) throw "Invalid Contact Public Key";
+        this.nonce = nonce;
 
         const timestamp = arguments[this._additionalParameters++];
         if (typeof timestamp !== "number") throw "Invalid timestamp";
@@ -20,10 +29,6 @@ module.exports = function(kademliaNode) {
         if (timestamp > time + global.KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_MAX_DRIFT) throw "Invalid timestamp max drift."
         if (timestamp < time - global.KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_MIN_DRIFT) throw "Invalid timestamp min drift."
         this.timestamp = timestamp;
-
-        const nonce = arguments[this._additionalParameters++];
-        if (!Buffer.isBuffer(nonce) || nonce.length !== 64) throw "Invalid Contact Public Key";
-        this.nonce = nonce;
 
         const signature = arguments[this._additionalParameters++];
         if (!Buffer.isBuffer(signature) || signature.length !== 64) throw "Invalid Contact Public Key";
@@ -57,8 +62,8 @@ module.exports = function(kademliaNode) {
         function toArray(notIncludeSignature){
 
             const out = _toArray(...arguments);
-            out.push(this.timestamp);
             out.push(this.nonce);
+            out.push(this.timestamp);
 
             if (!notIncludeSignature)
                 out.push(this.signature);
@@ -69,8 +74,8 @@ module.exports = function(kademliaNode) {
         function toJSON(){
             return {
                 ..._toJSON(),
-                timestamp: this.timestamp,
                 nonce: this.nonce,
+                timestamp: this.timestamp,
                 signature: this.signature,
             }
         }
