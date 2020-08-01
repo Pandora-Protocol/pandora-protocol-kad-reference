@@ -26,9 +26,7 @@ const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WE
 const COUNT = 6;
 
 //addresses
-const keyPairs = [];
-for (let i=0; i < COUNT; i++)
-    keyPairs[i] = KAD.helpers.ECCUtils.createPair();
+const keyPairs = new Array(COUNT).fill(1).map( it => KAD.helpers.ECCUtils.createPair() );
 
 const contacts = [];
 for (let i=0; i < COUNT; i++) {

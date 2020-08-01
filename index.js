@@ -60,6 +60,7 @@ module.exports = {
         AsyncInterval,
         ECCUtils,
         CryptoUtils,
+        Utils,
     },
 
     plugins: {
