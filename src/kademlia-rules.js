@@ -280,22 +280,20 @@ module.exports = class KademliaRules {
         next()
     }
 
-    decodeSendAnswer(destContact, command, data, alreadyDecoded = false){
+    decodeSendAnswer(destContact, command, data){
 
-        let decoded = data;
-        if ( !alreadyDecoded && Buffer.isBuffer(data) ) decoded = bencode.decode(data);
 
         if (command === 'FIND_VALUE'  || command === 'FIND_NODE'  ){
 
-            if (command === 'FIND_VALUE' && decoded[0] === 1 ){
-                decoded[1] = decoded[1].toString();
+            if (command === 'FIND_VALUE' && data[0] === 1 ){
+                data[1] = data[1].toString();
             } else {
-                for (let i = 0; i < decoded[1].length; i++)
-                    decoded[1][i] = Contact.fromArray(this._kademliaNode, decoded[1][i]);
+                for (let i = 0; i < data[1].length; i++)
+                    data[1][i] = Contact.fromArray(this._kademliaNode, data[1][i]);
             }
         }
 
-        return decoded;
+        return data;
     }
 
     decodeReceiveAnswer(  id, srcContact, buffer ){

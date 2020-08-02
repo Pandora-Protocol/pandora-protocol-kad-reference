@@ -61,27 +61,24 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
     }
 
 
-    function decodeSendAnswer(destContact, command, data, alreadyDecoded = false){
-
-        let decoded;
-        if ( !alreadyDecoded && Buffer.isBuffer(data) ) decoded = bencode.decode(data);
+    function decodeSendAnswer(destContact, command, data){
 
         if ( command === 'FIND_SORTED_LIST' ){
 
-            if ( decoded[0] === 1){
-                for (let i=0; i < decoded[1].length; i++)
-                    decoded[1][i][0] = decoded[1][i][0].toString();
+            if ( data[0] === 1){
+                for (let i=0; i < data[1].length; i++)
+                    data[1][i][0] = data[1][i][0].toString();
 
-                return decoded;
+                return data;
             } else {
-                for (let i = 0; i < decoded[1].length; i++)
-                    decoded[1][i] = Contact.fromArray(this._kademliaNode, decoded[1][i]);
+                for (let i = 0; i < data[1].length; i++)
+                    data[1][i] = Contact.fromArray(this._kademliaNode, data[1][i]);
 
-                return decoded;
+                return data;
             }
         }
 
-        return _decodeSendAnswer(destContact, command, decoded, true);
+        return _decodeSendAnswer(destContact, command, data);
     }
 
 }
