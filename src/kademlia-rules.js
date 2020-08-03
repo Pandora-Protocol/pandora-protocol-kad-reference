@@ -333,9 +333,13 @@ module.exports = class KademliaRules {
         const now = new Date().getTime();
 
         for (const key in this._pending)
-            if (now >= this._pending[key].timestamp + (this._pending[key].timeout || global.KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
+            if (now >= this._pending[key].timestamp + (this._pending[key].time || global.KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
 
-                this._pending[key].error.call(this, key, this._pending[key]);
+                try{
+                    this._pending[key].timeout.call(this, key, this._pending[key]);
+                }catch(err){
+                    console.error("_timeoutPending raised an error", err);
+                }
 
                 delete this._pending[key];
             }

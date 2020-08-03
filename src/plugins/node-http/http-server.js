@@ -84,7 +84,7 @@ module.exports = class HTTPServer extends EventEmitter {
             const buffer = Buffer.concat(data);
             this._kademliaNode.rules._pending['http'+id] = {
                 timestamp: new Date().getTime(),
-                error: ()=>{
+                timeout: ()=>{
                     res.statusCode = 504;
                     res.response.end('Gateway Timeout');
                 },

@@ -67,10 +67,8 @@ module.exports = function (kademliaRules){
 
         this._pending['ws'+ws.id] = {
             timestamp: new Date().getTime(),
-            timeout: KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY,
-            error: ()=>{
-                ws.close();
-            },
+            time: KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY,
+            timeout: () =>  ws.close(),
         }
 
         ws.onopen = () => {
@@ -96,10 +94,8 @@ module.exports = function (kademliaRules){
                         break;
                     }
 
-                for (const id in ws.socketsQueue) {
+                for (const id in ws.socketsQueue)
                     ws.socketsQueue[id].error(new Error('Disconnected or Error'));
-                    delete this._pending['ws'+ws.id+':'+id];
-                }
 
                 ws.socketsQueue = {};
 
@@ -119,7 +115,9 @@ module.exports = function (kademliaRules){
 
             if (data.type !== "message") return;
 
-            this._pending['ws'+ws.id].timestamp = new Date().getTime()
+            if (this._pending['ws'+ws.id])
+                this._pending['ws'+ws.id].timestamp = new Date().getTime()
+
             const message = data.data;
 
             if (typeof Blob !== 'undefined' && message instanceof Blob){
@@ -177,12 +175,12 @@ module.exports = function (kademliaRules){
 
             ws.socketsQueue[id] = {
                 resolve: cb,
-                error: ()=> cb(new Error('Disconnected or Error')),
+                error: () => cb(new Error('Disconnected or Error')),
             };
 
             this._pending['ws'+ws.id+':'+id] = {
                 timestamp: new Date().getTime(),
-                error: ()=>{
+                timeout: ()=>{
                     delete ws.socketsQueue[id];
                     cb(new Error('Timeout'));
                 },

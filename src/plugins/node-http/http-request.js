@@ -54,7 +54,7 @@ module.exports = class HTTPRequest {
         this._kademliaRules._pending['http'+id] = {
             timestamp: new Date().getTime(),
             response: (out)=> callback(null, out ),
-            error: ()=> callback(new Error('Timeout'))
+            timeout: () => callback(new Error('Timeout'))
         };
 
         request.on('response', (response) => {
