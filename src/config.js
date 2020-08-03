@@ -25,6 +25,11 @@ module.exports = {
     MAX_UNIMPROVED_REFRESHES: 3, // MAX_UNIMPROVED_REFRESHES - Quit refreshing no improvement
 
     PLUGINS: {
+
+        NODE_WEBSOCKET:{
+            T_WEBSOCKET_DISCONNECT_INACTIVITY: 30*60,
+        },
+
         CONTACT_SPARTACUS: {
             T_CONTACT_TIMESTAMP_MAX_DRIFT: 60,
             T_CONTACT_TIMESTAMP_MIN_DRIFT: 60*60,

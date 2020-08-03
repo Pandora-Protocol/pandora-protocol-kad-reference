@@ -65,7 +65,17 @@ module.exports = function (kademliaRules){
         this.webSocketActiveConnectionsMap[address] = ws;
         this.webSocketActiveConnections.push(ws);
 
+        this._pending['ws'+ws.id] = {
+            timestamp: new Date().getTime(),
+            timeout: KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY,
+            error: ()=>{
+                ws.close();
+            },
+        }
+
         ws.onopen = () => {
+
+            this._pending['ws'+ws.id].timestamp = new Date().getTime()
 
             if (ws._queue.length) {
                 const copy = [...ws._queue];
@@ -108,6 +118,8 @@ module.exports = function (kademliaRules){
         ws.onmessage =  (data) => {
 
             if (data.type !== "message") return;
+
+            this._pending['ws'+ws.id].timestamp = new Date().getTime()
             const message = data.data;
 
             if (typeof Blob !== 'undefined' && message instanceof Blob){
