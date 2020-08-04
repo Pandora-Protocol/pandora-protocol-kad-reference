@@ -40,7 +40,7 @@ module.exports = function (kademliaRules) {
         const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
         return {
             id,
-            buffer: bencode.encode( BufferHelper.serializeData([ id, kademliaRules._kademliaNode.contact, command, data ]) ),
+            out: [ id, kademliaRules._kademliaNode.contact, command, data ],
         }
     }
 

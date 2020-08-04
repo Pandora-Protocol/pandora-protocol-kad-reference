@@ -59,30 +59,51 @@ module.exports = class KademliaRules {
         clearAsyncInterval(this._asyncIntervalPending);
     }
 
+    _sendProcess(destContact, command, data, cb){
+        cb(null, bencode.encode(BufferHelper.serializeData(data) ) );
+    }
+
     send(destContact, command, data, cb){
 
         if ( destContact.identity.equals(this._kademliaNode.contact.identity) )
             return cb(new Error("Can't contact myself"));
 
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[destContact.address.protocol];
-        let { id, buffer } = sendSerialize(destContact, command, data);
+        let { id, out } = sendSerialize(destContact, command, data);
 
-        sendSerialized( id, destContact, command, buffer, (err, buffer)=>{
+        this._sendProcess(destContact, command, out, (err, buffer)=>{
 
             if (err) return cb(err);
 
-            this.sendReceivedSerialized(destContact, command, buffer, cb);
+            sendSerialized( id, destContact, command, buffer, (err, buffer)=>{
 
-        });
+                if (err) return cb(err);
 
+                this.sendReceivedSerialized(destContact, command, buffer, cb);
+
+            });
+
+        })
+
+    }
+
+    _receivedProcess(destContact, command, buffer, cb){
+        cb(null, buffer );
     }
 
     sendReceivedSerialized(destContact, command, buffer, cb){
 
-        const decoded = this.decodeSendAnswer(destContact, command, buffer);
-        if (!decoded) return cb(new Error('Error decoding data'));
+        this._receivedProcess(destContact, command, buffer, (err, buffer)=>{
 
-        cb(null, decoded);
+            if (err) return cb(err);
+
+            const decoded = this.decodeSendAnswer(destContact, command, buffer);
+            if (!decoded) return cb(new Error('Error decoding data'));
+
+            cb(null, decoded);
+
+        })
+
     }
 
     receiveSerialized( id, srcContact, buffer, cb){
@@ -352,16 +373,19 @@ module.exports = class KademliaRules {
         next(null)
     }
 
-    version(){
-        return KAD_OPTIONS.VERSION.VERSION;
+    version(srcContact, data, cb){
+        if (srcContact) this._welcomeIfNewNode(srcContact);
+        cb(null, KAD_OPTIONS.VERSION.VERSION);
     }
 
-    app(){
-        return KAD_OPTIONS.VERSION.APP;
+    app(srcContact, data, cb){
+        if (srcContact) this._welcomeIfNewNode(srcContact);
+        cb(null, KAD_OPTIONS.VERSION.APP);
     }
 
-    identity(){
-        return this._kademliaNode.contact.identity;
+    identity(srcContact, data, cb){
+        if (srcContact) this._welcomeIfNewNode(srcContact);
+        cb(null, this._kademliaNode.contact.identity);
     }
 
 }

@@ -1,6 +1,5 @@
 const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
 const IsomorphicWebSocket = require('isomorphic-ws')
-const Contact = require('../../contact/contact')
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
 const blobToBuffer = require('blob-to-buffer')
@@ -23,39 +22,47 @@ module.exports = function (kademliaRules){
     kademliaRules.sendWebSocketWaitAnswer = sendWebSocketWaitAnswer;
     kademliaRules.initializeWebSocket = initializeWebSocket;
 
-    function createWebSocket(address, srcContact ) {
 
-        const data = bencode.encode(this._kademliaNode.contact.toArray()).toString('hex');
+    function createWebSocket( address, dstContact, cb ) {
 
-        const ws = new IsomorphicWebSocket(address, data);
-        ws._kadInitialized = true;
-        ws.contact = srcContact;
+        const data = this._kademliaNode.contact.toArray();
+        kademliaRules._sendProcess(dstContact, '', data , (err, data) =>{
 
-        return ws;
+            if (err) return cb(err);
+
+            const ws = new IsomorphicWebSocket(address, data.toString('hex') );
+            ws._kadInitialized = true;
+            ws.contact = dstContact;
+
+            cb(null, ws);
+        } );
 
     }
 
-    function initializeWebSocket( srcContact, ws) {
+    function initializeWebSocket( contact, ws, cb ) {
 
-        const protocol = ( srcContact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) ? 'wss' : 'ws';
-        const address = protocol + '://' + srcContact.address.hostname +':'+ srcContact.address.port + srcContact.address.path;
+        const protocol = ( contact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) ? 'wss' : 'ws';
+        const address = protocol + '://' + contact.address.hostname +':'+ contact.address.port + contact.address.path;
 
-        //already connected to this node
+        //connected twice
         if (ws && this.webSocketActiveConnectionsMap[address]){
 
             if (this.webSocketActiveConnectionsMap[address] !== ws)
                 ws.close();
 
-            return undefined;
+            return cb(new Error('Already connected'));
         }
 
+        //connected once already already
         if (!ws && this.webSocketActiveConnectionsMap[address]){
-            ws = this.webSocketActiveConnectionsMap[address];
-            return ws;
+            return cb(null, this.webSocketActiveConnectionsMap[address] );
         }
 
         if (!ws)
-            ws = this.createWebSocket(address, srcContact);
+            return this.createWebSocket(address, contact, (err, ws) => {
+                if (err) return cb(err);
+                this.initializeWebSocket(contact, ws, cb);
+            });
 
         ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
         ws.address = address;
@@ -135,7 +142,7 @@ module.exports = function (kademliaRules){
 
         };
 
-        return ws;
+        cb(null, ws);
     }
 
     function processWebSocketMessage(ws, message){
@@ -211,7 +218,7 @@ module.exports = function (kademliaRules){
         const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
         return {
             id,
-            buffer: bencode.encode( BufferHelper.serializeData([ command, data ] ) ),
+            out: [ command, data ],
         }
     }
 
@@ -219,18 +226,14 @@ module.exports = function (kademliaRules){
 
         const buffer = bencode.encode( [0, id, data] );
 
-        let ws;
+        this.initializeWebSocket(destContact, undefined, (err, ws) =>{
 
-        try{
-            ws = this.initializeWebSocket(destContact, undefined );
-        }catch(err){
-            return cb(new Error(err),);
-        }
+            if (err) return cb(err);
+            if (!ws) return cb( new Error("Couldn't create web socket"), null);
 
-        if (!ws)
-            return cb( new Error("Couldn't create web socket"), null);
+            this.sendWebSocketWaitAnswer(ws, id, buffer, cb);
 
-        this.sendWebSocketWaitAnswer(ws, id, buffer, cb);
+        } );
 
     }
 

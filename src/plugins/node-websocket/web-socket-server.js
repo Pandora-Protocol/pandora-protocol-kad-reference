@@ -14,16 +14,27 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
     newClientConnection(ws){
 
-        try{
-            const decoded = bencode.decode( Buffer.from( ws.protocol, "hex") );
-            const contact = Contact.fromArray(this._kademliaNode, decoded);
-            ws._kadInitialized = true;
-            ws.contact = contact;
-        }catch(err) {
-            return ws.close();
-        }
+        this._kademliaNode.rules._receivedProcess( null,'', Buffer.from( ws.protocol, "hex"), (err, out) =>{
 
-        this._kademliaNode.rules.initializeWebSocket(  ws.contact, ws)
+            if (err)
+                return ws.close();
+
+            try{
+                const decoded = bencode.decode( out );
+                const contact = Contact.fromArray(this._kademliaNode, decoded);
+                ws._kadInitialized = true;
+                ws.contact = contact;
+
+                this._kademliaNode.rules.initializeWebSocket(  ws.contact, ws, (err, ws)=>{
+
+                })
+
+            }catch(err){
+                return ws.close();
+            }
+
+
+        } );
 
     }
 

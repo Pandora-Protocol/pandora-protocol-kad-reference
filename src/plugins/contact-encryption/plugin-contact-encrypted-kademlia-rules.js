@@ -5,11 +5,8 @@ const BufferHelper = require('../../helpers/buffer-utils')
 
 module.exports = function (kademliaRules) {
 
-    const _send = kademliaRules.send.bind(kademliaRules);
-    kademliaRules.send = send;
-
-    const _sendReceivedSerialized = kademliaRules.sendReceivedSerialized.bind(kademliaRules);
-    kademliaRules.sendReceivedSerialized = sendReceivedSerialized;
+    kademliaRules._sendProcess = _sendProcess;
+    kademliaRules._receivedProcess = _receivedProcess;
 
     const _receiveSerialized = kademliaRules.receiveSerialized.bind(kademliaRules);
     kademliaRules.receiveSerialized = receiveSerialized;
@@ -18,46 +15,19 @@ module.exports = function (kademliaRules) {
         kademliaRules._httpServer.onReceive = receiveSerialized.bind(kademliaRules);
     }
 
-    function send(destContact, command, data, cb){
-
-        if ( destContact.identity.equals(this._kademliaNode.contact.identity) )
-            return cb(new Error("Can't contact myself"));
-
-        const {sendSerialize, sendSerialized, sendSerializeFinal} = this._protocolSpecifics[destContact.address.protocol];
-        const { id, buffer} = sendSerialize(destContact, command, data);
-
-        ECCUtils.encrypt(destContact.publicKey, buffer, (err, out)=>{
-
+    function _sendProcess(destContact, command, data, cb){
+        ECCUtils.encrypt(destContact.publicKey,  bencode.encode(BufferHelper.serializeData(data) ), (err, out)=>{
             if (err) return cb(err);
-
-            sendSerialized(id, destContact, command, out, (err, out)=>{
-
-                if (err) return cb(err);
-                this.sendReceivedSerialized(destContact, command, out, cb);
-
-            });
-
-        })
-
+            cb(null, bencode.encode(out));
+        });
     }
 
-
-    function sendReceivedSerialized(destContact, command, buffer, cb){
-
-        let decoded;
+    function _receivedProcess(destContact, command, buffer, cb){
+        let decoded = buffer;
         if (Buffer.isBuffer(buffer)) decoded = bencode.decode(buffer);
-        else decoded = buffer;
 
         if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
-
-        ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, payload)=>{
-
-            if (err) return cb(err);
-
-            _sendReceivedSerialized(destContact, command, payload , cb );
-
-        });
-
+        ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, cb);
     }
 
     function receiveSerialized( id, srcContact, buffer, cb){
