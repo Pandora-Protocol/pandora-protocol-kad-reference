@@ -143,7 +143,8 @@ module.exports = class Crawler {
                     finished = true;
                     cb(null, {  result: result[1], contact });
                     next( new Error('finished') );
-                }
+                }else
+                    next(null, null);
 
             })
         }

@@ -16,7 +16,8 @@ const dataCount = 100;
 const contacts = [];
 for (let i=0; i < nodesCount; i++)
     contacts.push( [
-        0,
+        KAD_OPTIONS.VERSION.APP,
+        KAD_OPTIONS.VERSION.VERSION,
         KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH ) ,
         protocol,
         '127.0.0.1',
@@ -24,9 +25,9 @@ for (let i=0; i < nodesCount; i++)
         '',
     ] )
 
-const files = [];
+const values = [];
 for (let i=0; i < dataCount; i++)
-    files.push({
+    values.push({
         key: KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH ),
         value: KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH ).toString('hex')
     })
@@ -65,7 +66,7 @@ while (i < contacts.length) {
 
 }
 
-const outBootstrap = [], outFiles = [];
+const outBootstrap = [], outStreams = [];
 nodes[0].bootstrap( nodes[1].contact, true, ()=>{
 
     nodes[0].bootstrap( nodes[2].contact, true, () => {
@@ -80,15 +81,15 @@ nodes[0].bootstrap( nodes[1].contact, true, ()=>{
 
             console.log("bootstrap finished ", outBootstrap.length );
 
-            async.each(files, (file, next)=>{
+            async.each( values, (value, next)=>{
                 const nodeIndex = Math.floor( Math.random() * contacts.length );
-                nodes[nodeIndex].crawler.iterativeStoreValue( Buffer.alloc(0), file.key, file.value, (err, out) => {
-                    outFiles.push(out);
+                nodes[nodeIndex].crawler.iterativeStoreValue( Buffer.alloc(0), value.key, value.value, (err, out) => {
+                    outStreams.push(out);
                     next(null, out)
                 } )
             }, (err, out)=>{
 
-                console.log("files stored", outFiles )
+                console.log("streams stored", outStreams )
 
             })
 

@@ -38,7 +38,8 @@ for (let i=0; i < COUNT; i++) {
     ]);
 
     contacts[i] = [
-        0,
+        KAD_OPTIONS.VERSION.APP,
+        KAD_OPTIONS.VERSION.VERSION,
         Buffer.alloc(KAD_OPTIONS.NODE_ID_LENGTH), //empty identity
         protocol,
         '127.0.0.1',

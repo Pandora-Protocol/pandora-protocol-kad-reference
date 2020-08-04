@@ -2,7 +2,7 @@ const Validation = require('./../helpers/validation')
 
 module.exports = class ContactAddress {
 
-    constructor( kademliaNode, version, identity, protocol, hostname, port, path ) {
+    constructor( kademliaNode, app, version, identity, protocol, hostname, port, path ) {
 
         Validation.validateProtocol(protocol);
         Validation.validateHostname(hostname);

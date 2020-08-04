@@ -284,8 +284,9 @@ module.exports = class KademliaRules {
         next()
     }
 
-    decodeSendAnswer(destContact, command, data){
+    decodeSendAnswer(destContact, command, data, decodedAlready = false){
 
+        if (!decodedAlready && Buffer.isBuffer(data)) data = bencode.decode(data);
 
         if (command === 'FIND_VALUE'  || command === 'FIND_NODE'  ){
 

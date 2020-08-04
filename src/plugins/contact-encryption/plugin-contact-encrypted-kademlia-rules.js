@@ -14,9 +14,6 @@ module.exports = function (kademliaRules) {
     const _receiveSerialized = kademliaRules.receiveSerialized.bind(kademliaRules);
     kademliaRules.receiveSerialized = receiveSerialized;
 
-    const _decodeSendAnswer = kademliaRules.decodeSendAnswer.bind(kademliaRules);
-    kademliaRules.decodeSendAnswer = decodeSendAnswer;
-
     if (typeof window === "undefined" && kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP')){
         kademliaRules._httpServer.onReceive = receiveSerialized.bind(kademliaRules);
     }
@@ -104,12 +101,7 @@ module.exports = function (kademliaRules) {
 
     }
 
-    function decodeSendAnswer(destContact, command, data ) {
 
-        if (Buffer.isBuffer(data)) data = bencode.decode(data);
-        return _decodeSendAnswer(destContact, command, data);
-
-    }
 
 
 }

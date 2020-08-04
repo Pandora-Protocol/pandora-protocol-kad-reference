@@ -5,16 +5,24 @@ const StringUtils = require('./../helpers/string-utils')
 
 module.exports = class Contact{
 
-    constructor(  kademliaNode, version, identity ){
+    constructor(  kademliaNode, app, version, identity ){
 
         this._kademliaNode = kademliaNode;
 
+        if (app !== KAD_OPTIONS.VERSION.APP)
+            throw "Contact App is not matching"
+
+        if (version < KAD_OPTIONS.VERSION.VERSION_COMPATIBILITY )
+            throw "Contact Version is not compatible"
+
+        this.app = app;
         this.version = version;
+
         this.identity = identity;
 
         this.address = new ContactAddress( ...arguments );
 
-        this._additionalParameters = 7;
+        this._additionalParameters = 8;
 
         for (let i=0; i < kademliaNode.plugins.contactPlugins.length; i++)
             kademliaNode.plugins.contactPlugins[i].createInitialize.call(this, ...arguments);
@@ -30,21 +38,25 @@ module.exports = class Contact{
 
     //used for bencode
     toArray(){
-        return [ this.version, this.identity, ...this.address.toArray() ];
+        return [ this.app, this.version, this.identity, ...this.address.toArray() ];
     }
 
     //used for bencode
     static fromArray(kademliaNode, arr){
 
         arr.unshift(kademliaNode);
-        arr[4] = arr[4].toString('ascii');
-        arr[6] = arr[6].toString('ascii');
+        arr[1] = arr[1].toString('ascii'); //app
+        arr[2] = arr[2].toString('ascii'); //version
+
+        arr[5] = arr[5].toString('ascii');
+        arr[7] = arr[7].toString('ascii');
 
         return new Contact( ...arr );
     }
 
     toJSON(){
         return {
+            app: this.app,
             version: this.version,
             identity: this.identityHex,
             address:this.address.toJSON(),
