@@ -27,7 +27,6 @@ module.exports = function(kademliaNode) {
 
         const time = new Date().getTime() / 1000;
         if (timestamp > time + KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_MAX_DRIFT) throw "Invalid timestamp max drift."
-        if (timestamp < time - KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_MIN_DRIFT) throw "Invalid timestamp min drift."
         this.timestamp = timestamp;
 
         const signature = arguments[this._additionalParameters++];
