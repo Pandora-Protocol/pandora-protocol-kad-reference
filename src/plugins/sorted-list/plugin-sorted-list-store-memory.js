@@ -70,7 +70,7 @@ module.exports = function (store){
         const newNode = tree.insert( score, value );
         this._memorySortedListKeyNodesMap.set(table + ':' +key+':'+value, newNode );
 
-        this._putExpirationSortedList( table, key, { node: newNode, value, time: new Date().getTime() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY }, ()=>{
+        this._putExpirationSortedList( table, key, { node: newNode, value, time: new Date().getTime() + KAD_OPTIONS.T_STORE_KEY_EXPIRY }, ()=>{
             cb(null, 1);
         });
 
@@ -143,7 +143,7 @@ module.exports = function (store){
         delete this._expireOldKeysSortedListIterator;
         this._asyncIntervalExpireOldKeysSortedList = setAsyncInterval(
             next => this._expireOldKeysSortedList(next),
-            global.KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR + Utils.preventConvoy(5 * 60 * 1000)
+            KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR + Utils.preventConvoy(5 * 60 * 1000)
         );
 
     }

@@ -19,7 +19,7 @@ module.exports.validatePort = (port) => {
 
 module.exports.checkIdentity = (identity, text='Identity' ) => {
     if (!Buffer.isBuffer(identity)) return new Error(`${text} is not a buffer`);
-    if (identity.length !== global.KAD_OPTIONS.NODE_ID_LENGTH) return new Error(`${text} length is invalid`);
+    if (identity.length !== KAD_OPTIONS.NODE_ID_LENGTH) return new Error(`${text} length is invalid`);
 }
 
 module.exports.checkTable = (table ) => {
@@ -42,7 +42,7 @@ module.exports.checkStoreTable = (table) => {
 }
 
 module.exports.checkStoreKey = (key) => {
-    if (typeof key !== "string" || key.length !== global.KAD_OPTIONS.NODE_ID_LENGTH*2 ) return new Error("Key is invalid");
+    if (typeof key !== "string" || key.length !== KAD_OPTIONS.NODE_ID_LENGTH*2 ) return new Error("Key is invalid");
     if (!/^[0-9a-f]+$/g.test(key)) return new Error(`Key is hex`);
 }
 

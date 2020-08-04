@@ -88,14 +88,18 @@ module.exports = function (kademliaRules){
         ws.onclose = () => {
 
             if (this.webSocketActiveConnectionsMap[ws.address] === ws) {
+
                 for (let i = 0; i < this.webSocketActiveConnections.length; i++)
                     if (this.webSocketActiveConnections[i] === ws) {
                         this.webSocketActiveConnections.splice(i, 1);
                         break;
                     }
+                delete this.webSocketActiveConnectionsMap[ws.address];
 
-                for (const id in ws.socketsQueue)
+                for (const id in ws.socketsQueue) {
                     ws.socketsQueue[id].error(new Error('Disconnected or Error'));
+                    delete this._pending['ws'+ws.id+':'+id]
+                }
 
                 ws.socketsQueue = {};
 
@@ -106,7 +110,6 @@ module.exports = function (kademliaRules){
                         data.cb(new Error('Disconnected or Error'))
                 }
 
-                delete this.webSocketActiveConnectionsMap[ws.address];
             }
 
         }

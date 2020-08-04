@@ -88,7 +88,7 @@ module.exports = class Crawler {
 
         this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = new Date().getTime();
 
-        const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, global.KAD_OPTIONS.ALPHA_CONCURRENCY ) );
+        const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, KAD_OPTIONS.ALPHA_CONCURRENCY ) );
         let closest = shortlist.closest;
 
         let finished = false;
@@ -110,14 +110,14 @@ module.exports = class Crawler {
                 if (finished) return next(new Error('finished'))
 
                 if (!result || (Array.isArray(result) && !result.length)) {
-                    next(null, result);
+                    return next(null, result);
                 } else
                 //If the result is a contact/node list, just keep track of it
                 if ( result[0] === 0 ){
                     const added = shortlist.add( result[1] );
 
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
-                    async.eachLimit(added, global.KAD_OPTIONS.ALPHA_CONCURRENCY,
+                    async.eachLimit(added, KAD_OPTIONS.ALPHA_CONCURRENCY,
                         ( contact, next ) => this._updateContactFound(contact, () => next() ),
                         ()=> next(null,  result[1])
                     );
@@ -131,7 +131,7 @@ module.exports = class Crawler {
                     if (closestMissingValue) {
                         if (Array.isArray(result[1])){
 
-                            async.eachLimit(result[1], global.KAD_OPTIONS.ALPHA_CONCURRENCY,
+                            async.eachLimit(result[1], KAD_OPTIONS.ALPHA_CONCURRENCY,
                                 ( data, next ) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
                                 ()=>{});
 
@@ -153,7 +153,7 @@ module.exports = class Crawler {
 
             //nothing new to do
             if ( !selection.length )
-                return cb(null, shortlist.active.slice(0, global.KAD_OPTIONS.BUCKET_COUNT_K) );
+                return cb(null, shortlist.active.slice(0, KAD_OPTIONS.BUCKET_COUNT_K) );
 
             async.each( selection, dispatchFindNode.bind(this),
                 (err, results)=>{
@@ -163,23 +163,23 @@ module.exports = class Crawler {
                     // If we have reached at least K active nodes, or haven't found a
                     // closer node, even on our finishing trip, return to the caller
                     // the K closest active nodes.
-                    if (shortlist.active.length >= global.KAD_OPTIONS.BUCKET_COUNT_K || (closest === shortlist.closest && !continueLookup) )
-                        return cb(null, shortlist.active.slice(0, global.KAD_OPTIONS.BUCKET_COUNT_K));
+                    if (shortlist.active.length >= KAD_OPTIONS.BUCKET_COUNT_K || (closest === shortlist.closest && !continueLookup) )
+                        return cb(null, shortlist.active.slice(0, KAD_OPTIONS.BUCKET_COUNT_K));
 
                     // NB: we haven't discovered a closer node, call k uncalled nodes and
                     // NB: finish up
                     if (closest === shortlist.closest)
-                        return iterativeLookup.call(this, shortlist.uncontacted.slice(0, global.KAD_OPTIONS.BUCKET_COUNT_K), false );
+                        return iterativeLookup.call(this, shortlist.uncontacted.slice(0, KAD_OPTIONS.BUCKET_COUNT_K), false );
 
                     closest = shortlist.closest;
 
                     //continue the lookup with ALPHA close, uncontacted nodes
-                    iterativeLookup.call(this, shortlist.uncontacted.slice(0, global.KAD_OPTIONS.ALPHA_CONCURRENCY), true );
+                    iterativeLookup.call(this, shortlist.uncontacted.slice(0, KAD_OPTIONS.ALPHA_CONCURRENCY), true );
                 })
 
         }
 
-        iterativeLookup.call(this, shortlist.uncontacted.slice(0, global.KAD_OPTIONS.ALPHA_CONCURRENCY), true);
+        iterativeLookup.call(this, shortlist.uncontacted.slice(0, KAD_OPTIONS.ALPHA_CONCURRENCY), true);
 
     }
 
@@ -189,7 +189,7 @@ module.exports = class Crawler {
 
         let stored = 0, self = this;
         function dispatchSendStore(contacts, done){
-            async.eachLimit( contacts, global.KAD_OPTIONS.ALPHA_CONCURRENCY,
+            async.eachLimit( contacts, KAD_OPTIONS.ALPHA_CONCURRENCY,
                 ( node, next ) => self._kademliaNode.rules[method]( node, data, (err, out)=>{
                     stored = err ? stored : stored + 1;
                     next(null, out);

@@ -34,7 +34,7 @@ module.exports = class StoreMemory extends Store{
         if (err1 || err2 || err3) return cb(err1||err2||err3);
 
         this._memory.set( table + ':' + key, value );
-        this._putExpiration(table, key, new Date().getTime() + global.KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
+        this._putExpiration(table, key, new Date().getTime() + KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
             cb( null, 1 );
         });
 

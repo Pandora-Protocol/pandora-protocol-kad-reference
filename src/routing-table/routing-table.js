@@ -9,7 +9,7 @@ module.exports = class RoutingTable {
 
         this._kademliaNode = kademliaNode;
 
-        this.buckets = new Array(global.KAD_OPTIONS.BUCKETS_COUNT_B).fill( null );
+        this.buckets = new Array(KAD_OPTIONS.BUCKETS_COUNT_B).fill( null );
         this.buckets = this.buckets.map( (it, index) =>  new KBucket(index) );
         this.map = {};
 
@@ -39,7 +39,7 @@ module.exports = class RoutingTable {
 
         const bucketIndex = this.getBucketIndex( contact.identity );
 
-        if (this.buckets[bucketIndex].array.length === global.KAD_OPTIONS.BUCKET_COUNT_K)
+        if (this.buckets[bucketIndex].array.length === KAD_OPTIONS.BUCKET_COUNT_K)
             return [false, bucketIndex, -1, false]; //I have already too many in the bucket
 
         const newContact = {
@@ -84,7 +84,7 @@ module.exports = class RoutingTable {
     getBucketIndex(foreignNodeKey){
 
         const distance = BufferUtils.xorDistance(this._kademliaNode.contact.identity, foreignNodeKey );
-        let bucketIndex = global.KAD_OPTIONS.BUCKETS_COUNT_B;
+        let bucketIndex = KAD_OPTIONS.BUCKETS_COUNT_B;
 
         for (const byteValue of distance) {
             if (byteValue === 0) {
@@ -105,7 +105,7 @@ module.exports = class RoutingTable {
 
 
 
-    getClosestToKey(key, count = global.KAD_OPTIONS.BUCKET_COUNT_K, bannedMap){
+    getClosestToKey(key, count = KAD_OPTIONS.BUCKET_COUNT_K, bannedMap){
 
         const bucketIndex = this.getBucketIndex(key);
         const contactResults = [];
@@ -130,7 +130,7 @@ module.exports = class RoutingTable {
         while (contactResults.length < count && descIndex >= 0)
             _addNearestFromBucket(descIndex--);
 
-        while (contactResults.length < count && ascIndex < global.KAD_OPTIONS.BUCKETS_COUNT_B)
+        while (contactResults.length < count && ascIndex < KAD_OPTIONS.BUCKETS_COUNT_B)
             _addNearestFromBucket(ascIndex++);
 
         return contactResults;

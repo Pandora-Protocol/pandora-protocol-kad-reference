@@ -3,7 +3,7 @@ const { randomBytes } = require('crypto');
 const bencode = require('bencode');
 
 function getPowerOfTwoBufferForIndex(referenceKey, exp) {
-    if (exp < 0 || exp >= global.KAD_OPTIONS.BUCKETS_COUNT_B) throw 'Index out of range';
+    if (exp < 0 || exp >= KAD_OPTIONS.BUCKETS_COUNT_B) throw 'Index out of range';
 
     const buffer = Buffer.isBuffer(referenceKey)
         ? Buffer.from(referenceKey)
@@ -11,7 +11,7 @@ function getPowerOfTwoBufferForIndex(referenceKey, exp) {
     const byteValue = parseInt(exp / 8);
 
     // NB: We set the byte containing the bit to the right left shifted amount
-    buffer[ global.KAD_OPTIONS.BUCKET_COUNT_K - byteValue - 1] = 1 << (exp % 8);
+    buffer[ KAD_OPTIONS.BUCKET_COUNT_K - byteValue - 1] = 1 << (exp % 8);
 
     return buffer;
 }
@@ -57,7 +57,7 @@ module.exports = {
         let base = getPowerOfTwoBufferForIndex(referenceKey, index);
         let byte = parseInt(index / 8); // NB: Randomize bytes below the power of two
 
-        for (let i = global.KAD_OPTIONS.BUCKET_COUNT_K - 1; i > (global.KAD_OPTIONS.BUCKET_COUNT_K - byte - 1); i--)
+        for (let i = KAD_OPTIONS.BUCKET_COUNT_K - 1; i > (KAD_OPTIONS.BUCKET_COUNT_K - byte - 1); i--)
             base[i] = parseInt(Math.random() * 256);
 
 
@@ -67,7 +67,7 @@ module.exports = {
             let one = Math.random() >= 0.5;
             let shiftAmount = j - byte * 8;
 
-            base[ global.KAD_OPTIONS.BUCKET_COUNT_K - byte - 1] |= one ? (1 << shiftAmount) : 0;
+            base[ KAD_OPTIONS.BUCKET_COUNT_K - byte - 1] |= one ? (1 << shiftAmount) : 0;
         }
 
         return base;

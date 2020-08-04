@@ -16,7 +16,7 @@ module.exports = class KBucket {
         return this.array[0];
     }
 
-    getBucketClosestToKey( key, count =  global.KAD_OPTIONS.BUCKET_COUNT_K ){
+    getBucketClosestToKey( key, count =  KAD_OPTIONS.BUCKET_COUNT_K ){
 
         const contacts = [], distances = {};
 

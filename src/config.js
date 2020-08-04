@@ -1,5 +1,11 @@
 module.exports = {
 
+    VERSION:{
+        APP: "research",
+        VERSION: "0.1",
+        VERSION_COMPATIBILITY: "0.1",
+    },
+
     ALPHA_CONCURRENCY: 4, //ALPHA - Degree of parallelism
 
     NODE_ID_LENGTH: 32, // Number of bytes for nodeId, 20 bytes for 160 bits

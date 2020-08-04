@@ -39,7 +39,7 @@ for (let i=0; i < COUNT; i++) {
 
     contacts[i] = [
         0,
-        Buffer.alloc(global.KAD_OPTIONS.NODE_ID_LENGTH), //empty identity
+        Buffer.alloc(KAD_OPTIONS.NODE_ID_LENGTH), //empty identity
         protocol,
         '127.0.0.1',
         8000 + i,
@@ -96,12 +96,12 @@ async.eachLimit( connections, 1, ( connection, next) =>{
 
 }, (err, out)=> {
 
-    let query = KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );
+    let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query, (err, out)=>{
         console.log("iterativeFindValue", out);
     })
 
-    let query2 = KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH );
+    let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     nodes[3].crawler.iterativeStoreValue( Buffer.alloc(0), query2, 'query2', (err, out)=>{
         console.log("iterativeStoreValue", out);
 

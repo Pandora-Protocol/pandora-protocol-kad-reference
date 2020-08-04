@@ -17,7 +17,7 @@ const contacts = [];
 for (let i=0; i < nodesCount; i++)
     contacts.push( [
         0,
-        KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ) ,
+        KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH ) ,
         protocol,
         '127.0.0.1',
         10000 + i,
@@ -27,8 +27,8 @@ for (let i=0; i < nodesCount; i++)
 const files = [];
 for (let i=0; i < dataCount; i++)
     files.push({
-        key: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ),
-        value: KAD.helpers.BufferUtils.genBuffer(global.KAD_OPTIONS.NODE_ID_LENGTH ).toString('hex')
+        key: KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH ),
+        value: KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH ).toString('hex')
     })
 
 function newStore(index){

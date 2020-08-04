@@ -24,12 +24,12 @@ module.exports = class RoutingTableRefresher {
 
         this._intervalRefresh = setAsyncInterval(
             next => this.refresh(0, next ),
-            global.KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
+            KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
         )
 
         this._intervalReplicate = setAsyncInterval(
             next => this._replicate(undefined, next),
-            global.KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
+            KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
         )
 
         this._started = true;
@@ -68,13 +68,13 @@ module.exports = class RoutingTableRefresher {
 
             if ( bucket.bucketIndex < startIndex || finished) return next();
 
-            if (consecutiveUnimprovedLookups >= global.KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES){
+            if (consecutiveUnimprovedLookups >= KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES){
                 finished = true;
                 return next();
             }
 
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
-            const needsRefresh = lastBucketLookup + global.KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
+            const needsRefresh = lastBucketLookup + KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
 
             if (bucket.array.length > 0 && needsRefresh){
 
@@ -122,8 +122,8 @@ module.exports = class RoutingTableRefresher {
             const value = itValue.value[1];
 
             const isPublisher = this._publishedByMe[key];
-            const republishDue = (value.timestamp + global.KAD_OPTIONS.T_BUCKETS_REPUBLISH) <= now;
-            const replicateDue = (value.timestamp + global.KAD_OPTIONS.T_BUCKETS_REPLICATE) <= now;
+            const republishDue = (value.timestamp + KAD_OPTIONS.T_BUCKETS_REPUBLISH) <= now;
+            const replicateDue = (value.timestamp + KAD_OPTIONS.T_BUCKETS_REPLICATE) <= now;
             const shouldRepublish = isPublisher && republishDue;
             const shouldReplicate = !isPublisher && replicateDue;
 

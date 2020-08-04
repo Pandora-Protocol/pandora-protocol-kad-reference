@@ -15,6 +15,10 @@ module.exports = class KademliaRules {
         this._replicatedStoreToNewNodesAlready = {};
 
         this._commands = {
+            'V': this.version,
+            'APP': this.app,
+            'IDENTITY': this.identity,
+
             'PING': this.ping,
             'STORE': this.store,
             'FIND_NODE': this.findNode,
@@ -40,12 +44,12 @@ module.exports = class KademliaRules {
          */
         this._asyncIntervalReplicatedStoreToNewNodeExpire = setAsyncInterval(
             next => this._replicatedStoreToNewNodeExpire(next),
-            global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY +  preventConvoy(global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
+            KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY +  preventConvoy(KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
         );
 
         this._asyncIntervalPending = setAsyncInterval(
             next => this._timeoutPending(next),
-            global.KAD_OPTIONS.T_RESPONSE_TIMEOUT
+            KAD_OPTIONS.T_RESPONSE_TIMEOUT
         );
 
     }
@@ -253,7 +257,7 @@ module.exports = class KademliaRules {
                     if (err)
                         return cb(err); //error
 
-                    NextTick( this._replicateStoreToNewNode.bind(this, contact, iterator, cb), global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_SLEEP )
+                    NextTick( this._replicateStoreToNewNode.bind(this, contact, iterator, cb), KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_SLEEP )
 
                 });
             else
@@ -272,7 +276,7 @@ module.exports = class KademliaRules {
      */
     _replicatedStoreToNewNodeExpire(next){
         
-        const expiration = new Date() - global.KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY;
+        const expiration = new Date() - KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY;
         for (const identityHex in this._replicatedStoreToNewNodesAlready)
             if (this._replicatedStoreToNewNodesAlready[identityHex] < expiration )
                 delete this._replicatedStoreToNewNodesAlready[identityHex];
@@ -333,7 +337,7 @@ module.exports = class KademliaRules {
         const now = new Date().getTime();
 
         for (const key in this._pending)
-            if (now >= this._pending[key].timestamp + (this._pending[key].time || global.KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
+            if (now >= this._pending[key].timestamp + (this._pending[key].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
 
                 try{
                     this._pending[key].timeout.call(this, key, this._pending[key]);
@@ -345,6 +349,18 @@ module.exports = class KademliaRules {
             }
 
         next(null)
+    }
+
+    version(){
+        return KAD_OPTIONS.VERSION.VERSION;
+    }
+
+    app(){
+        return KAD_OPTIONS.VERSION.APP;
+    }
+
+    identity(){
+        return this._kademliaNode.contact.identity;
     }
 
 }

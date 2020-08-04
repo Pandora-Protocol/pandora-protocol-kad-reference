@@ -22,8 +22,8 @@ module.exports = function(kademliaNode) {
         const nonceMessage = this.getNonceMessage();
 
         const sybilPublicKeyIndex = this.nonce[0];
-        if ( sybilPublicKeyIndex >= global.KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
-        const sybilPublicKey = global.KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilPublicKeyIndex ];
+        if ( sybilPublicKeyIndex >= KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
+        const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilPublicKeyIndex ];
 
         const sybilSignature = Buffer.alloc(64);
         this.nonce.copy(sybilSignature, 0, 1)
