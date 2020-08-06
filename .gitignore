@@ -1,3 +1,8 @@
+examples/contact-encrypted-example/_temp/
+examples/large-example/_temp/
+examples/simple-example/_temp/
+examples/sorted-example/_temp/
+
 # Logs
 logs
 *.log

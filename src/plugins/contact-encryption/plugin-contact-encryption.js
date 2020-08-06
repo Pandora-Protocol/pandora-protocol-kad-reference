@@ -1,10 +1,12 @@
 const PluginContactEncryptedKademliaContact = require('./plugin-contact-encrypted-kademlia-contact')
-const PluginContactEncryptedMockKademliaRules = require('./plugin-contact-encrypted-kademlia-rules')
+const PluginContactEncryptedKademliaRules = require('./plugin-contact-encrypted-kademlia-rules')
+const PluginContactEncryptedContactStorage = require('./plugin-contact-encrypted-kademlia-contact-storage')
 
 module.exports = function(kademliaNode){
 
     PluginContactEncryptedKademliaContact(kademliaNode);
-    PluginContactEncryptedMockKademliaRules(kademliaNode.rules);
+    PluginContactEncryptedKademliaRules(kademliaNode.rules);
+    PluginContactEncryptedContactStorage(kademliaNode.contactStorage);
 
     return {
         name: "PluginContactEncrypted",

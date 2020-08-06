@@ -69,6 +69,10 @@ The reason it is pure JS is to make it low-latency. Promises and Async slow down
 6. **Contact Spartacus**. Well-known defense against Sybill attacks by introducing cryptographic identies using ECDSA. With Spartacus, nodes are required to prove that they own their identity by signing messages with their private EC key and including their public key in the message. The identity is thus derived from the EC public key.   
               
 
+TO DOs:
+
+1. UnPn
+2. 
 
 ## DISCLAIMER: 
 

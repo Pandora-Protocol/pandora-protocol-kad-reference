@@ -2,27 +2,34 @@ const RoutingTable = require('./routing-table/routing-table')
 const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
 const EventEmitter = require('events');
-const Contact = require('./contact/contact')
 const KademliaNodePlugins = require('./plugins/kademlia-node-plugins')
+
+
+const MemoryStore = require('./store/store-memory')
+const Storage = require('./storage/storage')
+const ContactStorage = require('./contact/contact-storage')
 
 module.exports = class KademliaNode extends EventEmitter {
 
-    constructor( plugins = [], contactArgs = {}, store, options = {}) {
+    constructor( index = '', plugins = [], options = {}) {
 
         super();
 
+        this._index = index;
+
         this.plugins = new KademliaNodePlugins(this);
 
-        this._store = store;
+        this._storage = new (options.Storage || Storage)(index.toString());
+        this._store = new (options.Store || MemoryStore)(index);
+
+        this.contactStorage = new ContactStorage(this);
+
         this.routingTable = new RoutingTable(this);
-        this.rules = new (options.KademliaRules || KademliaRules) (this, store);
+        this.rules = new (options.KademliaRules || KademliaRules) ( this, this._store );
         this.crawler = new Crawler(this);
 
         this.plugins.install(plugins);
 
-        contactArgs.unshift( this );
-        this._contact = new Contact(...contactArgs);
-        this._contact.mine = true;
 
         this._started = false;
     }

@@ -3,7 +3,7 @@
   "scripts": {
     "build": "webpack --config bin/webpack/webpack-config-node.js --mode production",
     "build-browser": "node --max_old_space_size=4096 ./node_modules/webpack/bin/webpack.js --config bin/webpack/webpack-config-browser.js --es6 true --mode production",
-    "start": "examples/simple-example.js"
+    "start": "examples/simple-example/simple-example.js"
   },
   "main": "src/index",
   "dependencies": {
