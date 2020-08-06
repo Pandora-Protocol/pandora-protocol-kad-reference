@@ -7,16 +7,16 @@ module.exports = function (contactStorage){
     const _createContactArgs = contactStorage.createContactArgs;
     contactStorage.createContactArgs = createContactArgs;
 
-    function createContactArgs ( keyPair, nonce, protocol, address = '127.0.0.1', port = 8000){
+    function createContactArgs ( privateKey, publicKey, nonce, protocol, address = '127.0.0.1', port = 8000){
 
-        const identity = CryptoUtils.sha256( Buffer.concat( [ nonce, keyPair.publicKey ] ) );
+        const identity = CryptoUtils.sha256( Buffer.concat( [ nonce, publicKey ] ) );
 
         const out = [
-            ..._createContactArgs( keyPair, nonce, identity, protocol, address, port),
+            ..._createContactArgs( publicKey, nonce, identity, protocol, address, port),
             Math.floor(new Date().getTime() / 1000),
         ]
 
-        const signature = ECCUtils.sign( keyPair.privateKey, CryptoUtils.sha256( bencode.encode( out ) ) );
+        const signature = ECCUtils.sign( privateKey, CryptoUtils.sha256( bencode.encode( out ) ) );
 
         return [
             ...out,

@@ -58,7 +58,7 @@ async.eachLimit( array, 1, (index, next )=>{
             sybilSignature,
         ]);
 
-        const contact = nodes[index].contactStorage.createContactArgs( keyPair, nonce, protocol, undefined, 8000+index )
+        const contact = nodes[index].contactStorage.createContactArgs( keyPair.privateKey, keyPair.publicKey, nonce, protocol, undefined, 8000+index )
 
         nodes[index].contactStorage.setContact( keyPair.privateKey, contact, true, true, next)
 

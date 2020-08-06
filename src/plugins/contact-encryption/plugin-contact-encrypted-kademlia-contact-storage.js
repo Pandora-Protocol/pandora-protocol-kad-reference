@@ -18,11 +18,11 @@ module.exports = function (contactStorage){
         })
     }
 
-    function createContactArgs ( keyPair, nonce, identity, protocol, address = '127.0.0.1', port = 8000){
+    function createContactArgs ( publicKey, nonce, identity, protocol, address = '127.0.0.1', port = 8000){
 
         return [
             ..._createContactArgs(identity, protocol, address, port),
-            keyPair.publicKey,
+            publicKey,
             nonce,
         ];
 
