@@ -6,7 +6,17 @@ module.exports = function (contactStorage){
     const _createContactArgs = contactStorage.createContactArgs;
     contactStorage.createContactArgs = createContactArgs;
     contactStorage.setContact = setContact;
+    contactStorage.loadContact = loadContact;
     contactStorage._setContact = _setContact;
+
+    function loadContact( cb ){
+        this._kademliaNode._storage.getItem('contact', (err, out)=>{
+            if (err) return cb(err);
+
+            out = bencode.decode(Buffer.from(out, 'hex') );
+            this._setContact( out[0], out[1], false, cb );
+        })
+    }
 
     function createContactArgs ( keyPair, nonce, identity, protocol, address = '127.0.0.1', port = 8000){
 
@@ -34,12 +44,12 @@ module.exports = function (contactStorage){
     function setContact( privateKey, contactArgs, loadFromStorage = true, saveToStorage = true,  cb){
 
         if (loadFromStorage)
-            this._kademliaNode._storage.getItem('contact', (err, out)=>{
-                if (err) return this._setContact( privateKey, contactArgs, saveToStorage, cb );
+            this.loadContact( (err, out) =>{
 
-                out = bencode.decode(Buffer.from(out, 'hex') );
-                this._setContact( out[0], out[1], false, cb );
-            })
+                if (err) return this._setContact( privateKey, contactArgs, saveToStorage, cb );
+                cb(out);
+
+            } );
         else
             this._setContact( privateKey, contactArgs, saveToStorage, cb );
 

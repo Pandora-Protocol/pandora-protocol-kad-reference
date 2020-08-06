@@ -30,7 +30,12 @@ const nodes = array.map(
 
 async.eachLimit( array, 1, (index, next )=>{
 
-    nodes[index].contactStorage.setContact( nodes[index].contactStorage.createContactArgs(protocol, undefined, 8000+index), true, true, next)
+    nodes[index].contactStorage.loadContact( (err, out) => {
+
+        if (!err) return next();
+
+        nodes[index].contactStorage.setContact(nodes[index].contactStorage.createContactArgs(undefined, protocol, undefined, 8000 + index), true, true, next)
+    });
 
 }, ()=>{
 

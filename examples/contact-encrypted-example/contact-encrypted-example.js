@@ -44,23 +44,26 @@ const nodes = array.map(
         ],
     ) )
 
-const contacts = [], keyPairs = [];
-for (let i=0; i < COUNT; i++) {
-
-    keyPairs[i] = KAD.helpers.ECCUtils.createPair();
-
-    const sybilSignature = KAD.helpers.ECCUtils.sign( sybilKeys.privateKey, KAD.helpers.CryptoUtils.sha256( keyPairs[i].publicKey ) );
-    const nonce = Buffer.concat([
-        Buffer.from("00", "hex"),
-        sybilSignature,
-    ]);
-
-    contacts[i] = nodes[i].contactStorage.createContactArgs( keyPairs[i], nonce, protocol, undefined, 8000+i)
-}
-
 async.eachLimit( array, 1, (index, next )=>{
 
-    nodes[index].contactStorage.setContact( keyPairs[index].privateKey, contacts[index], true, true, next)
+    nodes[index].contactStorage.loadContact( (err, out) =>{
+
+        if (!err) return next();
+
+        const keyPair = KAD.helpers.ECCUtils.createPair();
+
+        const sybilSignature = KAD.helpers.ECCUtils.sign( sybilKeys.privateKey, KAD.helpers.CryptoUtils.sha256( keyPair.publicKey ) );
+        const nonce = Buffer.concat([
+            Buffer.from("00", "hex"),
+            sybilSignature,
+        ]);
+
+        const contact = nodes[index].contactStorage.createContactArgs( keyPair, nonce, protocol, undefined, 8000+index )
+
+        nodes[index].contactStorage.setContact( keyPair.privateKey, contact, true, true, next)
+
+    } );
+
 
 }, ()=>{
 
