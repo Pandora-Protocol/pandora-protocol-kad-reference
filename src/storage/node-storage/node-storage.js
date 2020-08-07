@@ -31,7 +31,12 @@ module.exports = class NodeStorage {
     }
 
     getItem(key, callback) {
-        return this._db.get(key, callback)
+        return this._db.get(key, (err, out) =>{
+
+            if (err && err.type === "NotFoundError") return callback(null, null);
+            callback(err, out);
+
+        })
     }
 
     iterator(cb) {

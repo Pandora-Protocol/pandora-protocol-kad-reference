@@ -33,17 +33,7 @@ const nodes = array.map(
         ],
     ) )
 
-async.eachLimit( array, 1, (index, next )=>{
-
-    nodes[index].contactStorage.loadContact( (err, out) =>{
-
-        if (!err) return next();
-
-        nodes[index].contactStorage.setContact( nodes[index].contactStorage.createContactArgs( undefined, protocol, undefined, 8000+index), true, true, next)
-
-    });
-
-}, ()=>{
+async.eachLimit( array, 1, ( index, next ) => nodes[index].initializeNode( {protocol, port: 10000+index }, next), ()=>{
 
     nodes.forEach(it => it.start());
 

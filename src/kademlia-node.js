@@ -19,7 +19,7 @@ module.exports = class KademliaNode extends EventEmitter {
 
         this.plugins = new KademliaNodePlugins(this);
 
-        this._storage = new (options.Storage || Storage)(index.toString());
+        this.storage = new (options.Storage || Storage)(index.toString());
         this._store = new (options.Store || MemoryStore)(index);
 
         this.contactStorage = new ContactStorage(this);
@@ -104,7 +104,24 @@ module.exports = class KademliaNode extends EventEmitter {
         } );
     }
 
+    initializeNode( opts, cb){
 
+        this.contactStorage.loadContact( (err, out) =>{
+
+            if (err) return cb(err);
+            if (out) return cb(null, out);
+
+            this.contactStorage.createContactArgs( opts, (err, contactArgs ) => {
+
+                if (err) return cb(err);
+
+                this.contactStorage.setContact( contactArgs, false, true, cb)
+
+            } );
+
+        });
+
+    }
 
 }
 

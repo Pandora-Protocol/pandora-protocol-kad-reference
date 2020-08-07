@@ -169,7 +169,7 @@ module.exports = class Crawler {
 
                     // NB: we haven't discovered a closer node, call k uncalled nodes and
                     // NB: finish up
-                    if (closest === shortlist.closest)
+                    if (closest === shortlist.closest || closest.identity.equals(shortlist.closest.identity) )
                         return iterativeLookup.call(this, shortlist.uncontacted.slice(0, KAD_OPTIONS.BUCKET_COUNT_K), false );
 
                     closest = shortlist.closest;

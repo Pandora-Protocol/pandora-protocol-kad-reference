@@ -1,4 +1,4 @@
-const plugin = require('./plugins-contact-sybil-protect')
+const plugin = require('./plugin-contact-sybil-protect')
 module.exports = {
     plugin,
 }

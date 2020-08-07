@@ -1,62 +1,49 @@
 const Contact = require('../../contact/contact')
 const bencode = require('bencode')
+const ECCUtils = require('./../../helpers/ecc-utils')
 
 module.exports = function (contactStorage){
 
     const _createContactArgs = contactStorage.createContactArgs;
     contactStorage.createContactArgs = createContactArgs;
-    contactStorage.setContact = setContact;
-    contactStorage.loadContact = loadContact;
+
+    const __setContact = contactStorage._setContact.bind(contactStorage);
     contactStorage._setContact = _setContact;
 
-    function loadContact( cb ){
-        this._kademliaNode._storage.getItem('contact', (err, out)=>{
-            if (err) return cb(err);
+    function createContactArgs ( opts, cb){
 
-            out = bencode.decode(Buffer.from(out, 'hex') );
-            this._setContact( out[0], out[1], false, cb );
+        if (!opts.publicKey) {
+            const keyPair = ECCUtils.createPair();
+            opts.publicKey = keyPair.publicKey;
+            opts.privateKey = keyPair.privateKey;
+        }
+
+        _createContactArgs(opts, (err, out )=>{
+
+            cb(null, {
+                publicKey: opts.publicKey,
+                privateKey: opts.privateKey,
+                args: [
+                    ...out.args,
+                    opts.publicKey,
+                ]
+            });
+
         })
-    }
-
-    function createContactArgs ( publicKey, nonce, identity, protocol, address = '127.0.0.1', port = 8000){
-
-        return [
-            ..._createContactArgs(identity, protocol, address, port),
-            publicKey,
-            nonce,
-        ];
 
     }
 
-    function _setContact(privateKey, contactArgs, saveToStorage, cb){
+    function _setContact( contactArgs, saveToStorage, cb){
 
-        this._kademliaNode._contact = Contact.fromArray( this._kademliaNode, contactArgs );
-        this._kademliaNode._contact.mine = true;
-        this._kademliaNode._contact.privateKey = privateKey;
+        __setContact(contactArgs, saveToStorage, (err, out)=>{
 
-        if (saveToStorage)
-            this._kademliaNode._storage.setItem('contact', bencode.encode( [privateKey, contactArgs] ).toString('hex'), cb );
-        else
-            cb(null, contactArgs );
+            if (err) return cb(err);
+            this._kademliaNode._contact.privateKey = contactArgs.privateKey;
 
-    }
+            cb(null, out);
 
-    function setContact( privateKey, contactArgs, loadFromStorage = true, saveToStorage = true,  cb){
-
-        if (loadFromStorage)
-            this.loadContact( (err, out) =>{
-
-                if (err) return this._setContact( privateKey, contactArgs, saveToStorage, cb );
-                cb(out);
-
-            } );
-        else
-            this._setContact( privateKey, contactArgs, saveToStorage, cb );
+        })
 
     }
-
-
-
-
 
 }

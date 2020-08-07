@@ -9,6 +9,8 @@ module.exports = {
     ALPHA_CONCURRENCY: 4, //ALPHA - Degree of parallelism
 
     NODE_ID_LENGTH: 32, // Number of bytes for nodeId, 20 bytes for 160 bits
+    NODE_ID_EMPTY: Buffer.alloc(32),
+
     BUCKETS_COUNT_B: 256, //Number of bits for nodeID 160 bits
 
     BUCKET_COUNT_K: 20, // Number of contacts held in a bucket Number of nodes in a bucket
