@@ -104,7 +104,7 @@ module.exports = class KademliaNode extends EventEmitter {
         } );
     }
 
-    initializeNode( opts, cb){
+    initializeNode( opts, cb ){
 
         this.contactStorage.loadContact( (err, out) =>{
 

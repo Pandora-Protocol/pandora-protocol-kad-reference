@@ -5,16 +5,13 @@ module.exports = function (kademliaRules){
 
     function _welcomeIfNewNode(contact, cb = ()=>{} ){
 
-
         const oldContact = this._kademliaNode.routingTable.map[ contact.identityHex ];
         if (oldContact ){
 
-            if ( oldContact.contact.timestamp - contact.timestamp >= KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE  ) { //at least 15 seconds
-                oldContact.contact.timestamp = contact.timestamp;
-                oldContact.contact.signature = contact.signature;
-                oldContact.contact.address = contact.address;
+            //at least 15 seconds
+            if ( oldContact.contact.updateContactNewer( contact) )
                 return cb(null, "timestamp updated");
-            } else
+            else
                 return cb(new Error('Already have'));
 
         }
