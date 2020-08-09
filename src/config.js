@@ -25,7 +25,7 @@ module.exports = {
     T_BUCKETS_REPUBLISH: 86400000, //Interval for republishing data
 
     T_STORE_KEY_EXPIRY: 86405000, // Interval for expiring local data entries
-    T_STORE_GARBAGE_COLLECTOR: 10*60*3600,
+    T_STORE_GARBAGE_COLLECTOR: 5*60*3600,
     T_STORE_GARBAGE_COLLECTOR_SLEEP: 25, //25 ms for iterator
 
     T_RESPONSE_TIMEOUT: 10000, //Time to wait for RPC response

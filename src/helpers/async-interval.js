@@ -35,7 +35,7 @@ const processTimeout = (id) => {
         }
 
         map[id].processing = true;
-        map[id].func(()=>{
+        map[id].func( (time)=>{
 
             if (!map[id] || map[id].done) {
                 delete map[id];
@@ -44,7 +44,7 @@ const processTimeout = (id) => {
 
             map[id].processing = false;
 
-            map[id].timeout = NextTick( ()=>processTimeout( id ), map[id].time );
+            map[id].timeout = NextTick( () => processTimeout( id ), time || map[id].time );
 
         })
 
