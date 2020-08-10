@@ -57,7 +57,7 @@ module.exports = class HTTPRequest {
         const request = this._createRequest( reqopts, (response) =>{
 
             response.on('error', (err) => {
-                this.emit('error', err)
+                delete this._kademliaRules._pending['http'+id]
                 callback(err)
             });
 
@@ -84,6 +84,7 @@ module.exports = class HTTPRequest {
         } );
 
         request.on('error', (err) => {
+
             err.dispose = id;
             request.emit('error', err);
 
