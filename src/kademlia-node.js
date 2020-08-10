@@ -142,6 +142,8 @@ module.exports = class KademliaNode extends EventEmitter {
                     if (err) return cb(err)
 
                     this.rules.initContact(this.contact);
+                    cb(null, out);
+
                 })
 
             } );

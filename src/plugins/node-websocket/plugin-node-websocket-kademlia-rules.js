@@ -9,9 +9,9 @@ module.exports = function (kademliaRules){
     kademliaRules.webSocketActiveConnections = [];
     kademliaRules.webSocketActiveConnectionsMap = {};
 
-    kademliaRules.createWebSocket = createWebSocket;
-    kademliaRules.sendWebSocketWaitAnswer = sendWebSocketWaitAnswer;
-    kademliaRules.initializeWebSocket = initializeWebSocket;
+    kademliaRules._createWebSocket = _createWebSocket;
+    kademliaRules._sendWebSocketWaitAnswer = _sendWebSocketWaitAnswer;
+    kademliaRules._initializeWebSocket = _initializeWebSocket;
 
     const _start = kademliaRules.start.bind(kademliaRules);
     kademliaRules.start = start;
@@ -39,29 +39,33 @@ module.exports = function (kademliaRules){
         return _stop(...arguments);
     }
 
-    function createWebSocket( address, dstContact, cb ) {
+    function _createWebSocket( address, dstContact, protocol, cb ) {
 
         const data = this._kademliaNode.contact.toArray();
         kademliaRules._sendProcess(dstContact, '', data , (err, data) =>{
 
             if (err) return cb(err);
 
+            if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET) address = 'ws://'+address;
+            else if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) address = 'wss://'+address;
+            else return cb(new Error('invalid protocol type'));
+
             const ws = new IsomorphicWebSocket(address, data.toString('hex') );
             ws._kadInitialized = true;
             ws.contact = dstContact;
 
-            cb(null, ws);
+            this._initializeWebSocket(dstContact, ws, cb);
+
         } );
 
     }
 
-    function initializeWebSocket( contact, ws, cb ) {
+    function _initializeWebSocket( contact, ws, cb ) {
 
-        const protocol = ( contact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) ? 'wss' : 'ws';
-        const address = protocol + '://' + contact.address.hostname +':'+ contact.address.port + contact.address.path;
+        const address = contact.hostname +':'+ contact.port + contact.path;
 
         //connected twice
-        if (ws && this.webSocketActiveConnectionsMap[address]){
+        if (this.webSocketActiveConnectionsMap[address]){
 
             if (this.webSocketActiveConnectionsMap[address] !== ws)
                 ws.close();
@@ -69,16 +73,6 @@ module.exports = function (kademliaRules){
             return cb(new Error('Already connected'));
         }
 
-        //connected once already already
-        if (!ws && this.webSocketActiveConnectionsMap[address]){
-            return cb(null, this.webSocketActiveConnectionsMap[address] );
-        }
-
-        if (!ws)
-            return this.createWebSocket(address, contact, (err, ws) => {
-                if (err) return cb(err);
-                this.initializeWebSocket(contact, ws, cb);
-            });
 
         ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
         ws.address = address;
@@ -102,7 +96,7 @@ module.exports = function (kademliaRules){
                 const copy = [...ws._queue];
                 ws._queue = [];
                 for (const data of copy)
-                    this.sendWebSocketWaitAnswer(ws, data.id, data.buffer, data.cb);
+                    this._sendWebSocketWaitAnswer(ws, data.id, data.buffer, data.cb);
             }
 
         }
@@ -193,7 +187,7 @@ module.exports = function (kademliaRules){
 
     }
 
-    function sendWebSocketWaitAnswer(ws, id, buffer, cb){
+    function _sendWebSocketWaitAnswer(ws, id, buffer, cb){
 
         if (ws.readyState !== 1)
             ws._queue.push( {id, buffer, cb} );
@@ -242,14 +236,16 @@ module.exports = function (kademliaRules){
 
         const buffer = bencode.encode( [0, id, data] );
 
-        this.initializeWebSocket(destContact, undefined, (err, ws) =>{
+        const address = destContact.hostname +':'+ destContact.port + destContact.path;
 
+        //connected once already already
+        if (this.webSocketActiveConnectionsMap[address])
+            return this._sendWebSocketWaitAnswer( this.webSocketActiveConnectionsMap[address], id, buffer, cb);
+
+        this._createWebSocket(address, destContact, protocol,(err, ws) => {
             if (err) return cb(err);
-            if (!ws) return cb( new Error("Couldn't create web socket"), null);
-
-            this.sendWebSocketWaitAnswer(ws, id, buffer, cb);
-
-        } );
+            this._sendWebSocketWaitAnswer(ws, id, buffer, cb);
+        });
 
     }
 

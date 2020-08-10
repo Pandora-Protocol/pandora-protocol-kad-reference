@@ -122,7 +122,10 @@ module.exports = class KademliaRules {
         if (id === undefined) id = decoded[c++];
         if (srcContact === undefined) srcContact = decoded[c++];
 
-        this.receive( id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
+        const command = decoded[c++];
+        const data = decoded[c++];
+
+        this.receive( id, srcContact, command, data, (err, out )=>{
 
             if (err) return cb(err);
 

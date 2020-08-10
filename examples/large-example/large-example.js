@@ -7,7 +7,10 @@ console.log("Large KAD");
 
 KAD.plugins.PluginKademliaNodeMock.initialize();
 KAD.plugins.PluginKademliaNodeHTTP.initialize();
-const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
+
+// KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
+// KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
+// KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
 
 const COUNT = 1000;
 const dataCount = 100;
@@ -33,9 +36,14 @@ const nodes = array.map(
         ],
     ) )
 
-async.eachLimit( array, 1, ( index, next ) => nodes[index].initializeNode( {protocol, address:'127.0.0.1', port: 10000+index }, next), ()=>{
+async.eachLimit( array, 1, (index, next ) => {
 
-    nodes.forEach(it => it.start());
+    nodes[index].start( {hostname: '127.0.0.1', port: 10000+index} ).then((out)=>{
+        console.log("START", 10000+index, nodes[index].contact.contactServerType );
+        next(null, out)
+    })
+
+}, (err, out)=>{
 
     const nodesList = [];
 

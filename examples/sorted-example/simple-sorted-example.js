@@ -11,8 +11,9 @@ KAD.plugins.PluginKademliaNodeMock.initialize();
 KAD.plugins.PluginKademliaNodeHTTP.initialize();
 KAD.plugins.PluginKademliaNodeWebSocket.initialize();
 
-//const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
-const protocol = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
+// KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
+// KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
+// KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
 
 const array = new Array( COUNT ).fill(1).map( (it, i) => i )
 
@@ -28,9 +29,13 @@ const nodes = array.map(
         ],
     ) )
 
-async.eachLimit( array, 1, (index, next )=> nodes[index].initializeNode( {protocol, address:'127.0.0.1', port: 8000+index }, next), ()=>{
+async.eachLimit( array, 1, (index, next ) => {
 
-    nodes.map( it => it.start() );
+    nodes[index].start( {port: 10000+index} ).then((out)=>{
+        next(null, out)
+    })
+
+}, (err, out)=>{
 
     //encountering
     const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];
