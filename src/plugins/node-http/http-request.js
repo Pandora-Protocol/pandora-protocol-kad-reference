@@ -9,13 +9,10 @@ module.exports = class HTTPRequest {
         this._kademliaRules = kademliaRules;
     }
 
-    _createRequest(protocol, options) {
+    _createRequest(opts) {
 
-        if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP)
-            return httpRequest(options);
-
-        if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS)
-            return httpsRequest(options);
+        if (opts.protocol === 'http:') return httpRequest(...arguments);
+        if (opts.protocol === 'https:') return httpsRequest(...arguments);
 
         throw "Invalid protocol type";
     }
@@ -24,20 +21,19 @@ module.exports = class HTTPRequest {
      * Implements the writable interface
      * @private
      */
-    request( id, destContact,  buffer, callback) {
+    request( id, destContact,  protocol, buffer, callback) {
 
         if (this._kademliaRules._pending['http'+id])
             return callback(new Error('Pending Id already exists'));
 
         // NB: If originating an outbound request...
-        let protocol;
-        if (destContact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP) protocol = '';
-        else if (destContact.address.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS) protocol = 'https:';
+        if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP) protocol = 'http:';
+        else if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS) protocol = 'https:';
         else throw "invalid protocol"
 
         const reqopts = {
-            hostname: destContact.address.hostname,
-            port: destContact.address.port,
+            hostname: destContact.hostname,
+            port: destContact.port,
             protocol: protocol,
             method: 'POST',
             headers: {
@@ -47,17 +43,18 @@ module.exports = class HTTPRequest {
         };
 
         //optional path
-        if ( destContact.address.path) reqopts.address.path = destContact.address.path;
-
-        const request = this._createRequest(destContact.address.protocol, reqopts);
+        if ( destContact.path) reqopts.path = destContact.path;
 
         this._kademliaRules._pending['http'+id] = {
             timestamp: new Date().getTime(),
-            response: (out)=> callback(null, out ),
+            response: out => {
+                delete this._kademliaRules._pending['http'+id];
+                return callback(null, out );
+            },
             timeout: () => callback(new Error('Timeout'))
         };
 
-        request.on('response', (response) => {
+        const request = this._createRequest( reqopts, (response) =>{
 
             response.on('error', (err) => {
                 this.emit('error', err)
@@ -72,7 +69,7 @@ module.exports = class HTTPRequest {
                 if (response.statusCode >= 400) {
                     const err = new Error(buffer.toString());
                     err.dispose = id;
-                    return this.emit('error', err);
+                    return request.emit('error', err);
                 }
 
                 const bufferAnswer = Buffer.concat(data);
@@ -84,11 +81,11 @@ module.exports = class HTTPRequest {
 
             });
 
-        });
+        } );
 
         request.on('error', (err) => {
             err.dispose = id;
-            this.emit('error', err);
+            request.emit('error', err);
 
             if (this._kademliaNode.rules._pending['http'+id]) {
                 delete this._kademliaNode.rules._pending['http'+id];

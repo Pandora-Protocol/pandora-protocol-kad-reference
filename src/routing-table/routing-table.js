@@ -17,14 +17,26 @@ module.exports = class RoutingTable {
 
         this.bucketsLookups = {}; // Track the last lookup time for buckets
         this.count = 0;
+
+        this._started = false;
+        this._starting = false;
     }
 
-    start(){
-        this.refresher.start();
+    async start(opts, cb){
+        if (this._started || this._starting) throw "Already started";
+
+        this._starting = true;
+        return {
+            ... ( await this.refresher.start(opts) ),
+            routingTable: true,
+        };
+
     }
 
     stop(){
+        if (!this._started) throw "Already stopped";
         this.refresher.stop();
+        this._started = false;
     }
 
     addContact(contact){

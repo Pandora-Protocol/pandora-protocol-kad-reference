@@ -1,8 +1,12 @@
-const PluginNodeHTTPKademliaRules = require('./plugin-node-http-kademlia-rules')
+const PluginNodeHttpKademliaRules = require('./plugin-node-http-kademlia-rules')
+const PluginNodeHttpKademliaContact = require('./plugin-node-http-kademlia-contact')
+const PluginNodeHttpKademliaContactStorage = require('./plugin-node-http-kademlia-contact-storage')
 
 module.exports = function (kademliaNode){
 
-    PluginNodeHTTPKademliaRules(kademliaNode.rules);
+    PluginNodeHttpKademliaRules(kademliaNode.rules);
+    PluginNodeHttpKademliaContact(kademliaNode);
+    PluginNodeHttpKademliaContactStorage(kademliaNode.contactStorage);
 
     return {
         name: "PluginNodeHTTP",

@@ -1,6 +1,10 @@
 const http = require('http');
 const https = require('https');
+
 const EventEmitter = require('events');
+const publicIp = require('public-ip')
+const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
+const HttpServerTestingFirewall = require('./http-server-testing-firewall')
 
 module.exports = class HTTPServer extends EventEmitter {
 
@@ -9,20 +13,59 @@ module.exports = class HTTPServer extends EventEmitter {
 
         this._kademliaNode = kademliaNode;
         this._started = false;
+        this._starting = false;
 
-        this.server = this._createServer(this._options);
-        this.server.on('error', err => this.emit('error', err));
 
         this.on('error',(err)=>{
             console.log(err);
         })
     }
 
-    start(){
-        if (this._started) throw new Error("HTTP Server already started");
-        this.listen( this._kademliaNode.contact.address.port );
-        this._read();
-        this._started = true;
+    async start(opts){
+
+        if (this._started || this._starting) throw("HTTP Server already started");
+        this._starting = true;
+
+        if (!opts.protocol) opts.protocol = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
+        if (!opts.path) opts.path = '';
+
+        this.server = this._createServer(opts);
+        this._serverFirewall = new HttpServerTestingFirewall(this.server);
+
+        this.server.on('error', err => this.emit('error', err));
+
+        await this.listen( opts );
+
+        const fctReturn = async (hostname) => {
+
+            const natTraversal = await this._serverFirewall._checkNatTraversal( { ...opts, hostname });
+
+            this._read();
+
+            this._starting = false;
+            this._started = true;
+
+            return {
+                httpServer: {
+                    hostname,
+                    protocol: opts.protocol,
+                    port: opts.port,
+                    path: opts.path || '',
+                    natTraversal,
+                }
+            }
+
+        }
+
+        if (opts.hostname)
+            return fctReturn(opts.hostname);
+
+        const v4 = await publicIp.v4();
+        if (v4) return fctReturn(v4);
+
+        const v6 = await publicIp.v6();
+        if (v6) return fctReturn(v6);
+
     }
 
     stop(){
@@ -31,11 +74,11 @@ module.exports = class HTTPServer extends EventEmitter {
         this._started = false;
     }
 
-    _createServer() {
-        return http.createServer();
+    _createServer(opts) {
+        if (opts.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP) return http.createServer();
+        if (opts.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS) return https.createServer();
+        throw "invalid protocol";
     }
-
-
 
     _read() {
 
@@ -44,8 +87,6 @@ module.exports = class HTTPServer extends EventEmitter {
 
         this.server.on('request', this._handle.bind(this) );
     }
-
-
 
     /**
      * Default request handler
@@ -93,10 +134,11 @@ module.exports = class HTTPServer extends EventEmitter {
                 }
             };
 
-            this._kademliaNode.rules.receiveSerialized( id, undefined, buffer, (err, buffer)=>{
+            this._kademliaNode.rules.receiveSerialized( id, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, (err, buffer)=>{
 
                 if (this._kademliaNode.rules._pending['http'+id]) {
                     delete this._kademliaNode.rules._pending['http'+id];
+                    res.statusCode = 200;
                     res.end(buffer);
                 }
 
@@ -111,8 +153,17 @@ module.exports = class HTTPServer extends EventEmitter {
     /**
      * Binds the server to the given address/port
      */
-    listen() {
-        this.server.listen(...arguments);
+    listen(opts) {
+        return new Promise((resolve, reject )=>{
+
+            this.server.listen( opts.port, (err, out)=>{
+
+                if (err)  reject(err);
+                else resolve();
+
+            });
+
+        })
     }
 
     close(){

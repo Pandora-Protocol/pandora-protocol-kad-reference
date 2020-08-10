@@ -18,7 +18,7 @@ module.exports = class RoutingTableRefresher {
     }
 
 
-    start(){
+    async start(opts, cb){
 
         if (this._started) throw "Refresher already started";
 
@@ -33,6 +33,8 @@ module.exports = class RoutingTableRefresher {
         )
 
         this._started = true;
+
+        return { refresher: true };
     }
 
     stop(){

@@ -33,7 +33,7 @@ const nodes = array.map(
         ],
     ) )
 
-async.eachLimit( array, 1, ( index, next ) => nodes[index].initializeNode( {protocol, port: 10000+index }, next), ()=>{
+async.eachLimit( array, 1, ( index, next ) => nodes[index].initializeNode( {protocol, address:'127.0.0.1', port: 10000+index }, next), ()=>{
 
     nodes.forEach(it => it.start());
 

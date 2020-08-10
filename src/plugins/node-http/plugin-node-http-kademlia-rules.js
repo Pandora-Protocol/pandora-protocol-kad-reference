@@ -19,11 +19,17 @@ module.exports = function (kademliaRules) {
     const _stop = kademliaRules.stop.bind(kademliaRules);
     kademliaRules.stop = stop;
 
-    function start(){
-        _start(...arguments);
+    async function start(opts ){
+
+        const out = await _start(opts);
 
         if (this._httpServer)
-            this._httpServer.start();
+            return {
+                ...out,
+                ... ( await this._httpServer.start(opts ) )
+            };
+        else
+            return out;
     }
 
     function stop(){
@@ -53,9 +59,9 @@ module.exports = function (kademliaRules) {
         }
     }
 
-    function sendSerialized (id, destContact, command, data, cb) {
+    function sendSerialized (id, destContact, protocol, command, data, cb) {
         const buffer = Buffer.isBuffer(data) ? data : bencode.encode( data );
-        this._httpRequest.request( id, destContact, buffer, cb )
+        this._httpRequest.request( id, destContact, protocol, buffer, cb )
     }
 
     function receiveSerialize (id, srcContact, out )  {

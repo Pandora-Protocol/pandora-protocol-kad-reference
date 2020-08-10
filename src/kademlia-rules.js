@@ -37,7 +37,7 @@ module.exports = class KademliaRules {
 
     }
 
-    start(){
+    async start(opts){
         /**
          * USED to avoid memory leaks, from time to time, we have to clean this._replicatedStoreToNewNodesAlready
          * @private
@@ -52,6 +52,11 @@ module.exports = class KademliaRules {
             KAD_OPTIONS.T_RESPONSE_TIMEOUT
         );
 
+        return {rules: true}
+    }
+
+    initContact(contact){
+
     }
 
     stop(){
@@ -65,17 +70,19 @@ module.exports = class KademliaRules {
 
     send(destContact, command, data, cb){
 
-        if ( destContact.identity.equals(this._kademliaNode.contact.identity) )
+        if ( destContact.identity && destContact.identity.equals(this._kademliaNode.contact.identity) )
             return cb(new Error("Can't contact myself"));
 
-        const {sendSerialize, sendSerialized} = this._protocolSpecifics[destContact.address.protocol];
+        const protocol = KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
+
+        const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
         let { id, out } = sendSerialize(destContact, command, data);
 
         this._sendProcess(destContact, command, out, (err, buffer)=>{
 
             if (err) return cb(err);
 
-            sendSerialized( id, destContact, command, buffer, (err, buffer)=>{
+            sendSerialized( id, destContact, protocol, command, buffer, (err, buffer)=>{
 
                 if (err) return cb(err);
 
@@ -106,7 +113,7 @@ module.exports = class KademliaRules {
 
     }
 
-    receiveSerialized( id, srcContact, buffer, cb){
+    receiveSerialized( id, srcContact, protocol, buffer, cb){
 
         const decoded = this.decodeReceiveAnswer( id, srcContact, buffer );
         if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
@@ -119,7 +126,9 @@ module.exports = class KademliaRules {
 
             if (err) return cb(err);
 
-            const {receiveSerialize} = this._protocolSpecifics[srcContact.address.protocol];
+            const protocol = KAD_OPTIONS.TEST_PROTOCOL || srcContact.getProtocol(command, data);
+
+            const {receiveSerialize} = this._protocolSpecifics[protocol];
             const buffer = receiveSerialize(id, srcContact, out );
             cb(null, buffer );
 

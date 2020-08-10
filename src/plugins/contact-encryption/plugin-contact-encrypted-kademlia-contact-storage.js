@@ -1,5 +1,3 @@
-const Contact = require('../../contact/contact')
-const bencode = require('bencode')
 const ECCUtils = require('./../../helpers/ecc-utils')
 
 module.exports = function (contactStorage){

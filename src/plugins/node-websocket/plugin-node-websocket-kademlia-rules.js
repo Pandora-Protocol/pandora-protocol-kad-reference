@@ -9,19 +9,35 @@ module.exports = function (kademliaRules){
     kademliaRules.webSocketActiveConnections = [];
     kademliaRules.webSocketActiveConnectionsMap = {};
 
-    //Node.js
-    if ( typeof BROWSER === "undefined" && kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP') ){
-        const WebSocketServer = require('./web-socket-server')
-        kademliaRules._webSocketServer = new WebSocketServer(kademliaRules._kademliaNode, {
-            server: kademliaRules._httpServer.server,
-            'Access-Control-Allow-Origin': "*",
-        });
-    }
-
     kademliaRules.createWebSocket = createWebSocket;
     kademliaRules.sendWebSocketWaitAnswer = sendWebSocketWaitAnswer;
     kademliaRules.initializeWebSocket = initializeWebSocket;
 
+    const _start = kademliaRules.start.bind(kademliaRules);
+    kademliaRules.start = start;
+
+    const _stop = kademliaRules.stop.bind(kademliaRules);
+    kademliaRules.stop = stop;
+
+    async function start(opts){
+
+        const out = await _start(opts);
+
+        //Node.js
+        if ( typeof BROWSER === "undefined" && kademliaRules._kademliaNode.plugins.hasPlugin('PluginNodeHTTP') ){
+            const WebSocketServer = require('./web-socket-server')
+            kademliaRules._webSocketServer = new WebSocketServer(kademliaRules._kademliaNode, {
+                server: kademliaRules._httpServer.server,
+                'Access-Control-Allow-Origin': "*",
+            });
+        }
+
+        return out;
+    }
+
+    function stop(){
+        return _stop(...arguments);
+    }
 
     function createWebSocket( address, dstContact, cb ) {
 
@@ -165,7 +181,7 @@ module.exports = function (kademliaRules){
 
         } else {
 
-            this._kademliaNode.rules.receiveSerialized( id, ws.contact, decoded[2], (err, buffer )=>{
+            this._kademliaNode.rules.receiveSerialized( id, ws.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, decoded[2], (err, buffer )=>{
 
                 if (err) return;
 
@@ -222,7 +238,7 @@ module.exports = function (kademliaRules){
         }
     }
 
-    function sendSerialized (id, destContact, command, data, cb)  {
+    function sendSerialized (id, destContact, protocol, command, data, cb)  {
 
         const buffer = bencode.encode( [0, id, data] );
 

@@ -6,6 +6,7 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
     constructor(kademliaNode, options) {
         super(options);
+
         this._kademliaNode = kademliaNode;
 
         this.on('connection', this.newClientConnection );

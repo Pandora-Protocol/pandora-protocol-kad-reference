@@ -30,7 +30,7 @@ module.exports = function (kademliaRules) {
         ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, cb);
     }
 
-    function receiveSerialized( id, srcContact, buffer, cb){
+    function receiveSerialized( id, srcContact, protocol, buffer, cb){
 
         let decoded;
         if (Buffer.isBuffer(buffer) ) decoded = bencode.decode(buffer);
@@ -58,7 +58,7 @@ module.exports = function (kademliaRules) {
 
                     if (err) return cb(err);
 
-                    const {receiveSerialize} = this._protocolSpecifics[srcContact.address.protocol];
+                    const {receiveSerialize} = this._protocolSpecifics[protocol];
                     const buffer = receiveSerialize(id, srcContact, out );
                     cb(null, buffer );
 

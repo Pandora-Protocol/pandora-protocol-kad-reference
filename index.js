@@ -6,7 +6,6 @@ const Config = require('./src/config')
 const Storage = require('./src/storage/storage')
 
 const Contact = require('./src/contact/contact')
-const ContactAddress = require('./src/contact/contact-address')
 const ContactAddressProtocolType = require('./src/contact/contact-address-protocol-type')
 
 const RoutingTable = require('./src/routing-table/routing-table')
@@ -44,7 +43,6 @@ module.exports = {
 
 
     Contact,
-    ContactAddress,
     ContactAddressProtocolType,
 
     storage: {

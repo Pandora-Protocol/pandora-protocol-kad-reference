@@ -32,6 +32,7 @@ module.exports = class KademliaNode extends EventEmitter {
 
 
         this._started = false;
+        this._starting = false;
     }
 
     get contact(){
@@ -39,15 +40,34 @@ module.exports = class KademliaNode extends EventEmitter {
     }
 
 
-    start() {
-        if (this._started) throw "Already started";
-        this.routingTable.start();
-        this.rules.start();
+    async start(opts = {}) {
+
+        if (this._started || this._starting) throw "Already started";
+
+        this._starting = true;
+        const out = {
+            ... ( await this.rules.start(opts) ),
+            ... ( await this.routingTable.start(opts) ),
+            node: true,
+        }
+
         this.emit('status', true );
+
+        this._starting = false;
         this._started = true;
+
+        return new Promise((resolve, reject)=>{
+
+            this.initializeNode( {...opts, out},(err, out)=>{
+                if (err) return reject(err);
+                resolve(out);
+            })
+
+        })
+
     }
 
-    stop() {
+    async stop() {
         if (!this._started) throw "Already stopped";
         this.routingTable.stop();
         this.rules.stop();
@@ -109,13 +129,20 @@ module.exports = class KademliaNode extends EventEmitter {
         this.contactStorage.loadContact( (err, out) =>{
 
             if (err) return cb(err);
-            if (out) return cb(null, out);
+            if (out) {
+                this.rules.initContact(this.contact);
+                return cb(null, out);
+            }
 
             this.contactStorage.createContactArgs( opts, (err, contactArgs ) => {
 
                 if (err) return cb(err);
 
-                this.contactStorage.setContact( contactArgs, false, true, cb)
+                this.contactStorage.setContact( contactArgs, false, true, (err, out)=>{
+                    if (err) return cb(err)
+
+                    this.rules.initContact(this.contact);
+                })
 
             } );
 

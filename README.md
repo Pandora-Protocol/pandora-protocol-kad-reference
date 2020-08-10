@@ -1,5 +1,7 @@
 # Pandora Protocol - Kademlia Reference
 
+Essential functions which are critical in the KademliaReferenceProtocol must use callbacks. Non-essential functions can use promises.
+
 ### Installation
 
 ``` 

@@ -50,10 +50,6 @@ module.exports = class ContactStorage {
             opts.app || KAD_OPTIONS.VERSION.APP,
             opts.version || KAD_OPTIONS.VERSION.VERSION,
             opts.identity || BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH),
-            opts.protocol,
-            opts.address || '127.0.0.1',
-            opts.port || 80,
-            opts.path || '',
         ]});
     }
 

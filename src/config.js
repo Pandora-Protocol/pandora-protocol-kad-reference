@@ -32,6 +32,8 @@ module.exports = {
 
     MAX_UNIMPROVED_REFRESHES: 3, // MAX_UNIMPROVED_REFRESHES - Quit refreshing no improvement
 
+    TEST_PROTOCOL: '',
+
     PLUGINS: {
 
         NODE_WEBSOCKET:{
