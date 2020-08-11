@@ -7,7 +7,6 @@ module.exports = function(kademliaNode) {
         create,
     })
 
-
     function create(){
 
         this.contactType = arguments[this._additionalParameters++];
@@ -34,9 +33,6 @@ module.exports = function(kademliaNode) {
 
         const _toJSON = this.toJSON.bind(this);
         this.toJSON = toJSON;
-
-        const _importContactNewer = this.importContactNewer.bind(this);
-        this.importContactNewer = importContactNewer;
 
         this.getProtocol = getProtocol;
 
@@ -77,25 +73,6 @@ module.exports = function(kademliaNode) {
             return this.protocol;
         }
 
-        function importContactNewer(newContact){
-
-            _importContactNewer(newContact);
-
-            this.contactType = newContact.contactType;
-
-            if (newContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
-                this.protocol = newContact.protocol;
-                this.hostname = newContact.hostname;
-                this.port = newContact.port;
-                this.path = newContact.path;
-            } else {
-                delete this.protocol;
-                delete this.hostname;
-                delete this.port;
-                delete this.path;
-            }
-
-        }
-
     }
+
 }

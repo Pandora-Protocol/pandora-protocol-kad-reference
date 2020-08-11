@@ -1,3 +1,5 @@
+const Contact = require('../../contact/contact')
+
 module.exports = function (kademliaRules){
 
     const __welcomeIfNewNode = kademliaRules._welcomeIfNewNode.bind(kademliaRules);
@@ -9,9 +11,10 @@ module.exports = function (kademliaRules){
         if (oldContact ){
 
             //at least 15 seconds
-            if ( oldContact.contact.updateContactNewer( contact) )
+            if ( oldContact.contact.isContactNewer( contact ) ) {
+                oldContact.contact = contact;
                 return cb(null, "timestamp updated");
-            else
+            } else
                 return cb(new Error('Already have'));
 
         }

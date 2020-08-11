@@ -1,11 +1,10 @@
 const ContactType = require('./contact-type')
 const NextTick = require('../../helpers/next-tick')
-const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
 const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
+const PluginNodeWebsocket = require('../node-websocket/index')
 
 module.exports = function(kademliaRules){
 
-    kademliaRules._wsRelayedSocket = undefined;
 
     kademliaRules._selectRelay = _selectRelay;
     kademliaRules.setRelay = setRelay;
@@ -14,8 +13,12 @@ module.exports = function(kademliaRules){
     kademliaRules._setTimeoutWebSocket = _setTimeoutWebSocket;
     kademliaRules._socketConnectedAsRelaySocket = _socketConnectedAsRelaySocket;
 
-    kademliaRules.relayedJoined = 0;
+    kademliaRules._relayedJoined = 0;
+    kademliaRules._relaySocket = null;
     kademliaRules._setRelayNow = _setRelayNow;
+
+    kademliaRules._commands['RELAY_JOIN'] = relayJoin.bind(kademliaRules);
+    kademliaRules._commands['RELAY_REVERSE_CON'] = relayReverseConnection.bind(kademliaRules);
 
     const _start = kademliaRules.start.bind(kademliaRules);
     kademliaRules.start = start;
@@ -33,11 +36,9 @@ module.exports = function(kademliaRules){
     }
 
     function stop(){
-        clearAsyncInterval( this._asyncIntervalSetRelay );
         _stop();
+        clearAsyncInterval( this._asyncIntervalSetRelay );
     }
-
-    kademliaRules._commands['RELAY_JOIN'] = relayJoin.bind(kademliaRules);
 
     function _setTimeoutWebSocket(ws){
         this._pending['ws'+ws.id] = {
@@ -51,10 +52,10 @@ module.exports = function(kademliaRules){
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
-        if (this.relayedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RELAY.RELAY_JOINED_MAX)
+        if (this._relayedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RELAY.RELAY_JOINED_MAX)
             return cb( new Error('FULL') );
 
-        this.relayedJoined++;
+        this._relayedJoined++;
         req.relayed = true;
 
         cb(null, [1] );
@@ -62,13 +63,20 @@ module.exports = function(kademliaRules){
     }
 
     function sendRelayJoin(contact, cb){
-        this.send(contact,'RELAY_JOIN', [  ],  cb);
+        this.send(contact, 'RELAY_JOIN', [  ],  cb);
+    }
+
+    function relayReverseConnection(req, srcContact, data, cb){
+
+    }
+
+    function sendRelayReverseConnection(contact, cb){
+        this.send(contact, 'RELAY_REVERSE_CON', [ this._kademliaNode.contact ],  cb);
     }
 
     function _selectRelay(array, cb){
 
-        if (!array)
-            array = this._kademliaNode.routingTable.array;
+        if (!array) array = this._kademliaNode.routingTable.array;
 
         let contact, index;
 
@@ -112,6 +120,8 @@ module.exports = function(kademliaRules){
 
                 this._kademliaNode.contact.contactUpdated();
 
+
+
                 cb(null, contact);
 
             })
@@ -122,10 +132,10 @@ module.exports = function(kademliaRules){
     function _socketConnectedAsRelaySocket(ws){
 
         ws.isRelaySocket = true;
-        this._wsRelayedSocket = ws;
+        this._relaySocket = ws;
 
         ws.onclosed = ()=>{
-            this._wsRelayedSocket = null;
+            this._relaySocket = null;
         }
 
         delete this._pending['ws'+ws.id];
@@ -135,10 +145,8 @@ module.exports = function(kademliaRules){
 
         const address = contact.hostname +':'+ contact.port + contact.path;
 
-        let protocol = contact.getProtocol();
-        if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP) protocol = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
-        else if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS) protocol = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET;
-        else return cb(new Error('Invalid protocol'));
+        let protocol = PluginNodeWebsocket.utils.convertProtocolToWebSocket( contact.getProtocol() );
+        if (!protocol) return cb(new Error('Protocol is invalid'));
 
         let ws = this.webSocketActiveConnectionsMap[address];
         if (ws) {
@@ -161,11 +169,10 @@ module.exports = function(kademliaRules){
         if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED)
             return next(5000);
 
-        if (this._wsRelayedSocket)
-            return next(1000)
+        if (this._relaySocket)
+            return next(2500)
 
         this.setRelay( () => next(1000) );
-
 
     }
 

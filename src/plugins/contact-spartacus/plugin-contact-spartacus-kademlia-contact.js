@@ -45,10 +45,7 @@ module.exports = function(kademliaNode) {
         this.verifySignature = verifySignature;
         this.verifyContactIdentity = verifyContactIdentity;
         this.computeContactIdentity = computeContactIdentity;
-        this.updateContactNewer = updateContactNewer;
-
-        const _importContactNewer = this.importContactNewer.bind(this);
-        this.importContactNewer = importContactNewer;
+        this.isContactNewer = isContactNewer;
 
         const skipVerifySpartacus = arguments[this._additionalParameters++];
         if (!skipVerifySpartacus ) {
@@ -110,25 +107,11 @@ module.exports = function(kademliaNode) {
             return this.identity.equals(identity);
         }
 
-        function updateContactNewer(newContact){
+        function isContactNewer(newContact){
 
             //at least 15 seconds
-            if ( this.timestamp - newContact.timestamp >= KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE  ) {
-                this.importContactNewer();
-                return true;
-            }
+            return this.timestamp - newContact.timestamp >= KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE;
 
-            return false;
-
-        }
-
-        function importContactNewer(newContact){
-
-            _importContactNewer(newContact);
-
-            this.timestamp = newContact.timestamp;
-            this.nonce = newContact.nonce;
-            this.signature = newContact.signature;
         }
 
         function contactUpdated(){

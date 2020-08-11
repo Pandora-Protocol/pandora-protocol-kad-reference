@@ -2,6 +2,7 @@ const async = require('async');
 const Validation = require('../helpers/validation')
 const ContactList = require('./contact-list')
 const Contact = require('./../contact/contact')
+const ContactRefresher = require('./contact-refresher')
 
 module.exports = class Crawler {
 
@@ -12,6 +13,8 @@ module.exports = class Crawler {
             (task, cb) => this._updateContactWorker(task, cb),
             1
         );
+
+        this.cntactRefresher = new ContactRefresher(kademliaNode);
 
     }
 

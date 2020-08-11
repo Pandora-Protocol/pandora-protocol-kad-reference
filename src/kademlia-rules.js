@@ -18,7 +18,6 @@ module.exports = class KademliaRules {
             'V': this.version,
             'APP': this.app,
             'IDENTITY': this.identity,
-
             'PING': this.ping,
             'STORE': this.store,
             'FIND_NODE': this.findNode,

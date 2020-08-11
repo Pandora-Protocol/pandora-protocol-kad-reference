@@ -68,6 +68,10 @@ async.eachLimit( array, 1, (index, next ) => {
                     console.log("iterativeFindValue2", out);
                 })
 
+                nodes[4].rules.sendPing(nodes[5].contact,(err, out)=>{
+
+                })
+
             })
 
         })

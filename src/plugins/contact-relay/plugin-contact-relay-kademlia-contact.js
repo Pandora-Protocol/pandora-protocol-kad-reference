@@ -1,5 +1,6 @@
 const ContactType = require('./contact-type')
 const ContactAddressProtocolType = require('./../../contact/contact-address-protocol-type')
+const PluginNodeWebsocket = require('../node-websocket/index')
 
 const Contact = require('../../contact/contact')
 const bencode = require('bencode');
@@ -20,9 +21,6 @@ module.exports = function(kademliaNode) {
 
         const _getProtocol = this.getProtocol.bind(this)
         this.getProtocol = getProtocol;
-
-        const _importContactNewer = this.importContactNewer.bind(this);
-        this.importContactNewer = importContactNewer;
 
         if (this.contactType === ContactType.CONTACT_TYPE_RELAY){
             this.relay = arguments[this._additionalParameters++];
@@ -49,27 +47,11 @@ module.exports = function(kademliaNode) {
             return out;
         }
 
-        function importContactNewer(newContact){
-
-            _importContactNewer(newContact);
-
-            if (newContact.contactType === ContactType.CONTACT_TYPE_RELAY){
-                this.relay = newContact.relay;
-                this.relayContact = newContact.relayContact;
-            } else {
-                delete this.relay;
-                delete this.relayContact;
-            }
-
-        }
 
         function getProtocol(command, data){
 
-            if (command === 'RELAY_JOIN'){
-                if (this.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP) return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
-                if (this.protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS) return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET;
-                throw 'Invalid protocol';
-            }
+            if (command === 'RELAY_JOIN')
+                return PluginNodeWebsocket.utils.convertProtocolToWebSocket(this.protocol);
 
             return _getProtocol(command, data);
         }

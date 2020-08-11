@@ -69,10 +69,6 @@ module.exports = class Contact{
         this.identityHex = this.identity.toString('hex')
     }
 
-    importContactNewer(newContact){
-
-    }
-
     contactUpdated(){
 
     }
