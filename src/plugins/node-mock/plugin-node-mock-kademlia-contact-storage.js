@@ -3,20 +3,18 @@ module.exports = function (contactStorage){
     const _createContactArgs = contactStorage.createContactArgs;
     contactStorage.createContactArgs = createContactArgs;
 
-    function createContactArgs ( opts, cb){
+    async function createContactArgs ( opts ){
 
         if (!opts.mockId) opts.mockId = opts.out.mock.mockId;
 
-        _createContactArgs(opts, (err, out )=>{
+        const out = await _createContactArgs(opts);
 
-            cb(null, {
-                args: [
-                    ...out.args,
-                    opts.mockId,
-                ]
-            });
-
-        })
+        return {
+            args: [
+                ...out.args,
+                opts.mockId,
+            ]
+        };
 
     }
 

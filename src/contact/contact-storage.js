@@ -44,13 +44,15 @@ module.exports = class ContactStorage {
             this._setContact( contactArgs, saveToStorage, cb );
     }
 
-    createContactArgs( opts, cb ){
+    async createContactArgs( opts, cb ){
 
-        cb(null, { args: [
-            opts.app || KAD_OPTIONS.VERSION.APP,
-            opts.version || KAD_OPTIONS.VERSION.VERSION,
-            opts.identity || BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH),
-        ]});
+        return {
+            args: [
+                opts.app || KAD_OPTIONS.VERSION.APP,
+                opts.version || KAD_OPTIONS.VERSION.VERSION,
+                opts.identity || BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH),
+            ]
+        };
     }
 
 }

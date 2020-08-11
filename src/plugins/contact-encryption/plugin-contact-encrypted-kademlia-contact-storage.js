@@ -8,7 +8,7 @@ module.exports = function (contactStorage){
     const __setContact = contactStorage._setContact.bind(contactStorage);
     contactStorage._setContact = _setContact;
 
-    function createContactArgs ( opts, cb){
+    async function createContactArgs ( opts ){
 
         if (!opts.publicKey) {
             const keyPair = ECCUtils.createPair();
@@ -16,18 +16,15 @@ module.exports = function (contactStorage){
             opts.privateKey = keyPair.privateKey;
         }
 
-        _createContactArgs(opts, (err, out )=>{
-
-            cb(null, {
-                publicKey: opts.publicKey,
-                privateKey: opts.privateKey,
-                args: [
-                    ...out.args,
-                    opts.publicKey,
-                ]
-            });
-
-        })
+        const out = await _createContactArgs( opts );
+        return {
+            publicKey: opts.publicKey,
+            privateKey: opts.privateKey,
+            args: [
+                ...out.args,
+                opts.publicKey,
+            ]
+        }
 
     }
 

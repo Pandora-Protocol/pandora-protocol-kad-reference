@@ -5,38 +5,37 @@ module.exports = function (contactStorage){
     const _createContactArgs = contactStorage.createContactArgs;
     contactStorage.createContactArgs = createContactArgs;
 
-    function createContactArgs ( opts, cb){
+    async function createContactArgs ( opts ){
 
         if (!opts.httpServer){
 
-            opts.httpServer = {};
-            if (opts.out.httpServer.natTraversal){
-                opts.httpServer.contactServerType = ContactServerType.SERVER_TYPE_ENABLED;
-                opts.httpServer.protocol = opts.out.httpServer.protocol;
-                opts.httpServer.hostname = opts.out.httpServer.hostname;
-                opts.httpServer.port = opts.out.httpServer.port;
-                opts.httpServer.path = opts.out.httpServer.path;
+            if (opts.out.httpServer && opts.out.httpServer.natTraversal){
+                opts.httpServer = {
+                    contactServerType : ContactServerType.SERVER_TYPE_ENABLED,
+                    protocol : opts.out.httpServer.protocol,
+                    hostname : opts.out.httpServer.hostname,
+                    port : opts.out.httpServer.port,
+                    path : opts.out.httpServer.path,
+                }
             }else {
-                opts.httpServer.contactServerType = ContactServerType.SERVER_TYPE_DISABLED;
+                opts.httpServer = {
+                    contactServerType : ContactServerType.SERVER_TYPE_DISABLED
+                };
             }
         }
 
-        _createContactArgs(opts, (err, out )=>{
+        const out = await _createContactArgs(opts);
 
-            out.args.push(opts.httpServer.contactServerType);
+        out.args.push(opts.httpServer.contactServerType);
 
-            if (opts.httpServer.contactServerType === ContactServerType.SERVER_TYPE_ENABLED ){
-                out.args.push(opts.httpServer.protocol);
-                out.args.push(opts.httpServer.hostname);
-                out.args.push(opts.httpServer.port);
-                out.args.push(opts.httpServer.path);
-            }
+        if (opts.httpServer.contactServerType === ContactServerType.SERVER_TYPE_ENABLED ){
+            out.args.push(opts.httpServer.protocol);
+            out.args.push(opts.httpServer.hostname);
+            out.args.push(opts.httpServer.port);
+            out.args.push(opts.httpServer.path);
+        }
 
-            cb(null, {
-                args: out.args,
-            });
-
-        })
+        return out;
 
     }
 

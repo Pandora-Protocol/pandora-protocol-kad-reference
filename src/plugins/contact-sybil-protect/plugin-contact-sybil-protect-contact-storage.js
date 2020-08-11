@@ -37,14 +37,19 @@ module.exports = function (contactStorage){
             opts.privateKey = keyPair.privateKey;
         }
 
-        this.sybilSign( opts.publicKey, undefined, (err, sybilSignature )=>{
+        this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
 
             if (err) return cb(err);
 
             opts.nonce = sybilSignature.signature;
             opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
 
-            _createContactArgs( opts, cb );
+            try{
+                const out = await _createContactArgs( opts );
+                cb(null, out);
+            }catch(err){
+                cb(err);
+            }
 
         } );
 

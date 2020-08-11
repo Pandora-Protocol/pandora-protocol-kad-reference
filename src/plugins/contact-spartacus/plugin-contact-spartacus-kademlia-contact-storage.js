@@ -7,7 +7,7 @@ module.exports = function (contactStorage){
     const _createContactArgs = contactStorage.createContactArgs;
     contactStorage.createContactArgs = createContactArgs;
 
-    function createContactArgs ( opts, cb){
+    async function createContactArgs ( opts ){
 
         if (!opts.publicKey) {
             const keyPair = ECCUtils.createPair();
@@ -18,22 +18,20 @@ module.exports = function (contactStorage){
         if (!opts.timestamp)
             opts.timestamp = Math.floor(new Date().getTime() / 1000);
 
-        _createContactArgs(opts, (err, out )=>{
+        const out = await _createContactArgs(opts);
 
-            out.args.push(opts.nonce)
-            out.args.push(opts.timestamp)
+        out.args.push(opts.nonce)
+        out.args.push(opts.timestamp)
 
-            const signature = ECCUtils.sign( opts.privateKey, CryptoUtils.sha256( bencode.encode( out.args ) ) );
+        const signature = ECCUtils.sign( opts.privateKey, CryptoUtils.sha256( bencode.encode( out.args ) ) );
 
-            cb(null, {
-                ...out,
-                args: [
-                    ...out.args,
-                    signature
-                ]
-            });
-
-        })
+        return {
+            ...out,
+            args: [
+                ...out.args,
+                signature
+            ]
+        };
 
     }
 

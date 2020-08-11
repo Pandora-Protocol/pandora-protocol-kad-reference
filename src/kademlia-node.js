@@ -126,7 +126,7 @@ module.exports = class KademliaNode extends EventEmitter {
 
     initializeNode( opts, cb ){
 
-        this.contactStorage.loadContact( (err, out) =>{
+        this.contactStorage.loadContact( async (err, out) =>{
 
             if (err) return cb(err);
             if (out) {
@@ -134,10 +134,8 @@ module.exports = class KademliaNode extends EventEmitter {
                 return cb(null, out);
             }
 
-            this.contactStorage.createContactArgs( opts, (err, contactArgs ) => {
-
-                if (err) return cb(err);
-
+            try{
+                const contactArgs = await this.contactStorage.createContactArgs( opts );
                 this.contactStorage.setContact( contactArgs, false, true, (err, out)=>{
                     if (err) return cb(err)
 
@@ -145,8 +143,9 @@ module.exports = class KademliaNode extends EventEmitter {
                     cb(null, out);
 
                 })
-
-            } );
+            }catch(err){
+                cb(err);
+            }
 
         });
 
