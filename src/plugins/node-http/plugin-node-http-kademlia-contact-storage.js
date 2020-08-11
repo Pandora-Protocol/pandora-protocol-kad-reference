@@ -22,6 +22,8 @@ module.exports = function (contactStorage){
 
         const out = await _createContactArgs(opts);
 
+        out.args.push(opts.contactType);
+
         if (opts.contactType === ContactType.CONTACT_TYPE_ENABLED ){
             out.args.push(opts.httpServer.protocol);
             out.args.push(opts.httpServer.hostname);
@@ -29,7 +31,9 @@ module.exports = function (contactStorage){
             out.args.push(opts.httpServer.path);
         }
 
-        return out;
+        return {
+            ...out,
+        };
 
     }
 

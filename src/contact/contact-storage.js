@@ -8,12 +8,16 @@ module.exports = class ContactStorage {
         this._kademliaNode = kademliaNode;
     }
 
-    loadContact( cb ){
-        this._kademliaNode.storage.getItem('info:contact', (err, out)=>{
+    loadContact( opts, cb ){
+        this._kademliaNode.storage.getItem('info:contact', async (err, out)=>{
             if (err) return cb(err);
             if (!out) return cb(null, null)
 
-            this._setContact( bencode.decode( Buffer.from(out, 'base64') ), false, cb );
+            const obj = bencode.decode( Buffer.from(out, 'base64') );
+
+            const args = await this.createContactArgs({...opts, ...obj} );
+            this._setContact( args, false, cb );
+
         })
     }
 
@@ -22,8 +26,10 @@ module.exports = class ContactStorage {
         this._kademliaNode._contact = Contact.fromArray( this._kademliaNode, contactArgs.args );
         this._kademliaNode._contact.mine = true;
 
-        if (saveToStorage)
-            this._kademliaNode.storage.setItem('info:contact', bencode.encode( contactArgs ).toString('base64'), cb );
+        if (saveToStorage) {
+            delete contactArgs.args;
+            this._kademliaNode.storage.setItem('info:contact', bencode.encode(contactArgs).toString('base64'), cb);
+        }
         else
             cb(null, contactArgs );
 

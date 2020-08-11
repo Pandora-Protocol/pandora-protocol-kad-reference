@@ -36,8 +36,13 @@ module.exports = {
 
     PLUGINS: {
 
+        CONTACT_RELAY:{
+            RELAY_JOINED_MAX: 500,
+            T_WEBSOCKET_DISCONNECT_RELAY: 30*60*1000,
+        },
+
         NODE_WEBSOCKET:{
-            T_WEBSOCKET_DISCONNECT_INACTIVITY: 30*60,
+            T_WEBSOCKET_DISCONNECT_INACTIVITY: 2*60*1000,
         },
 
         CONTACT_SPARTACUS: {

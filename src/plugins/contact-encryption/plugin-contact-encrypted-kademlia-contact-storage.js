@@ -18,8 +18,7 @@ module.exports = function (contactStorage){
 
         const out = await _createContactArgs( opts );
         return {
-            publicKey: opts.publicKey,
-            privateKey: opts.privateKey,
+            ...out,
             args: [
                 ...out.args,
                 opts.publicKey,

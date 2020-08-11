@@ -9,9 +9,11 @@ module.exports = function (kademliaRules){
     kademliaRules.webSocketActiveConnections = [];
     kademliaRules.webSocketActiveConnectionsMap = {};
 
+
     kademliaRules._createWebSocket = _createWebSocket;
     kademliaRules._sendWebSocketWaitAnswer = _sendWebSocketWaitAnswer;
     kademliaRules._initializeWebSocket = _initializeWebSocket;
+    kademliaRules._setTimeoutWebSocket = _setTimeoutWebSocket;
 
     const _start = kademliaRules.start.bind(kademliaRules);
     kademliaRules.start = start;
@@ -60,6 +62,14 @@ module.exports = function (kademliaRules){
 
     }
 
+    function _setTimeoutWebSocket(ws){
+        this._pending['ws'+ws.id] = {
+            timestamp: new Date().getTime(),
+            time: KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY,
+            timeout: () => ws.close(),
+        }
+    }
+
     function _initializeWebSocket( contact, ws, cb ) {
 
         const address = contact.hostname +':'+ contact.port + contact.path;
@@ -82,15 +92,9 @@ module.exports = function (kademliaRules){
         this.webSocketActiveConnectionsMap[address] = ws;
         this.webSocketActiveConnections.push(ws);
 
-        this._pending['ws'+ws.id] = {
-            timestamp: new Date().getTime(),
-            time: KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY,
-            timeout: () =>  ws.close(),
-        }
+        this._setTimeoutWebSocket(ws);
 
         ws.onopen = () => {
-
-            this._pending['ws'+ws.id].timestamp = new Date().getTime()
 
             if (ws._queue.length) {
                 const copy = [...ws._queue];
@@ -111,6 +115,7 @@ module.exports = function (kademliaRules){
                         this.webSocketActiveConnections.splice(i, 1);
                         break;
                     }
+
                 delete this.webSocketActiveConnectionsMap[ws.address];
 
                 for (const id in ws.socketsQueue) {
@@ -127,6 +132,8 @@ module.exports = function (kademliaRules){
                         data.cb(new Error('Disconnected or Error'))
                 }
 
+                if (ws.onclosed) ws.onclosed(  )
+
             }
 
         }
@@ -135,8 +142,7 @@ module.exports = function (kademliaRules){
 
             if (data.type !== "message") return;
 
-            if (this._pending['ws'+ws.id])
-                this._pending['ws'+ws.id].timestamp = new Date().getTime()
+            this._setTimeoutWebSocket(ws);
 
             const message = data.data;
 
@@ -175,7 +181,7 @@ module.exports = function (kademliaRules){
 
         } else {
 
-            this._kademliaNode.rules.receiveSerialized( id, ws.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, decoded[2], (err, buffer )=>{
+            this._kademliaNode.rules.receiveSerialized( ws, id, ws.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, decoded[2], (err, buffer )=>{
 
                 if (err) return;
 
@@ -252,5 +258,7 @@ module.exports = function (kademliaRules){
     function receiveSerialize (id, srcContact, out ) {
         return bencode.encode( BufferHelper.serializeData([ 1, id, out] ) )
     }
+
+
 
 }

@@ -66,7 +66,7 @@ module.exports = function (kademliaRules) {
         }
 
         setTimeout(()=>{
-            KAD_MOCKUP[destContact.mockId].receiveSerialized( undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK, buffer, cb );
+            KAD_MOCKUP[destContact.mockId].receiveSerialized( undefined, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK, buffer, cb );
         }, Math.floor( Math.random() * 100) + 10)
 
     }

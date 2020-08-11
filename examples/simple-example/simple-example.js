@@ -23,10 +23,10 @@ const nodes = array.map(
     (contact, index) => new KAD.KademliaNode(
         path.resolve( __dirname + '/_temp/' + index ),
         [
-            KAD.plugins.PluginContactRelay.plugin,
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
             KAD.plugins.PluginKademliaNodeWebSocket.plugin,
+            KAD.plugins.PluginContactRelay.plugin,
         ],
     ) )
 
@@ -39,7 +39,7 @@ async.eachLimit( array, 1, (index, next ) => {
 }, (err, out)=>{
 
     //encountering
-    const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];
+    const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[5,4]];
     async.eachLimit( connections, 1, ( connection, next) =>{
 
         nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, ()=>{

@@ -118,7 +118,7 @@ module.exports = class KademliaNode extends EventEmitter {
 
         return new Promise((resolve, reject)=>{
 
-            this.contactStorage.loadContact( async (err, out) =>{
+            this.contactStorage.loadContact( opts, async (err, out) =>{
 
                 if (err) return reject(err);
                 if (out) {

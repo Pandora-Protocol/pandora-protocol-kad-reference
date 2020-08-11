@@ -3,13 +3,9 @@ const ContactAddressProtocolType = require('../../contact/contact-address-protoc
 module.exports = function(kademliaNode) {
 
     kademliaNode.plugins.contactPlugins.push({
-        createInitialize,
         create,
     })
 
-    function createInitialize(){
-
-    }
 
     function create(){
 

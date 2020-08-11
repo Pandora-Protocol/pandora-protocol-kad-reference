@@ -10,6 +10,7 @@ module.exports = function (contactStorage){
         const out = await _createContactArgs(opts);
 
         return {
+            ...out,
             args: [
                 ...out.args,
                 opts.mockId,

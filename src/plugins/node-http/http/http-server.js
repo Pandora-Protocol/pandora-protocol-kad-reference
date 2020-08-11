@@ -135,7 +135,7 @@ module.exports = class HTTPServer extends EventEmitter {
                 }
             };
 
-            this._kademliaNode.rules.receiveSerialized( id, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, (err, buffer)=>{
+            this._kademliaNode.rules.receiveSerialized( res, id, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, (err, buffer)=>{
 
                 if (this._kademliaNode.rules._pending['http'+id]) {
                     this._kademliaNode.rules._pending['http'+id].cb(200, buffer);

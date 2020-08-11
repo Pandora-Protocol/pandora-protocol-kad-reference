@@ -73,8 +73,7 @@ module.exports = class KademliaRules {
         if ( destContact.identity && destContact.identity.equals(this._kademliaNode.contact.identity) )
             return cb(new Error("Can't contact myself"));
 
-        const protocol = KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
-
+        let protocol = KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
         if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
 
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
@@ -115,7 +114,7 @@ module.exports = class KademliaRules {
 
     }
 
-    receiveSerialized( id, srcContact, protocol, buffer, cb){
+    receiveSerialized( req, id, srcContact, protocol, buffer, cb){
 
         const decoded = this.decodeReceiveAnswer( id, srcContact, buffer );
         if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
@@ -127,13 +126,9 @@ module.exports = class KademliaRules {
         const command = decoded[c++];
         const data = decoded[c++];
 
-        this.receive( id, srcContact, command, data, (err, out )=>{
+        this.receive( req, id, srcContact, command, data, (err, out )=>{
 
             if (err) return cb(err);
-
-            const protocol = KAD_OPTIONS.TEST_PROTOCOL || srcContact.getProtocol(command, data);
-
-            if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
 
             const {receiveSerialize} = this._protocolSpecifics[protocol];
             const buffer = receiveSerialize(id, srcContact, out );
@@ -143,10 +138,10 @@ module.exports = class KademliaRules {
 
     }
 
-    receive(id, srcContact, command, data, cb){
+    receive(req, id, srcContact, command, data, cb){
 
         if (this._commands[command])
-            return this._commands[command].call(this, srcContact, data, cb);
+            return this._commands[command].call(this, req, srcContact, data, cb);
 
         throw "invalid command";
     }
@@ -155,15 +150,15 @@ module.exports = class KademliaRules {
      * used to verify that a node is still alive.
      * @param cb
      */
-    ping(srcContact, data, cb) {
+    ping(req, srcContact, data, cb) {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
-        cb(null, true);
+        cb(null, [] );
 
     }
 
     sendPing(contact, cb){
-        this.send(contact,'PING', [true],  cb);
+        this.send(contact,'PING', [  ],  cb);
     }
 
     /**
@@ -172,7 +167,7 @@ module.exports = class KademliaRules {
      * @param value
      * @param cb
      */
-    store(srcContact, [table, key, value], cb) {
+    store(req, srcContact, [table, key, value], cb) {
 
         if (!this._allowedStoreTables[table.toString('ascii')])
             return cb(new Error('Table is not allowed'));
@@ -197,7 +192,7 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    findNode( srcContact, [key], cb ){
+    findNode( req, srcContact, [key], cb ){
 
         const err = Validation.checkIdentity(key);
         if (err) return cb(err);
@@ -208,7 +203,7 @@ module.exports = class KademliaRules {
     }
 
     sendFindNode(contact, key, cb){
-        this.send(contact, 'FIND_NODE', [key], cb);
+        this.send(contact,'FIND_NODE', [key], cb);
     }
 
     /**
@@ -216,7 +211,7 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    findValue( srcContact, [table, key], cb){
+    findValue( req, srcContact, [table, key], cb){
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
 
@@ -228,8 +223,8 @@ module.exports = class KademliaRules {
 
     }
 
-    sendFindValue(contact, table, key, cb){
-        this.send(contact, 'FIND_VALUE', [table, key], cb);
+    sendFindValue(contact, protocol, table, key, cb){
+        this.send(contact, protocol, 'FIND_VALUE', [table, key], cb);
     }
 
 
@@ -389,17 +384,17 @@ module.exports = class KademliaRules {
         next(null)
     }
 
-    version(srcContact, data, cb){
+    version(req, srcContact, data, cb){
         if (srcContact) this._welcomeIfNewNode(srcContact);
         cb(null, KAD_OPTIONS.VERSION.VERSION);
     }
 
-    app(srcContact, data, cb){
+    app(req, srcContact, data, cb){
         if (srcContact) this._welcomeIfNewNode(srcContact);
         cb(null, KAD_OPTIONS.VERSION.APP);
     }
 
-    identity(srcContact, data, cb){
+    identity(req, srcContact, data, cb){
         if (srcContact) this._welcomeIfNewNode(srcContact);
         cb(null, this._kademliaNode.contact.identity);
     }

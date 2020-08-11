@@ -25,7 +25,8 @@ module.exports = class Contact{
         this._additionalParameters = 4;
 
         for (let i=0; i < kademliaNode.plugins.contactPlugins.length; i++)
-            kademliaNode.plugins.contactPlugins[i].createInitialize.call(this, ...arguments);
+            if (kademliaNode.plugins.contactPlugins[i].createInitialize)
+                kademliaNode.plugins.contactPlugins[i].createInitialize.call(this, ...arguments);
 
         for (let i=0; i < kademliaNode.plugins.contactPlugins.length; i++)
             kademliaNode.plugins.contactPlugins[i].create.call(this, ...arguments);

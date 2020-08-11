@@ -4,16 +4,14 @@ const Validation = require('../../helpers/validation')
 module.exports = function(kademliaNode) {
 
     kademliaNode.plugins.contactPlugins.push({
-        createInitialize,
         create,
     })
 
-    function createInitialize(){
-
-    }
 
     function create(){
 
+        this.contactType = arguments[this._additionalParameters++];
+        if (!ContactType._map[this.contactType]) throw "Contact Server Type"
 
         if (this.contactType === ContactType.CONTACT_TYPE_ENABLED){
 
@@ -47,6 +45,8 @@ module.exports = function(kademliaNode) {
 
             const out = _toArray(...arguments);
 
+            out.push(this.contactType);
+
             if (this.contactType === ContactType.CONTACT_TYPE_ENABLED ){
                 out.push(this.protocol);
                 out.push(this.hostname);
@@ -60,6 +60,8 @@ module.exports = function(kademliaNode) {
         function toJSON(){
 
             const out = _toJSON();
+
+            out.contactType = this.contactType;
 
             if (this.contactType === ContactType.CONTACT_TYPE_ENABLED){
                 out.protocol = this.protocol;
@@ -78,6 +80,8 @@ module.exports = function(kademliaNode) {
         function importContactNewer(newContact){
 
             _importContactNewer(newContact);
+
+            this.contactType = newContact.contactType;
 
             if (newContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
                 this.protocol = newContact.protocol;
