@@ -29,29 +29,34 @@ module.exports = function (contactStorage){
         })
     }
 
-    function createContactArgs ( opts, cb ){
+    function createContactArgs ( opts ){
 
-        if (!opts.publicKey) {
-            const keyPair = ECCUtils.createPair();
-            opts.publicKey = keyPair.publicKey;
-            opts.privateKey = keyPair.privateKey;
-        }
+        return new Promise((resolve, reject)=>{
 
-        this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
-
-            if (err) return cb(err);
-
-            opts.nonce = sybilSignature.signature;
-            opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
-
-            try{
-                const out = await _createContactArgs( opts );
-                cb(null, out);
-            }catch(err){
-                cb(err);
+            if (!opts.publicKey) {
+                const keyPair = ECCUtils.createPair();
+                opts.publicKey = keyPair.publicKey;
+                opts.privateKey = keyPair.privateKey;
             }
 
-        } );
+            this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
+
+                if (err) return cb(err);
+
+                opts.nonce = sybilSignature.signature;
+                opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
+
+                try{
+                    const out = await _createContactArgs( opts );
+                    resolve(out);
+                }catch(err){
+                    reject(err);
+                }
+
+            } );
+
+        })
+
 
     }
 

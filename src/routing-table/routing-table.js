@@ -10,7 +10,7 @@ module.exports = class RoutingTable {
         this._kademliaNode = kademliaNode;
 
         this.buckets = new Array(KAD_OPTIONS.BUCKETS_COUNT_B).fill( null );
-        this.buckets = this.buckets.map( (it, index) =>  new KBucket(index) );
+        this.buckets = this.buckets.map( (it, index) => new KBucket(index) );
         this.map = {};
 
         this.refresher = new RoutingTableRefresher(kademliaNode, this);
@@ -177,6 +177,10 @@ module.exports = class RoutingTable {
                     furtherBuckets.push( this.buckets[i] );
 
         return furtherBuckets;
+    }
+
+    get array(){
+        return Object.values(this.map);
     }
 
 }

@@ -75,6 +75,8 @@ module.exports = class KademliaRules {
 
         const protocol = KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
 
+        if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
+
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
         let { id, out } = sendSerialize(destContact, command, data);
 
@@ -130,6 +132,8 @@ module.exports = class KademliaRules {
             if (err) return cb(err);
 
             const protocol = KAD_OPTIONS.TEST_PROTOCOL || srcContact.getProtocol(command, data);
+
+            if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
 
             const {receiveSerialize} = this._protocolSpecifics[protocol];
             const buffer = receiveSerialize(id, srcContact, out );

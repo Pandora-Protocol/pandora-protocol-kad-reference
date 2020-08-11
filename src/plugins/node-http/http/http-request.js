@@ -1,4 +1,4 @@
-const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
+const ContactAddressProtocolType = require('../../../contact/contact-address-protocol-type')
 
 const httpRequest = require('http').request;
 const httpsRequest = require('https').request;

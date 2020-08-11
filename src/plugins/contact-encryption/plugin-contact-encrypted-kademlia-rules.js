@@ -58,6 +58,8 @@ module.exports = function (kademliaRules) {
 
                     if (err) return cb(err);
 
+                    if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
+
                     const {receiveSerialize} = this._protocolSpecifics[protocol];
                     const buffer = receiveSerialize(id, srcContact, out );
                     cb(null, buffer );

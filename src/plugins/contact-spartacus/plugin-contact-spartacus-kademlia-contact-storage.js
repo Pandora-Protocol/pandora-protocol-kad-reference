@@ -16,7 +16,7 @@ module.exports = function (contactStorage){
         }
 
         if (!opts.timestamp)
-            opts.timestamp = Math.floor(new Date().getTime() / 1000);
+            opts.timestamp = Math.floor(new Date().getTime() / 1000) - KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE;
 
         const out = await _createContactArgs(opts);
 

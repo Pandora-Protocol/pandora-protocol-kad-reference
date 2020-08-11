@@ -39,7 +39,7 @@ const nodes = array.map(
 async.eachLimit( array, 1, (index, next ) => {
 
     nodes[index].start( {hostname: '127.0.0.1', port: 10000+index} ).then((out)=>{
-        console.log("START", 10000+index, nodes[index].contact.contactServerType );
+        console.log("START", 10000+index, nodes[index].contact.contactType );
         next(null, out)
     })
 

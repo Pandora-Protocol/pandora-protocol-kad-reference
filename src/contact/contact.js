@@ -1,5 +1,6 @@
 const Validation = require('./../helpers/validation')
 const StringUtils = require('./../helpers/string-utils')
+const bencode = require('bencode');
 
 module.exports = class Contact{
 
@@ -40,6 +41,10 @@ module.exports = class Contact{
         return [ this.app, this.version, this.identity ];
     }
 
+    toArrayBuffer(){
+        return bencode.encode(this.toArray());
+    }
+
     //used for bencode
     static fromArray(kademliaNode, arr){
         return new Contact( ...[ kademliaNode, ...arr] );
@@ -61,6 +66,14 @@ module.exports = class Contact{
         Validation.validateIdentity(newIdentity)
         this._identity = newIdentity;
         this.identityHex = this.identity.toString('hex')
+    }
+
+    importContactNewer(newContact){
+
+    }
+
+    contactUpdated(){
+
     }
 
 }

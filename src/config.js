@@ -42,7 +42,6 @@ module.exports = {
 
         CONTACT_SPARTACUS: {
             T_CONTACT_TIMESTAMP_MAX_DRIFT: 60,
-            T_CONTACT_TIMESTAMP_MIN_DRIFT: 60*60,
             T_CONTACT_TIMESTAMP_DIFF_UPDATE: 15,
         },
         CONTACT_SYBIL_PROTECT: {

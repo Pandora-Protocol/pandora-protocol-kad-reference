@@ -23,6 +23,7 @@ const nodes = array.map(
     (contact, index) => new KAD.KademliaNode(
         path.resolve( __dirname + '/_temp/' + index ),
         [
+            KAD.plugins.PluginContactRelay.plugin,
             KAD.plugins.PluginKademliaNodeMock.plugin,
             KAD.plugins.PluginKademliaNodeHTTP.plugin,
             KAD.plugins.PluginKademliaNodeWebSocket.plugin,
@@ -31,7 +32,7 @@ const nodes = array.map(
 
 async.eachLimit( array, 1, (index, next ) => {
 
-    nodes[index].start( {port: 10000+index} ).then((out)=>{
+    nodes[index].start( {port: 10096+index} ).then((out)=>{
         next(null, out)
     })
 
@@ -60,8 +61,13 @@ async.eachLimit( array, 1, (index, next ) => {
         nodes[3].crawler.iterativeStoreValue( Buffer.alloc(0), query2, 'query2', (err, out)=>{
             console.log("iterativeStoreValue", out);
 
-            nodes[5].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
+            nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
                 console.log("iterativeFindValue2", out);
+
+                nodes[5].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
+                    console.log("iterativeFindValue2", out);
+                })
+
             })
 
         })

@@ -1,13 +1,15 @@
 const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
+
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
 const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
-const HTTPRequest = require('./http-request')
+const HTTPRequest = require('./http/http-request')
+const NextTick = require('../../helpers/next-tick')
 
 module.exports = function (kademliaRules) {
 
     if (typeof BROWSER === "undefined"){
-        const HTTPServer = require('./http-server');
+        const HTTPServer = require('./http/http-server');
         kademliaRules._httpServer = new HTTPServer( kademliaRules._kademliaNode );
     }
 
@@ -18,6 +20,7 @@ module.exports = function (kademliaRules) {
 
     const _stop = kademliaRules.stop.bind(kademliaRules);
     kademliaRules.stop = stop;
+
 
     async function start(opts ){
 

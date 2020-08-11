@@ -56,14 +56,8 @@ module.exports = class KademliaNode extends EventEmitter {
         this._starting = false;
         this._started = true;
 
-        return new Promise((resolve, reject)=>{
 
-            this.initializeNode( {...opts, out},(err, out)=>{
-                if (err) return reject(err);
-                resolve(out);
-            })
-
-        })
+        return this.initializeNode( {...opts, out} );
 
     }
 
@@ -79,8 +73,6 @@ module.exports = class KademliaNode extends EventEmitter {
      * Bootstrap by connecting to other known node in the network.
      */
     bootstrap(contact, first, cb = ()=>{} ){
-        if (this.routingTable.map[ contact.identityHex ]) return cb(null, [] ); //already
-
         this.join(contact, first, cb)
     }
 
@@ -104,9 +96,7 @@ module.exports = class KademliaNode extends EventEmitter {
 
             const bucketsClosest = this.routingTable.getBucketsBeyondClosest();
             if (bucketsClosest.length)
-                this.routingTable.refresher.refresh( bucketsClosest[0].bucketIndex, ()=> {
-                });
-
+                this.routingTable.refresher.refresh( bucketsClosest[0].bucketIndex, ()=> { });
 
             if (!first && this.routingTable.count === 1){
                 this.routingTable.removeContact( contact );
@@ -124,30 +114,35 @@ module.exports = class KademliaNode extends EventEmitter {
         } );
     }
 
-    initializeNode( opts, cb ){
+    async initializeNode( opts ){
 
-        this.contactStorage.loadContact( async (err, out) =>{
+        return new Promise((resolve, reject)=>{
 
-            if (err) return cb(err);
-            if (out) {
-                this.rules.initContact(this.contact);
-                return cb(null, out);
-            }
+            this.contactStorage.loadContact( async (err, out) =>{
 
-            try{
-                const contactArgs = await this.contactStorage.createContactArgs( opts );
-                this.contactStorage.setContact( contactArgs, false, true, (err, out)=>{
-                    if (err) return cb(err)
-
+                if (err) return reject(err);
+                if (out) {
                     this.rules.initContact(this.contact);
-                    cb(null, out);
+                    return resolve(out);
+                }
 
-                })
-            }catch(err){
-                cb(err);
-            }
+                try{
+                    const contactArgs = await this.contactStorage.createContactArgs( opts );
+                    this.contactStorage.setContact( contactArgs, false, true, (err, out)=>{
+                        if (err) return reject(err)
 
-        });
+                        this.rules.initContact(this.contact);
+                        resolve(out);
+
+                    })
+                }catch(err){
+                    reject(err);
+                }
+
+            });
+
+        })
+
 
     }
 

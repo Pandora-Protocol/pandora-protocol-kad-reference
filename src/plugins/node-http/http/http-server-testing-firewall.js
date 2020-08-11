@@ -44,7 +44,7 @@ module.exports = class HttpServerTestingFirewall {
                     if (res.statusCode === 200 && output === this._id)
                         resolve(true);
                     else
-                        reject(data);
+                        reject(new Error('Answer is invalid'));
                 });
 
             });

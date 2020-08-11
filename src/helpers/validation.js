@@ -33,10 +33,6 @@ module.exports.validateIdentity = (identity, text )=>{
     if (err) throw err;
 }
 
-module.exports.validateContactVersion = ( version  )=>{
-    if (version !== 0) throw "Invalid Contact Version";
-}
-
 module.exports.checkStoreTable = (table) => {
     if (typeof table !== "string" && table.length > 64 ) return new Error("Table is invalid");
 }
