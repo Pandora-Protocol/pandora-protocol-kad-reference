@@ -2,73 +2,71 @@ const ContactAddressProtocolType = require('../../contact/contact-address-protoc
 
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
-const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
 const HTTPRequest = require('./http/http-request')
-const NextTick = require('../../helpers/next-tick')
 
-module.exports = function (kademliaRules) {
+module.exports = function (options) {
 
-    if (typeof BROWSER === "undefined"){
-        const HTTPServer = require('./http/http-server');
-        kademliaRules._httpServer = new HTTPServer( kademliaRules._kademliaNode );
-    }
+    return class NewRules extends options.Rules{
 
-    kademliaRules._httpRequest = new HTTPRequest(kademliaRules);
+        constructor() {
 
-    const _start = kademliaRules.start.bind(kademliaRules);
-    kademliaRules.start = start;
+            super(...arguments);
 
-    const _stop = kademliaRules.stop.bind(kademliaRules);
-    kademliaRules.stop = stop;
+            this._httpRequest = new HTTPRequest(this);
+
+            if (typeof BROWSER === "undefined"){
+                const HTTPServer = require('./http/http-server');
+                this._httpServer = new HTTPServer( this._kademliaNode );
+            }
 
 
-    async function start(opts ){
-
-        const out = await _start(opts);
-
-        if (this._httpServer)
-            return {
-                ...out,
-                ... ( await this._httpServer.start(opts ) )
+            if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP === undefined) throw new Error('HTTP protocol was not initialized.');
+            this._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP] =
+            this._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS] = {
+                sendSerialize: this._httpSendSerialize.bind(this),
+                sendSerialized: this._httpSendSerialized.bind(this),
+                receiveSerialize: this._httpReceiveSerialize.bind(this),
             };
-        else
-            return out;
-    }
 
-    function stop(){
-        _stop(...arguments);
-
-        if (this._httpServer)
-            this._httpServer.stop();
-    }
-
-
-
-
-
-    if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP === undefined) throw new Error('HTTP protocol was not initialized.');
-    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP] =
-    kademliaRules._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTPS] = {
-        sendSerialize: sendSerialize.bind(kademliaRules),
-        sendSerialized: sendSerialized.bind(kademliaRules),
-        receiveSerialize: receiveSerialize.bind(kademliaRules),
-    };
-
-    function sendSerialize (destContact, command, data) {
-        const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-        return {
-            id,
-            out: [ this._kademliaNode.contact, command, data ],
         }
-    }
 
-    function sendSerialized (id, destContact, protocol, command, data, cb) {
-        const buffer = Buffer.isBuffer(data) ? data : bencode.encode( data );
-        this._httpRequest.request( id, destContact, protocol, buffer, cb )
-    }
+        async start(opts ){
 
-    function receiveSerialize (id, srcContact, out )  {
-        return bencode.encode( BufferHelper.serializeData(out) );
+            const out = await super.start(opts);
+
+            if (this._httpServer)
+                return {
+                    ...out,
+                    ... ( await this._httpServer.start(opts ) )
+                };
+            else
+                return out;
+        }
+
+        stop(){
+            super.stop(...arguments);
+
+            if (this._httpServer)
+                this._httpServer.stop();
+        }
+
+        _httpSendSerialize (destContact, command, data) {
+            const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+            return {
+                id,
+                out: [ this._kademliaNode.contact, command, data ],
+            }
+        }
+
+        _httpSendSerialized (id, destContact, protocol, command, data, cb) {
+            const buffer = Buffer.isBuffer(data) ? data : bencode.encode( data );
+            this._httpRequest.request( id, destContact, protocol, buffer, cb )
+        }
+
+        _httpReceiveSerialize (id, srcContact, out )  {
+            return bencode.encode( BufferHelper.serializeData(out) );
+        }
+
     }
 
 }

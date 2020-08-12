@@ -14,7 +14,7 @@ module.exports = class Crawler {
             1
         );
 
-        this.cntactRefresher = new ContactRefresher(kademliaNode);
+        this.contactRefresher = new ContactRefresher(kademliaNode);
 
     }
 

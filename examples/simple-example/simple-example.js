@@ -8,10 +8,6 @@ console.log("Simple KAD");
 
 const COUNT = 6;
 
-KAD.plugins.PluginKademliaNodeMock.initialize();
-KAD.plugins.PluginKademliaNodeHTTP.initialize();
-KAD.plugins.PluginKademliaNodeWebSocket.initialize();
-
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
@@ -23,10 +19,10 @@ const nodes = array.map(
     (contact, index) => new KAD.KademliaNode(
         path.resolve( __dirname + '/_temp/' + index ),
         [
-            KAD.plugins.PluginKademliaNodeMock.plugin,
-            KAD.plugins.PluginKademliaNodeHTTP.plugin,
-            KAD.plugins.PluginKademliaNodeWebSocket.plugin,
-            KAD.plugins.PluginContactRelay.plugin,
+            KAD.plugins.PluginKademliaNodeMock,
+            KAD.plugins.PluginKademliaNodeHTTP,
+            KAD.plugins.PluginKademliaNodeWebSocket,
+            KAD.plugins.PluginContactRelay,
         ],
     ) )
 
@@ -68,7 +64,7 @@ async.eachLimit( array, 1, (index, next ) => {
                     console.log("iterativeFindValue2", out);
                 })
 
-                nodes[4].rules.sendPing(nodes[5].contact,(err, out)=>{
+                nodes[3].rules.sendPing(nodes[5].contact,(err, out)=>{
 
                 })
 

@@ -1,75 +1,42 @@
 const ContactType = require('../contact-relay/contact-type')
 const Validation = require('../../helpers/validation')
 
-module.exports = function(kademliaNode) {
+module.exports = function(options) {
 
-    kademliaNode.plugins.contactPlugins.push({
-        create,
-    })
+    return class MyContact extends options.Contact {
 
-    function create(){
+        constructor() {
 
-        this.contactType = arguments[this._additionalParameters++];
-        if (!ContactType._map[this.contactType]) throw "Contact Server Type"
+            super(...arguments);
 
-        if (this.contactType === ContactType.CONTACT_TYPE_ENABLED){
+            this.contactType = arguments[this._argumentIndex++];
+            if (!ContactType._map[this.contactType]) throw "Contact Server Type"
 
-            this.protocol = arguments[this._additionalParameters++];
-            Validation.validateProtocol(this.protocol);
-
-            this.hostname = arguments[this._additionalParameters++].toString('ascii');
-            Validation.validateHostname(this.hostname);
-
-            this.port = arguments[this._additionalParameters++];
-            Validation.validatePort(this.port);
-
-            this.path = arguments[this._additionalParameters++].toString('ascii');
-            Validation.validatePath(this.path);
-
-        }
-
-        const _toArray = this.toArray.bind(this);
-        this.toArray = toArray;
-
-        const _toJSON = this.toJSON.bind(this);
-        this.toJSON = toJSON;
-
-        this.getProtocol = getProtocol;
-
-        //used for bencode
-        function toArray(){
-
-            const out = _toArray(...arguments);
-
-            out.push(this.contactType);
-
-            if (this.contactType === ContactType.CONTACT_TYPE_ENABLED ){
-                out.push(this.protocol);
-                out.push(this.hostname);
-                out.push(this.port);
-                out.push(this.path);
-            }
-
-            return out;
-        }
-
-        function toJSON(){
-
-            const out = _toJSON();
-
-            out.contactType = this.contactType;
+            this._keys.push('contactType');
 
             if (this.contactType === ContactType.CONTACT_TYPE_ENABLED){
-                out.protocol = this.protocol;
-                out.hostname = this.hostname;
-                out.port = this.port;
-                out.path = this.path;
+
+                this.protocol = arguments[this._argumentIndex++];
+                Validation.validateProtocol(this.protocol);
+
+                this.hostname = arguments[this._argumentIndex++].toString('ascii');
+                Validation.validateHostname(this.hostname);
+
+                this.port = arguments[this._argumentIndex++];
+                Validation.validatePort(this.port);
+
+                this.path = arguments[this._argumentIndex++].toString('ascii');
+                Validation.validatePath(this.path);
+
+                this._keys.push('protocol', 'hostname', 'port', 'path');
+
             }
 
-            return out;
+            this._allKeys.push('contactType', 'protocol', 'hostname', 'port', 'path');
+
         }
 
-        function getProtocol(command, data){
+        getProtocol(command, data){
             return this.protocol;
         }
 

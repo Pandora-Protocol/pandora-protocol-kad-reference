@@ -1,35 +1,43 @@
 const Validation = require('./../helpers/validation')
-const StringUtils = require('./../helpers/string-utils')
 const bencode = require('bencode');
 
 module.exports = class Contact{
 
-    constructor(  kademliaNode, app, version, identity ){
+    constructor(  kademliaNode ){
 
         this._kademliaNode = kademliaNode;
 
-        if (Buffer.isBuffer(app)) app = app.toString('ascii')
-        if (Buffer.isBuffer(version)) version = version.toString('ascii')
+        this._argumentIndex = 1;
 
-        if (app !== KAD_OPTIONS.VERSION.APP)
+        this.app = arguments[this._argumentIndex++].toString('ascii');
+        if (this.app !== KAD_OPTIONS.VERSION.APP)
             throw "Contact App is not matching"
 
-        if (version < KAD_OPTIONS.VERSION.VERSION_COMPATIBILITY )
+        this.version = arguments[this._argumentIndex++];
+        if (this.version < KAD_OPTIONS.VERSION.VERSION_COMPATIBILITY )
             throw "Contact Version is not compatible"
 
-        this.app = app;
-        this.version = version;
+        this.identity = arguments[this._argumentIndex++];
 
-        this.identity = identity;
+        this._keys = ['app', 'version', 'identity'];
+        this._allKeys = ['app', 'version', 'identity'];
 
-        this._additionalParameters = 4;
+    }
 
-        for (let i=0; i < kademliaNode.plugins.contactPlugins.length; i++)
-            if (kademliaNode.plugins.contactPlugins[i].createInitialize)
-                kademliaNode.plugins.contactPlugins[i].createInitialize.call(this, ...arguments);
+    addKey(key){
 
-        for (let i=0; i < kademliaNode.plugins.contactPlugins.length; i++)
-            kademliaNode.plugins.contactPlugins[i].create.call(this, ...arguments);
+        if (this._keys.indexOf(key) === -1){
+
+            for (let i = this._allKeys.indexOf(key)-1; i >= 0; i--){
+                const pos = this._keys.indexOf( this._allKeys[i] );
+                if (pos !== -1) {
+                    this._keys.splice(pos+1, 0, key);
+                    return;
+                }
+            }
+        }
+
+        this._keys.shift(key);
 
     }
 
@@ -39,7 +47,12 @@ module.exports = class Contact{
 
     //used for bencode
     toArray(){
-        return [ this.app, this.version, this.identity ];
+
+        let arr = [];
+        for (const key in this._keys)
+            arr.push( this[ this._keys[key] ])
+
+        return arr;
     }
 
     toArrayBuffer(){
@@ -48,7 +61,7 @@ module.exports = class Contact{
 
     //used for bencode
     static fromArray(kademliaNode, arr){
-        return new Contact( ...[ kademliaNode, ...arr] );
+        return new kademliaNode.Contact( ...[ kademliaNode, ...arr] );
     }
 
     toJSON(){

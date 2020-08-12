@@ -1,23 +1,24 @@
-module.exports = function (contactStorage){
+module.exports = function (options){
 
-    const _createContactArgs = contactStorage.createContactArgs;
-    contactStorage.createContactArgs = createContactArgs;
+    return class NewStorage extends options.ContactStorage{
 
-    async function createContactArgs ( opts ){
+        async createContactArgs ( opts ){
 
-        if (!opts.mockId) opts.mockId = opts.out.mock.mockId;
+            if (!opts.mockId) opts.mockId = opts.out.mock.mockId;
 
-        const out = await _createContactArgs(opts);
+            const out = await super.createContactArgs(opts);
 
-        return {
-            ...out,
-            args: [
-                ...out.args,
-                opts.mockId,
-            ]
-        };
+            return {
+                ...out,
+                args: [
+                    ...out.args,
+                    opts.mockId,
+                ]
+            };
+
+        }
+
 
     }
-
 
 }

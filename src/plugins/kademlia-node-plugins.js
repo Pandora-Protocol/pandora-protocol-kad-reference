@@ -9,17 +9,22 @@ module.exports = class KademliaNodePlugins {
         this.contactPlugins = [];
     }
 
-    install(plugins){
+    install(plugins, options){
+
         for (const plugin of plugins)
-            this._use(plugin);
+            if (plugin.initialize)
+                plugin.initialize();
+
+        for (const plugin of plugins)
+            this._use(plugin.plugin, options);
     }
 
     //plugin
-    _use(plugin){
+    _use(plugin, options){
 
         if (!plugin || typeof plugin !== "function" ) throw "Invalid plugin";
 
-        const {name, version, success} = plugin(this._kademliaNode);
+        const {name, version, success} = plugin(this._kademliaNode, options);
         const data = {name, version, success};
 
         this.installed.push( data );

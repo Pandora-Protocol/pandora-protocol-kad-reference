@@ -1,38 +1,26 @@
 const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
 
-module.exports = function(kademliaNode) {
+module.exports = function (options) {
 
-    kademliaNode.plugins.contactPlugins.push({
-        create,
-    })
+    return class NewContact extends options.Contact{
 
+        constructor(  ) {
 
-    function create(){
+            super(...arguments);
 
-        this.mockId = arguments[this._additionalParameters++].toString('ascii');
-        if (!this.mockId || typeof this.mockId !== "string") throw "Mock id is invalid";
+            this.mockId = arguments[this._argumentIndex++].toString('ascii');
+            if (typeof this.mockId !== "string")
+                throw "MockId is invalid"
 
-        const _toArray = this.toArray.bind(this);
-        this.toArray = toArray;
+            this._keys.push('mockId');
+            this._allKeys.push('mockId');
 
-        const _toJSON = this.toJSON.bind(this);
-        this.toJSON = toJSON;
-
-        //used for bencode
-        function toArray(){
-            return [ ..._toArray(...arguments), this.mockId ];
         }
 
-        function toJSON(){
-            return {
-                ..._toJSON(),
-                mockId: this.mockId,
-            }
-        }
-
-        function getProtocol(command, data){
+        getProtocol(command, data){
             return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
         }
 
     }
+
 }

@@ -2,12 +2,12 @@ const RoutingTable = require('./routing-table/routing-table')
 const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
 const EventEmitter = require('events');
-const KademliaNodePlugins = require('./plugins/kademlia-node-plugins')
-
+const Contact = require('./contact/contact')
 
 const MemoryStore = require('./store/store-memory')
 const Storage = require('./storage/storage')
 const ContactStorage = require('./contact/contact-storage')
+const KademliaNodePlugins = require('./plugins/kademlia-node-plugins')
 
 module.exports = class KademliaNode extends EventEmitter {
 
@@ -15,21 +15,32 @@ module.exports = class KademliaNode extends EventEmitter {
 
         super();
 
+        options = {
+            Contact,
+            Storage,
+            ContactStorage,
+            Store: MemoryStore,
+            RoutingTable,
+            Rules: KademliaRules,
+            Crawler,
+            ...options,
+        }
+
+        this.plugins = new KademliaNodePlugins(this)
+        this.plugins.install(plugins, options);
+
+        this.Contact = options.Contact;
+
         this._index = index;
 
-        this.plugins = new KademliaNodePlugins(this);
+        this.storage = new options.Storage (index.toString());
+        this._store = new  options.Store(index);
 
-        this.storage = new (options.Storage || Storage)(index.toString());
-        this._store = new (options.Store || MemoryStore)(index);
+        this.contactStorage = new options.ContactStorage(this);
 
-        this.contactStorage = new ContactStorage(this);
-
-        this.routingTable = new RoutingTable(this);
-        this.rules = new (options.KademliaRules || KademliaRules) ( this, this._store );
-        this.crawler = new Crawler(this);
-
-        this.plugins.install(plugins);
-
+        this.routingTable = new options.RoutingTable(this);
+        this.rules = new options.Rules ( this, this._store );
+        this.crawler = new options.Crawler(this);
 
         this._started = false;
         this._starting = false;
@@ -38,7 +49,6 @@ module.exports = class KademliaNode extends EventEmitter {
     get contact(){
         return this._contact;
     }
-
 
     async start(opts = {}) {
 

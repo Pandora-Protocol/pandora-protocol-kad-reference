@@ -1,63 +1,38 @@
 const ContactType = require('./contact-type')
 const ContactAddressProtocolType = require('./../../contact/contact-address-protocol-type')
-const PluginNodeWebsocket = require('../node-websocket/index')
 
 const Contact = require('../../contact/contact')
 const bencode = require('bencode');
 
-module.exports = function(kademliaNode) {
+module.exports = function(options) {
 
-    kademliaNode.plugins.contactPlugins.push({
-        create,
-    })
+    return class MyContact extends options.Contact{
 
-    function create(){
+        constructor() {
 
-        const _toArray = this.toArray.bind(this);
-        this.toArray = toArray;
+            super(...arguments);
 
-        const _toJSON = this.toJSON.bind(this);
-        this.toJSON = toJSON;
+            if (this.contactType === ContactType.CONTACT_TYPE_RELAY) {
 
-        const _getProtocol = this.getProtocol.bind(this)
-        this.getProtocol = getProtocol;
+                this.relay = arguments[this._argumentIndex++];
+                this.relayContact = Contact.fromArray(this._kademliaNode, bencode.decode(this.relay) );
 
-        if (this.contactType === ContactType.CONTACT_TYPE_RELAY){
-            this.relay = arguments[this._additionalParameters++];
-            this.relayContact = Contact.fromArray(this._kademliaNode, bencode.decode(this.relay) );
+                this._keys.push('relay');
+
+            }
+
+            this._allKeys.push('relay');
+
         }
 
-        function toArray(){
-
-            const out = _toArray(...arguments);
-
-            if (this.contactType === ContactType.CONTACT_TYPE_RELAY)
-                out.push(this.relay);
-
-            return out;
-        }
-
-        function toJSON() {
-
-            const out = _toJSON();
-
-            if (this.contactType === ContactType.CONTACT_TYPE_RELAY)
-                out.relay = this.relay.toString('hex');
-
-            return out;
-        }
-
-
-        function getProtocol(command, data){
+        getProtocol(command, data){
 
             if (command === 'RELAY_JOIN')
-                return PluginNodeWebsocket.utils.convertProtocolToWebSocket(this.protocol);
+                return this.convertProtocolToWebSocket();
 
-            return _getProtocol(command, data);
+            return super.getProtocol(command, data);
         }
 
     }
-
-
 
 }
