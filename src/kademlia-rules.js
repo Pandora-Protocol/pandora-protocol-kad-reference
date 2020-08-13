@@ -67,12 +67,16 @@ module.exports = class KademliaRules {
         cb(null, bencode.encode(BufferHelper.serializeData(data) ) );
     }
 
+    _sendGetProtocol(destContact, command, data){
+        return KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
+    }
+
     send(destContact, command, data, cb){
 
         if ( destContact.identity && destContact.identity.equals(this._kademliaNode.contact.identity) )
             return cb(new Error("Can't contact myself"));
 
-        let protocol = KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
+        let protocol = this._sendGetProtocol(destContact, command, data);
         if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
 
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
@@ -152,7 +156,7 @@ module.exports = class KademliaRules {
     ping(req, srcContact, data, cb) {
 
         if (srcContact) this._welcomeIfNewNode(srcContact);
-        cb(null, [] );
+        cb(null, [1] );
 
     }
 

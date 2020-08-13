@@ -25,6 +25,13 @@ module.exports = function (options){
 
         }
 
+        _sendGetProtocol(destContact){
+            if (this.webSocketActiveConnectionsByContactsMap[destContact.identityHex])
+                return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
+
+            return super._sendGetProtocol(...arguments);
+        }
+
         async start(opts){
 
             const out = await super.start(opts);
@@ -66,10 +73,14 @@ module.exports = function (options){
 
         }
 
+        _getTimeoutWebSocketTime(ws){
+            return KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
+        }
+
         _setTimeoutWebSocket(ws){
             this._pending['ws'+ws.id] = {
                 timestamp: new Date().getTime(),
-                time: KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY,
+                time: this._getTimeoutWebSocketTime(ws),
                 timeout: () => ws.close(),
             }
         }
@@ -80,7 +91,10 @@ module.exports = function (options){
 
             //connected twice
             if (this.webSocketActiveConnectionsMap[address] || this.webSocketActiveConnectionsByContactsMap[contact.identityHex]){
-                ws.close();
+
+                if (ws.readyState !== 3) //WebSocket.CLOSED
+                    ws.close();
+
                 return cb(new Error('Already connected'));
             }
 
@@ -200,7 +214,7 @@ module.exports = function (options){
 
         _sendWebSocketWaitAnswer(ws, id, buffer, cb){
 
-            if (ws.readyState !== 1)
+            if (ws.readyState !== 1 ) //WebSocket.OPEN
                 ws._queue.push( {id, buffer, cb} );
             else {
 

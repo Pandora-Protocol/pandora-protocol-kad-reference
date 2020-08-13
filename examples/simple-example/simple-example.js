@@ -65,7 +65,7 @@ async.eachLimit( array, 1, (index, next ) => {
                 })
 
                 nodes[3].rules.sendPing(nodes[5].contact,(err, out)=>{
-
+                    console.log("reverse connection", out[0] === 1 );
                 })
 
             })

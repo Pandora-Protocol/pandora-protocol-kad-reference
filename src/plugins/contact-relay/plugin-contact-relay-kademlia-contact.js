@@ -27,8 +27,7 @@ module.exports = function(options) {
 
         getProtocol(command, data){
 
-            if (command === 'RELAY_JOIN')
-                return this.convertProtocolToWebSocket();
+            if (command === 'RELAY_JOIN' || command === 'REV_CON') return this.convertProtocolToWebSocket();
 
             return super.getProtocol(command, data);
         }

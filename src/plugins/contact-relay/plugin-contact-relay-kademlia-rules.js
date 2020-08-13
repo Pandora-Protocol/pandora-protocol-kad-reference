@@ -13,8 +13,12 @@ module.exports = function(options){
             this._relayedJoined = 0;
             this._relaySocket = null;
 
+            this._relayWait = {};
+
+            this._commands['REV_CON'] = this.reverseConnect.bind(this);
+            this._commands['REQ_REV_CON'] = this.requestReverseConnect.bind(this);
             this._commands['RELAY_JOIN'] = this.relayJoin.bind(this);
-            this._commands['RELAY_REVERSE_CON'] = this.relayReverseConnection.bind(this);
+            this._commands['RELAY_REV_CON'] = this.relayReverseConnection.bind(this);
 
         }
 
@@ -32,12 +36,45 @@ module.exports = function(options){
             clearAsyncInterval( this._asyncIntervalSetRelay );
         }
 
-        _setTimeoutWebSocket(ws){
-            this._pending['ws'+ws.id] = {
-                timestamp: new Date().getTime(),
-                time: (ws.relayed || ws.isRelaySocket) ? KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_RELAY : KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY,
-                timeout: () => ws.close(),
+        _getTimeoutWebSocketTime(ws){
+            return (ws.relayed || ws.isRelaySocket) ? KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_RELAY : KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
+        }
+
+        reverseConnect(req, srcContact, data, cb){
+
+            const pending = this._pending['relay:' + srcContact.identityHex];
+            if (pending) {
+                delete this._pending['relay:' + srcContact.identityHex];
+                pending.resolve(null, true);
             }
+
+            cb(null, 1);
+
+        }
+
+        sendReverseConnect(contact, cb){
+            this.send(contact, 'REV_CON', [], cb)
+        }
+
+        requestReverseConnect(req, srcContact, [contact], cb ){
+
+            if (srcContact) this._welcomeIfNewNode(srcContact);
+
+            try{
+
+                contact = this._kademliaNode.Contact.fromArray(this._kademliaNode, contact);
+                if (contact) this._welcomeIfNewNode(contact);
+
+                this.sendReverseConnect( contact, cb );
+
+            }catch(err){
+                cb(new Error('Invalid Contact'));
+            }
+
+        }
+
+        sendRequestReverseConnect(contact, contactFinal,  cb){
+            this.send(contact, 'REQ_REV_CON', [contactFinal], cb)
         }
 
         relayJoin(req, srcContact, data, cb){
@@ -58,12 +95,24 @@ module.exports = function(options){
             this.send(contact, 'RELAY_JOIN', [  ],  cb);
         }
 
-        relayReverseConnection(req, srcContact, data, cb){
+        relayReverseConnection(req, srcContact, [identity], cb){
 
+            try{
+
+                const identityHex = identity.toString('hex');
+                const ws = this.webSocketActiveConnectionsByContactsMap[ identityHex ];
+                if (!ws)
+                    return cb(new Error('Node is not connected'));
+
+                this.sendRequestReverseConnect(ws.contact, srcContact, cb );
+
+            }catch(err){
+                cb(new Error('Invalid contact'));
+            }
         }
 
-        sendRelayReverseConnection(contact, cb){
-            this.send(contact, 'RELAY_REVERSE_CON', [ this._kademliaNode.contact ],  cb);
+        sendRelayReverseConnection(contact, identity, cb){
+            this.send(contact, 'RELAY_REV_CON', [ identity],  cb);
         }
 
         _selectRelay(array, cb){
@@ -173,7 +222,7 @@ module.exports = function(options){
 
         send(destContact, command, data, cb){
 
-            if (destContact.contactType === ContactType.CONTACT_TYPE_RELAY){
+            if ( !this.webSocketActiveConnectionsByContactsMap[destContact.identityHex] && destContact.contactType === ContactType.CONTACT_TYPE_RELAY){
 
                 //reverse connection
                 if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED){
@@ -181,9 +230,19 @@ module.exports = function(options){
                     if (destContact.relayContact.contactType !== ContactType.CONTACT_TYPE_ENABLED )
                         return cb(new Error("Relay contact type is invalid"));
 
-                    return this.sendRelayReverseConnection( destContact.relayContact, (err, out) => {
+                    this._pending['relay:'+destContact.identityHex] = {
+                        timestamp: new Date().getTime(),
+                        timeout: ()=> cb(new Error('Timeout')),
+                        time: 2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT,
+                        resolve: (out) => super.send(destContact, command, data, cb),
+                    }
 
-                        if (err) return cb(err);
+                    return this.sendRelayReverseConnection( destContact.relayContact, destContact.identity, (err, out) => {
+
+                        if (err && this._pending['relay:'+destContact.identityHex]) {
+                            delete this._pending['relay:'+destContact.identityHex];
+                            return cb(err);
+                        }
 
                     }  );
 
