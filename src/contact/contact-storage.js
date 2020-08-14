@@ -23,7 +23,7 @@ module.exports = class ContactStorage {
 
     _setContact(contactArgs, saveToStorage, cb){
 
-        this._kademliaNode._contact = Contact.fromArray( this._kademliaNode, contactArgs.args );
+        this._kademliaNode._contact = this._kademliaNode.createContact( contactArgs.args );
         this._kademliaNode._contact.mine = true;
 
         if (saveToStorage) {

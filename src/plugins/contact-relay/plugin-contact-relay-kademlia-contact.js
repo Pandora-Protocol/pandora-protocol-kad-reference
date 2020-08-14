@@ -15,7 +15,7 @@ module.exports = function(options) {
             if (this.contactType === ContactType.CONTACT_TYPE_RELAY) {
 
                 this.relay = arguments[this._argumentIndex++];
-                this.relayContact = Contact.fromArray(this._kademliaNode, bencode.decode(this.relay) );
+                this.relayContact = this._kademliaNode.createContact( bencode.decode(this.relay) );
 
                 this._keys.push('relay');
 

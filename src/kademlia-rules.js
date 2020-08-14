@@ -329,7 +329,7 @@ module.exports = class KademliaRules {
                 data[1] = data[1].toString();
             } else {
                 for (let i = 0; i < data[1].length; i++)
-                    data[1][i] = Contact.fromArray(this._kademliaNode, data[1][i]);
+                    data[1][i] = this._kademliaNode.createContact ( data[1][i] );
             }
         }
 
@@ -350,7 +350,7 @@ module.exports = class KademliaRules {
                 decoded[c] = Number.parseInt(decoded[c++]);
 
             if (!srcContact)
-                decoded[c] = Contact.fromArray( this._kademliaNode, decoded[c++] )
+                decoded[c] = this._kademliaNode.createContact( decoded[c++] )
 
             decoded[c] = decoded[c++].toString()
 

@@ -129,7 +129,7 @@ module.exports = class HTTPServer extends EventEmitter {
                     res.statusCode = 504;
                     res.end('Gateway Timeout');
                 },
-                cb: (statusCode, buffer) =>{
+                resolve: (statusCode, buffer) =>{
                     res.statusCode = statusCode;
                     res.end(buffer);
                 }
@@ -138,7 +138,7 @@ module.exports = class HTTPServer extends EventEmitter {
             this._kademliaNode.rules.receiveSerialized( res, id, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, (err, buffer)=>{
 
                 if (this._kademliaNode.rules._pending['http'+id]) {
-                    this._kademliaNode.rules._pending['http'+id].cb(200, buffer);
+                    this._kademliaNode.rules._pending['http'+id].resolve(200, buffer);
                     delete this._kademliaNode.rules._pending['http'+id];
                 }
 

@@ -22,7 +22,7 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
             try{
                 const decoded = bencode.decode( out );
-                const contact = Contact.fromArray(this._kademliaNode, decoded);
+                const contact = this._kademliaNode.createContact( decoded );
                 ws._kadInitialized = true;
                 ws.contact = contact;
 

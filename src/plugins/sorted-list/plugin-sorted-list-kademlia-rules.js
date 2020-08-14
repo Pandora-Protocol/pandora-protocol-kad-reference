@@ -74,7 +74,7 @@ module.exports = function SortedListKademliaRules (kademliaRules) {
                 return data;
             } else {
                 for (let i = 0; i < data[1].length; i++)
-                    data[1][i] = Contact.fromArray(this._kademliaNode, data[1][i]);
+                    data[1][i] = this._kademliaNode.createContact( data[1][i] );
 
                 return data;
             }

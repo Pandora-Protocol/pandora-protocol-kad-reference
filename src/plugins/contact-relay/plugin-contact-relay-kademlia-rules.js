@@ -62,7 +62,7 @@ module.exports = function(options){
 
             try{
 
-                contact = this._kademliaNode.Contact.fromArray(this._kademliaNode, contact);
+                contact = this._kademliaNode.createContact( contact );
                 if (contact) this._welcomeIfNewNode(contact);
 
                 this.sendReverseConnect( contact, cb );

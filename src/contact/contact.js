@@ -37,12 +37,12 @@ module.exports = class Contact{
             }
         }
 
-        this._keys.shift(key);
+        this._keys.unshift(key);
 
     }
 
     clone(){
-        return Contact.fromArray( this._kademliaNode, this.toArray() );
+        return this._kademliaNode.createContact( this.toArray() );
     }
 
     //used for bencode
@@ -59,17 +59,13 @@ module.exports = class Contact{
         return bencode.encode(this.toArray());
     }
 
-    //used for bencode
-    static fromArray(kademliaNode, arr){
-        return new kademliaNode.Contact( ...[ kademliaNode, ...arr] );
-    }
-
     toJSON(){
-        return {
-            app: this.app,
-            version: this.version,
-            identity: this.identityHex,
-        }
+
+        const obj = {};
+        for (const key in this._keys)
+            obj[key] = this[key];
+
+        return obj;
     }
 
     get identity(){

@@ -11,7 +11,12 @@ module.exports = class Crawler {
 
         this._updateContactQueue = async.queue(
             (task, cb) => this._updateContactWorker(task, cb),
-            1
+            KAD_OPTIONS.ALPHA_CONCURRENCY,
+        );
+
+        this._storeMissingKeysQueue = async.queue(
+            (task, cb) => this._sendStoreMissingKeyWorker(task, cb),
+            KAD_OPTIONS.ALPHA_CONCURRENCY,
         );
 
         this.contactRefresher = new ContactRefresher(kademliaNode);
@@ -76,15 +81,6 @@ module.exports = class Crawler {
 
     }
 
-    _sendStoreMissingKey( table, closestMissingValue, methodStore, key, data, cb ){
-
-        let out;
-        if (Array.isArray(data)) out = [table, key, ...data]
-        else out = [table,  key, data];
-
-        this._kademliaNode.rules.send( closestMissingValue, methodStore, out, cb);
-    }
-
     _iterativeFind( table, method, methodStore, key, cb){
 
         const data = ( method === 'FIND_NODE' ) ? [key] : [table, key];
@@ -132,14 +128,13 @@ module.exports = class Crawler {
                     const closestMissingValue = shortlist.active[0];
 
                     if (closestMissingValue) {
-                        if (Array.isArray(result[1])){
 
-                            async.eachLimit(result[1], KAD_OPTIONS.ALPHA_CONCURRENCY,
-                                ( data, next ) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
-                                ()=>{});
+                        const elements = Array.isArray(result[1]) ? result[1] : [ result[1] ];
+                        async.eachLimit(elements, KAD_OPTIONS.ALPHA_CONCURRENCY,
+                            this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
+                            ()=> next(null,  result[1])
+                        );
 
-                        } else
-                        this._sendStoreMissingKey(table, closestMissingValue, methodStore, key,  result[1], ()=>{});
                     }
 
                     //  we found a value, so stop searching
@@ -221,7 +216,7 @@ module.exports = class Crawler {
 
         this._updateContactQueue.push( contact, (err, tail )=> {
 
-            if (err) return cb(err, null);
+            if (err) return cb(err);
 
             if (tail && typeof tail === "object"){
                 this._kademliaNode.routingTable.removeContact(tail.contact);
@@ -258,5 +253,17 @@ module.exports = class Crawler {
     }
 
 
+    _sendStoreMissingKey( table, closestMissingValue, methodStore, key, data, cb ){
+
+        let out;
+        if (Array.isArray(data)) out = [table, key, ...data]
+        else out = [table,  key, data];
+
+        this._storeMissingKeysQueue.push({closestMissingValue, methodStore, out}, cb);
+    }
+
+    _sendStoreMissingKeyWorker( {closestMissingValue, methodStore, out}, cb){
+        this._kademliaNode.rules.send( closestMissingValue, methodStore, out, cb);
+    }
 
 }
