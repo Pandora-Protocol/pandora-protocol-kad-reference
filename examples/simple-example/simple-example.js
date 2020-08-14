@@ -35,10 +35,9 @@ async.eachLimit( array, 1, (index, next ) => {
 }, (err, out)=>{
 
     //encountering
-    const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[5,4]];
-    async.eachLimit( connections, 1, ( connection, next) =>{
+    async.eachLimit( array.slice(1), 1, ( index, next) =>{
 
-        nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, true, (err, out)=>{
+        nodes[index].bootstrap( nodes[ 0 ].contact, true, (err, out)=>{
 
             console.log("BOOTSTRAPING...", out.length);
             //fix for websockets

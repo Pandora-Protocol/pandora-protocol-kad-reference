@@ -7,10 +7,6 @@ KAD.init({});
 console.log("Simple KAD");
 const COUNT = 6;
 
-KAD.plugins.PluginKademliaNodeMock.initialize();
-KAD.plugins.PluginKademliaNodeHTTP.initialize();
-KAD.plugins.PluginKademliaNodeWebSocket.initialize();
-
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
@@ -22,10 +18,10 @@ const nodes = array.map(
     (contact, index) => new KAD.KademliaNode(
         path.resolve( __dirname + '/_temp/' + index ),
         [
-            KAD.plugins.PluginKademliaNodeMock.plugin,
-            KAD.plugins.PluginKademliaNodeHTTP.plugin,
-            KAD.plugins.PluginKademliaNodeWebSocket.plugin,
-            KAD.plugins.PluginSortedList.plugin,
+            KAD.plugins.PluginKademliaNodeMock,
+            KAD.plugins.PluginKademliaNodeHTTP,
+            KAD.plugins.PluginKademliaNodeWebSocket,
+            KAD.plugins.PluginSortedList,
         ],
     ) )
 

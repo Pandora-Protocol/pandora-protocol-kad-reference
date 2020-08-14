@@ -35,9 +35,9 @@ module.exports = class Contact{
                     return;
                 }
             }
-        }
+            this._keys.unshift(key);
 
-        this._keys.unshift(key);
+        }
 
     }
 
@@ -45,12 +45,17 @@ module.exports = class Contact{
         return this._kademliaNode.createContact( this.toArray() );
     }
 
-    //used for bencode
     toArray(){
+        return this.toArray();
+    }
+
+    //used for bencode
+    _toArray(filter = {}){
 
         let arr = [];
-        for (const key in this._keys)
-            arr.push( this[ this._keys[key] ])
+        for (const key of this._keys)
+            if (!filter[key])
+                arr.push( this[ key ])
 
         return arr;
     }

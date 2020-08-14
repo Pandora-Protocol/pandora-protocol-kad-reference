@@ -10,6 +10,7 @@ const BufferHelper = require('./helpers/buffer-utils')
 module.exports = class KademliaRules {
 
     constructor(kademliaNode, store) {
+
         this._kademliaNode = kademliaNode;
         this._store = store;
         this._replicatedStoreToNewNodesAlready = {};

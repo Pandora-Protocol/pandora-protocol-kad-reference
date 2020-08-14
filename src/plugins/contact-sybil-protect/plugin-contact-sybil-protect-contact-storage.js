@@ -2,63 +2,63 @@ const CryptoUtils = require('./../../helpers/crypto-utils')
 const ECCUtils = require('./../../helpers/ecc-utils')
 
 
-module.exports = function (contactStorage){
+module.exports = function (options){
 
-    const _createContactArgs = contactStorage.createContactArgs;
-    contactStorage.createContactArgs = createContactArgs;
-    contactStorage.sybilSign = sybilSign;
+    return class MyContactStorage extends options.ContactStorage {
 
-    function sybilSign( message, index, cb){
 
-        if (index === undefined)
-            index = Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
+        sybilSign( message, index, cb){
 
-        const sybilSignature = ECCUtils.sign( KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[index].privateKey, CryptoUtils.sha256( message ) );
+            if (index === undefined)
+                index = Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
 
-        let hex = index.toString(16, 2);
-        if (hex.length === 1) hex = "0"+hex;
+            const sybilSignature = ECCUtils.sign( KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[index].privateKey, CryptoUtils.sha256( message ) );
 
-        const signature = Buffer.concat([
-            Buffer.from( hex, "hex"),
-            sybilSignature,
-        ]);
+            let hex = index.toString(16, 2);
+            if (hex.length === 1) hex = "0"+hex;
 
-        cb(null, {
-            index,
-            signature,
-        })
-    }
+            const signature = Buffer.concat([
+                Buffer.from( hex, "hex"),
+                sybilSignature,
+            ]);
 
-    function createContactArgs ( opts ){
+            cb(null, {
+                index,
+                signature,
+            })
+        }
 
-        return new Promise((resolve, reject)=>{
+        createContactArgs ( opts ){
 
-            if (!opts.publicKey) {
-                const keyPair = ECCUtils.createPair();
-                opts.publicKey = keyPair.publicKey;
-                opts.privateKey = keyPair.privateKey;
-            }
+            return new Promise((resolve, reject)=>{
 
-            this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
-
-                if (err) return cb(err);
-
-                opts.nonce = sybilSignature.signature;
-                opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
-
-                try{
-                    const out = await _createContactArgs( opts );
-                    resolve(out);
-                }catch(err){
-                    reject(err);
+                if (!opts.publicKey) {
+                    const keyPair = ECCUtils.createPair();
+                    opts.publicKey = keyPair.publicKey;
+                    opts.privateKey = keyPair.privateKey;
                 }
 
-            } );
+                this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
 
-        })
+                    if (err) return cb(err);
 
+                    opts.nonce = sybilSignature.signature;
+                    opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
+
+                    try{
+                        const out = await super.createContactArgs( opts );
+                        resolve(out);
+                    }catch(err){
+                        reject(err);
+                    }
+
+                } );
+
+            })
+
+
+        }
 
     }
-
 
 }

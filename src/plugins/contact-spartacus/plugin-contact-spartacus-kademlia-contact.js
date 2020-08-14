@@ -2,122 +2,92 @@ const bencode = require('bencode');
 const ECCUtils = require('../../helpers/ecc-utils')
 const CryptoUtils = require('../../helpers/crypto-utils')
 
-module.exports = function(kademliaNode) {
+module.exports = function(options) {
 
-    if (!kademliaNode.plugins.hasPlugin('PluginContactEncrypted'))
-        throw "PluginContactEncrypted is required";
 
-    kademliaNode.plugins.contactPlugins.push({
-        createInitialize,
-        create,
-    })
+    return class MyContact extends options.Contact{
 
-    function createInitialize(){
-        this._spartacusNonceLength = 0;
-    }
+        constructor() {
 
-    function create(  ){
+            super(...arguments)
 
-        const nonce = arguments[this._additionalParameters++];
-        if (!Buffer.isBuffer(nonce) || nonce.length !== this._spartacusNonceLength) throw "Invalid Contact Public Key";
-        this.nonce = nonce;
+            this.nonce = arguments[this._argumentIndex++];
+            if (!Buffer.isBuffer(this.nonce) || this.nonce.length !== this._spartacusNonceLength) throw "Invalid Contact Public Key";
 
-        const timestamp = arguments[this._additionalParameters++];
-        if (typeof timestamp !== "number") throw "Invalid timestamp";
+            this.timestamp = arguments[this._argumentIndex++];
+            if (typeof this.timestamp !== "number") throw "Invalid timestamp";
 
-        const time = new Date().getTime() / 1000;
-        if (timestamp > time + KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_MAX_DRIFT) throw "Invalid timestamp max drift."
-        this.timestamp = timestamp;
+            if (this.timestamp > new Date().getTime()/1000 + KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_MAX_DRIFT) throw "Invalid timestamp max drift."
 
-        const signature = arguments[this._additionalParameters++];
-        if (!Buffer.isBuffer(signature) || signature.length !== 64) throw "Invalid Contact Public Key";
-        this.signature = signature;
+            this.signature = arguments[this._argumentIndex++];
+            if (!Buffer.isBuffer(this.signature) || this.signature.length !== 64) throw "Invalid Contact Public Key";
 
-        const _toArray = this.toArray.bind(this);
-        this.toArray = toArray;
+            this._keys.push('nonce','timestamp','signature');
+            this._allKeys.push('nonce','timestamp','signature');
 
-        const _toJSON = this.toJSON.bind(this);
-        this.toJSON = toJSON;
+            const skipVerifySpartacus = arguments[this._argumentIndex++];
+            if (!skipVerifySpartacus ) {
 
-        this.contactUpdated = contactUpdated;
+                //validate signature
+                if (!this.verifySignature() )
+                    throw "Invalid Contact Spartacus Signature";
 
-        this.sign = sign;
-        this.verifySignature = verifySignature;
-        this.verifyContactIdentity = verifyContactIdentity;
-        this.computeContactIdentity = computeContactIdentity;
-        this.isContactNewer = isContactNewer;
+                //validate identity
+                if (!this.verifyContactIdentity() )
+                    throw "Invalid Contact Spartacus Identity";
 
-        const skipVerifySpartacus = arguments[this._additionalParameters++];
-        if (!skipVerifySpartacus ) {
-
-            //validate signature
-            if (!this.verifySignature() )
-                throw "Invalid Contact Spartacus Signature";
-
-            //validate identity
-            if (!this.verifyContactIdentity() )
-                throw "Invalid Contact Spartacus Identity";
-
-        }
-
-        //used for bencode
-        function toArray(notIncludeSignature){
-
-            const out = _toArray(...arguments);
-            out.push(this.nonce);
-            out.push(this.timestamp);
-
-            if (!notIncludeSignature)
-                out.push(this.signature);
-
-            return out;
-        }
-
-        function toJSON(){
-            return {
-                ..._toJSON(),
-                nonce: this.nonce,
-                timestamp: this.timestamp,
-                signature: this.signature,
             }
         }
 
+        toArray(notIncludeSignature){
+
+            const filter = {};
+            if (notIncludeSignature) filter['signature'] = true;
+
+            return this._toArray(filter);
+        }
+
+        get _spartacusNonceLength(){
+            return 0;
+        }
+
         //sign signature
-        function sign(){
+        sign(){
             const buffer = bencode.encode( this.toArray(true) );
             const msg = CryptoUtils.sha256(buffer);
             return ECCUtils.sign(this.privateKey, msg);
         }
 
         //verify signature
-        function verifySignature(){
+        verifySignature(){
             const buffer = bencode.encode( this.toArray(true) );
             const msg = CryptoUtils.sha256(buffer);
             return ECCUtils.verifySignature(this.publicKey, msg, this.signature );
         }
 
-        function computeContactIdentity(){
+        computeContactIdentity(){
             const buffer = Buffer.concat([ this.nonce, this.publicKey ] );
             const identity = CryptoUtils.sha256(buffer);
             return identity;
         }
 
-        function verifyContactIdentity(){
+        verifyContactIdentity(){
             const identity = this.computeContactIdentity();
             return this.identity.equals(identity);
         }
 
-        function isContactNewer(newContact){
+        isContactNewer(newContact){
 
             //at least 15 seconds
             return this.timestamp - newContact.timestamp >= KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE;
 
         }
 
-        function contactUpdated(){
+        contactUpdated(){
             this.timestamp = Math.floor(new Date().getTime() / 1000);
             this.signature = this.sign();
         }
+
 
     }
 

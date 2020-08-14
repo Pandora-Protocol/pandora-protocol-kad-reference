@@ -1,42 +1,37 @@
 const CryptoUtils = require('../../helpers/crypto-utils')
 const ECCUtils = require('../../helpers/ecc-utils')
 
-module.exports = function(kademliaNode) {
+module.exports = function(options) {
 
-    if (!kademliaNode.plugins.hasPlugin('PluginContactSpartacus'))
-        throw "PluginContactSpartacus is required";
+    return class MyContact extends options.Contact {
 
-    kademliaNode.plugins.contactPlugins.push({
-        createInitialize,
-        create,
-    })
+        constructor() {
 
-    function createInitialize(){
-        this._spartacusNonceLength = 65;
-    }
+            super(...arguments);
 
-    function create(){
+            const nonceMessage = this.getNonceMessage();
 
-        this.getNonceMessage = getNonceMessage;
+            const sybilPublicKeyIndex = this.nonce[0];
+            if ( sybilPublicKeyIndex >= KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
+            const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilPublicKeyIndex ].publicKey;
 
-        const nonceMessage = this.getNonceMessage();
+            const sybilSignature = Buffer.alloc(64);
+            this.nonce.copy(sybilSignature, 0, 1)
 
-        const sybilPublicKeyIndex = this.nonce[0];
-        if ( sybilPublicKeyIndex >= KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
-        const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilPublicKeyIndex ].publicKey;
+            if ( !ECCUtils.verifySignature( sybilPublicKey, nonceMessage, sybilSignature ))
+                throw "Nonce is invalid";
 
-        const sybilSignature = Buffer.alloc(64);
-        this.nonce.copy(sybilSignature, 0, 1)
+        }
 
-        if ( !ECCUtils.verifySignature( sybilPublicKey, nonceMessage, sybilSignature ))
-            throw "Nonce is invalid";
+        get _spartacusNonceLength(){
+            return 65;
+        }
 
-    }
+        getNonceMessage (){
+            const publicKey = this.publicKey;
+            return CryptoUtils.sha256( publicKey );
+        }
 
-    function getNonceMessage (){
-
-        const publicKey = this.publicKey;
-        return CryptoUtils.sha256( publicKey );
 
     }
 

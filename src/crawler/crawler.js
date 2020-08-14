@@ -114,10 +114,11 @@ module.exports = class Crawler {
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
                     async.eachLimit(added, KAD_OPTIONS.ALPHA_CONCURRENCY,
                         ( contact, next ) => this._updateContactFound(contact, () => next() ),
-                        () => next()
+                        () => {}
                     );
 
-                } else if ( result[0] === 1 ){
+                    return next();
+                } else if ( result[0] === 1 && method !== 'FIND_NODE' ){
 
                     //If we did get an item back, get the closest node we contacted
                     //who is missing the value and store a copy with them
