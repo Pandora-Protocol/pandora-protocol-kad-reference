@@ -65,15 +65,14 @@ module.exports = class RoutingTableRefresher {
          * @type {Set<any>}
          */
 
-        let results = new Set(), consecutiveUnimprovedLookups = 0, finished = false;
+        let results = new Set(), consecutiveUnimprovedLookups = 0;
         async.each(  this._routingTable.buckets, (bucket, next) => {
 
-            if ( bucket.bucketIndex < startIndex || finished) return next();
+            if ( bucket.bucketIndex < startIndex) return next();
 
-            if (consecutiveUnimprovedLookups >= KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES){
-                finished = true;
-                return next();
-            }
+            if (consecutiveUnimprovedLookups >= KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES)
+                return next('Done');
+
 
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
             const needsRefresh = lastBucketLookup + KAD_OPTIONS.T_BUCKETS_REFRESH <= now;

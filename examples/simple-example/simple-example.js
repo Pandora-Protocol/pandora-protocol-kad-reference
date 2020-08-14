@@ -38,9 +38,9 @@ async.eachLimit( array, 1, (index, next ) => {
     const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[5,4]];
     async.eachLimit( connections, 1, ( connection, next) =>{
 
-        nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, ()=>{
+        nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, true, (err, out)=>{
 
-            console.log("BOOTSTRAPING...");
+            console.log("BOOTSTRAPING...", out.length);
             //fix for websockets
             setTimeout( next, 100 );
 
@@ -53,18 +53,18 @@ async.eachLimit( array, 1, (index, next ) => {
 
         let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query, (err, out)=>{
-            console.log("iterativeFindValue", out);
+            console.log("iterativeFindValue", out.result, out.length);
         })
 
         let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         nodes[3].crawler.iterativeStoreValue( Buffer.alloc(0), query2, 'query2', (err, out)=>{
-            console.log("iterativeStoreValue", out);
+            console.log("iterativeStoreValue", out );
 
             nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
-                console.log("iterativeFindValue2", out);
+                console.log("iterativeFindValue2_1", out.result);
 
                 nodes[5].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
-                    console.log("iterativeFindValue2", out);
+                    console.log("iterativeFindValue2_2", out.result);
                 })
 
                 nodes[3].rules.sendPing(nodes[5].contact,(err, out)=>{

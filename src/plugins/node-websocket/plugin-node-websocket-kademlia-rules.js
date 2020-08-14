@@ -92,7 +92,7 @@ module.exports = function (options){
             //connected twice
             if (this.webSocketActiveConnectionsMap[address] || this.webSocketActiveConnectionsByContactsMap[contact.identityHex]){
 
-                if (ws.readyState !== 3) //WebSocket.CLOSED
+                if (ws.readyState !== 3 && ws.readyState !== 2) //WebSocket.CLOSED
                     ws.close();
 
                 return cb(new Error('Already connected'));

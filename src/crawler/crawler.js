@@ -94,8 +94,6 @@ module.exports = class Crawler {
 
         function dispatchFindNode(contact, next){
 
-            if (finished) return next(new Error('finished'))
-
             //mark this node as contacted so as to avoid repeats
             shortlist.contacted(contact);
 
@@ -106,10 +104,8 @@ module.exports = class Crawler {
                 // mark this node as active to include it in any return values
                 shortlist.responded(contact);
 
-                if (finished) return next(new Error('finished'))
-
                 if (!result || (Array.isArray(result) && !result.length)) {
-                    return next(null, result);
+                    return next();
                 } else
                 //If the result is a contact/node list, just keep track of it
                 if ( result[0] === 0 ){
@@ -118,7 +114,7 @@ module.exports = class Crawler {
                     //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
                     async.eachLimit(added, KAD_OPTIONS.ALPHA_CONCURRENCY,
                         ( contact, next ) => this._updateContactFound(contact, () => next() ),
-                        ()=> next(null,  result[1])
+                        () => next()
                     );
 
                 } else if ( result[0] === 1 ){
@@ -131,18 +127,20 @@ module.exports = class Crawler {
 
                         const elements = Array.isArray(result[1]) ? result[1] : [ result[1] ];
                         async.eachLimit(elements, KAD_OPTIONS.ALPHA_CONCURRENCY,
-                            this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
-                            ()=> next(null,  result[1])
+                            (key, next) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
+                            ()=> {}
                         );
 
                     }
 
                     //  we found a value, so stop searching
-                    finished = true;
-                    cb(null, {  result: result[1], contact });
-                    next( new Error('finished') );
+                    if (!finished) {
+                        finished = true;
+                        cb(null, {result: result[1], contact});
+                    }
+                    next( );
                 }else
-                    next(null, null);
+                    next();
 
             })
         }
@@ -158,6 +156,7 @@ module.exports = class Crawler {
                 (err, results)=>{
 
                     if (finished) return;
+                    if (err) return;
 
                     // If we have reached at least K active nodes, or haven't found a
                     // closer node, even on our finishing trip, return to the caller
@@ -221,8 +220,10 @@ module.exports = class Crawler {
             if (tail && typeof tail === "object"){
                 this._kademliaNode.routingTable.removeContact(tail.contact);
                 this._kademliaNode.routingTable.addContact(contact);
-                return cb(null, contact);
-            } else cb(null, contact);
+
+            }
+
+            cb(null, contact);
 
         })
     }
