@@ -44,13 +44,13 @@ module.exports = class HttpServerTestingFirewall {
                     if (res.statusCode === 200 && output === this._id)
                         resolve(true);
                     else
-                        reject(new Error('Answer is invalid'));
+                        resolve(false);
                 });
 
             });
 
             req.on('error', function(e) {
-                reject(e);
+                resolve(false);
             });
 
             req.end(this._id);
@@ -114,14 +114,11 @@ module.exports = class HttpServerTestingFirewall {
 
         let answer = false;
 
-        try{
             
-            await this._firewallPing( opt, )
+        if (await this._firewallPing( opt, ))
             answer = true;
-
-        }catch(err){
-
-        }
+        else
+            answer = false;
 
         this.stop();
         return answer;

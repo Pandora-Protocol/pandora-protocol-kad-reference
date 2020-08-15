@@ -4,25 +4,23 @@ module.exports = class ContactRefresher {
 
     constructor(kademliaNode) {
         this._kademliaNode = kademliaNode;
-        this._updateTimestamp = 0;
+        this._updateId = 0;
     }
 
     updateContact(cb){
 
-        console.log("updateContact");
-
-        this._updateTimestamp = new Date().getTime();
-        const updateTimestamp = this._updateTimestamp;
+        this._updateId = new Date().getTime();
+        const updateId = this._updateId;
 
         const contacts = this._kademliaNode.routingTable.array.map(it => it.contact);
 
         async.eachLimit( contacts, KAD_OPTIONS.ALPHA_CONCURRENCY,
             ( contact, next ) => {
 
-                if (updateTimestamp !== this._updateTimestamp)
+                if (updateId !== this._updateId)
                     return next(new Error('Changed'));
 
-                this._kademliaNode.rules.sendPing(contact, (err, out) => next() );
+                this._kademliaNode.rules.sendUpdateContact(contact, (err, out) => next() );
             },
             (err)=>{
 

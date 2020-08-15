@@ -37,14 +37,15 @@ const nodes = array.map(
             KAD.plugins.PluginKademliaNodeWebSocket,
             KAD.plugins.PluginContactEncrypted,
             KAD.plugins.PluginContactSpartacus,
-            KAD.plugins.PluginContactRelay,
             KAD.plugins.PluginContactSybilProtect, //must be the last
+            KAD.plugins.PluginContactRelay,
         ],
     ) )
 
 async.eachLimit( array, 1, (index, next ) => {
 
     nodes[index].start( {port: 10096+index} ).then((out)=>{
+        console.log("BOOTSTRAPING...", nodes[index].contact.identityHex, nodes[index].contact.port );
         next(null, out)
     })
 
@@ -55,7 +56,6 @@ async.eachLimit( array, 1, (index, next ) => {
 
         nodes[index].bootstrap( nodes[ 0 ].contact, true, (err, out)=>{
 
-            console.log("BOOTSTRAPING...");
             //fix for websockets
             setTimeout( next, 1 );
 

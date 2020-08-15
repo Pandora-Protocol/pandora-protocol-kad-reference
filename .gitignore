@@ -3,6 +3,10 @@ examples/large-example/_temp/
 examples/simple-example/_temp/
 examples/sorted-example/_temp/
 
+build/
+.idea/
+package-lock.json
+
 # Logs
 logs
 *.log

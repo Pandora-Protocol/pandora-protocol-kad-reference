@@ -1,6 +1,7 @@
 const PluginContactSpartacusKademliaContact = require('./plugin-contact-spartacus-kademlia-contact')
 const PluginContactSpartacusKademliaRules = require('./plugin-contact-spartacus-kademlia-rules')
 const PluginContactSpartacusKademliaContactStorage = require('./plugin-contact-spartacus-kademlia-contact-storage')
+const PluginContactSpartacusKademliaCrawler = require('./plugin-contact-spartacus-kademlia-crawler')
 
 module.exports = {
 
@@ -9,9 +10,12 @@ module.exports = {
         if (!kademliaNode.plugins.hasPlugin('PluginContactEncrypted'))
             throw "PluginContactEncrypted is required";
 
+
+
         options.Contact = PluginContactSpartacusKademliaContact(options);
         options.Rules = PluginContactSpartacusKademliaRules(options);
         options.ContactStorage = PluginContactSpartacusKademliaContactStorage(options);
+        options.Crawler = PluginContactSpartacusKademliaCrawler(options);
 
         const _createContact = kademliaNode.createContact.bind(kademliaNode);
         kademliaNode.createContact = function () {

@@ -156,7 +156,7 @@ module.exports = class KademliaRules {
      */
     ping(req, srcContact, data, cb) {
 
-        if (srcContact) this._welcomeIfNewNode(srcContact);
+        if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, [1] );
 
     }
@@ -176,7 +176,7 @@ module.exports = class KademliaRules {
         if (!this._allowedStoreTables[table.toString('ascii')])
             return cb(new Error('Table is not allowed'));
 
-        if (srcContact) this._welcomeIfNewNode(srcContact);
+        if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
         this._store.put(table.toString('hex'), key.toString('hex'), value.toString('ascii'), cb);
 
@@ -201,7 +201,7 @@ module.exports = class KademliaRules {
         const err = Validation.checkIdentity(key);
         if (err) return cb(err);
 
-        if (srcContact) this._welcomeIfNewNode(srcContact);
+        if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
         cb( null, [0, this._kademliaNode.routingTable.getClosestToKey(key) ] );
     }
@@ -217,7 +217,7 @@ module.exports = class KademliaRules {
      */
     findValue( req, srcContact, [table, key], cb){
 
-        if (srcContact) this._welcomeIfNewNode(srcContact);
+        if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
         this._store.get(table.toString('hex'), key.toString('hex'), (err, out) => {
             //found the data
@@ -238,7 +238,7 @@ module.exports = class KademliaRules {
      *  @param contact: A new node that just joined (or that we just found out about).
      *  Process:
      */
-    _welcomeIfNewNode(contact, cb = ()=>{} ){
+    _welcomeIfNewNode(req, contact, cb = ()=>{} ){
 
         if (this._kademliaNode.routingTable.map[ contact.identityHex ] || contact.identity.equals( this._kademliaNode.contact.identity ))
             return cb(null, "already");
@@ -389,17 +389,17 @@ module.exports = class KademliaRules {
     }
 
     version(req, srcContact, data, cb){
-        if (srcContact) this._welcomeIfNewNode(srcContact);
+        if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, KAD_OPTIONS.VERSION.VERSION);
     }
 
     app(req, srcContact, data, cb){
-        if (srcContact) this._welcomeIfNewNode(srcContact);
+        if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, KAD_OPTIONS.VERSION.APP);
     }
 
     identity(req, srcContact, data, cb){
-        if (srcContact) this._welcomeIfNewNode(srcContact);
+        if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, this._kademliaNode.contact.identity);
     }
 

@@ -20,6 +20,8 @@ module.exports = function(options){
 
         }
 
+
+
         async start(opts){
 
             const out = await super.start(opts);
@@ -37,6 +39,8 @@ module.exports = function(options){
         _getTimeoutWebSocketTime(ws){
             return (ws.relayed || ws.isRelaySocket) ? KAD_OPTIONS.PLUGINS.CONTACT_RELAY.T_WEBSOCKET_DISCONNECT_RELAY : KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
         }
+
+
 
         reverseConnect(req, srcContact, data, cb){
 
@@ -56,12 +60,12 @@ module.exports = function(options){
 
         requestReverseConnect(req, srcContact, [contact], cb ){
 
-            if (srcContact) this._welcomeIfNewNode(srcContact);
+            if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
             try{
 
                 contact = this._kademliaNode.createContact( contact );
-                if (contact) this._welcomeIfNewNode(contact);
+                if (contact) this._welcomeIfNewNode(req, contact);
 
                 this.sendReverseConnect( contact, cb );
 
@@ -77,10 +81,10 @@ module.exports = function(options){
 
         relayJoin(req, srcContact, data, cb){
 
-            if ( !req.socketsQueue ) return cb(new Error('Relay Join is available only for WebSockets') );
+            if ( !req.isWebSocket ) return cb(new Error('Relay Join is available only for WebSockets') );
             if ( req.relayed ) return cb(new Error(''))
 
-            if (srcContact) this._welcomeIfNewNode(srcContact);
+            if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
             if (this._relayedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RELAY.RELAY_JOINED_MAX)
                 return cb( new Error('FULL') );

@@ -19,7 +19,8 @@ module.exports = function (options){
 
         async createContactArgs ( opts ){
 
-            if (opts.contactType === undefined)
+            if (opts.contactType === undefined) opts.contactType = ContactType.CONTACT_TYPE_DISABLED;
+            if (opts.contactType === ContactType.CONTACT_TYPE_RELAY)
                 opts.contactType = ContactType.CONTACT_TYPE_DISABLED;
 
             const out = await super.createContactArgs(opts);

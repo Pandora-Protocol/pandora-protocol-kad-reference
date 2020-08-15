@@ -26,7 +26,10 @@ module.exports = function (options){
 
         }
 
+
         _sendGetProtocol(destContact){
+
+            // the destContact is already contacted via a websocket
             if (this.webSocketActiveConnectionsByContactsMap[destContact.identityHex])
                 return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
 
@@ -66,7 +69,6 @@ module.exports = function (options){
 
                 const ws = new IsomorphicWebSocket(address, data.toString('hex') );
                 ws._kadInitialized = true;
-                ws.contact = dstContact;
 
                 this._initializeWebSocket(dstContact, ws, cb);
 
@@ -121,6 +123,8 @@ module.exports = function (options){
 
 
 
+            ws.contact = contact;
+            ws.isWebSocket = true;
             ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             ws.socketsQueue = {};
             ws._queue = [];
@@ -144,8 +148,8 @@ module.exports = function (options){
             ws.onerror =
                 ws.onclose = () => {
 
-                    if (this.webSocketActiveConnectionsByContactsMap[ws.identityHex] === ws)
-                        delete this.webSocketActiveConnectionsByContactsMap[ws.identityHex];
+                    if (this.webSocketActiveConnectionsByContactsMap[contact.identityHex] === ws)
+                        delete this.webSocketActiveConnectionsByContactsMap[contact.identityHex];
 
                     if (ws.contactType === ContactType.CONTACT_TYPE_ENABLED)
                         if (this.webSocketActiveConnectionsMap[ws.address] === ws) {
@@ -270,12 +274,11 @@ module.exports = function (options){
 
             const buffer = bencode.encode( [0, id, data] );
 
-            const address = destContact.hostname +':'+ destContact.port + destContact.path;
-
             //connected once already already
-            if (this.webSocketActiveConnectionsMap[address])
-                return this._sendWebSocketWaitAnswer( this.webSocketActiveConnectionsMap[address], id, buffer, cb);
+            if (this.webSocketActiveConnectionsByContactsMap[destContact.identityHex])
+                return this._sendWebSocketWaitAnswer( this.webSocketActiveConnectionsByContactsMap[destContact.identityHex], id, buffer, cb);
 
+            const address = destContact.hostname +':'+ destContact.port + destContact.path;
             this._createWebSocket(address, destContact, protocol,(err, ws) => {
                 if (err) return cb(err);
                 this._sendWebSocketWaitAnswer(ws, id, buffer, cb);

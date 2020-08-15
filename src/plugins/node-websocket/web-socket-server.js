@@ -1,5 +1,4 @@
 const WebSocket = require('isomorphic-ws')
-const Contact = require('../../contact/contact')
 const bencode = require('bencode');
 
 module.exports = class WebSocketServer extends WebSocket.Server {
@@ -24,9 +23,8 @@ module.exports = class WebSocketServer extends WebSocket.Server {
                 const decoded = bencode.decode( out );
                 const contact = this._kademliaNode.createContact( decoded );
                 ws._kadInitialized = true;
-                ws.contact = contact;
 
-                this._kademliaNode.rules._initializeWebSocket(  ws.contact, ws, (err, ws)=>{
+                this._kademliaNode.rules._initializeWebSocket(  contact, ws, (err, ws)=>{
                     if (err)
                         return ws.close();
                 })

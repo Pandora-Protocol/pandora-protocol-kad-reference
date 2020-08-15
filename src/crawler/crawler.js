@@ -2,7 +2,6 @@ const async = require('async');
 const Validation = require('../helpers/validation')
 const ContactList = require('./contact-list')
 const Contact = require('./../contact/contact')
-const ContactRefresher = require('./contact-refresher')
 
 module.exports = class Crawler {
 
@@ -19,7 +18,6 @@ module.exports = class Crawler {
             KAD_OPTIONS.ALPHA_CONCURRENCY,
         );
 
-        this.contactRefresher = new ContactRefresher(kademliaNode);
 
     }
 
@@ -99,7 +97,8 @@ module.exports = class Crawler {
 
             this._kademliaNode.rules.send(contact, method, data , (err, result) => {
 
-                if ( err ) return next();
+                if ( err )
+                    return next();
 
                 // mark this node as active to include it in any return values
                 shortlist.responded(contact);
@@ -153,7 +152,7 @@ module.exports = class Crawler {
             if ( !selection.length )
                 return cb(null, shortlist.active.slice(0, KAD_OPTIONS.BUCKET_COUNT_K) );
 
-            async.each( selection, dispatchFindNode.bind(this),
+            async.each( selection, (contact, next) => dispatchFindNode.call(this, contact, next),
                 (err, results)=>{
 
                     if (finished) return;
