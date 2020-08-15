@@ -1,4 +1,4 @@
-const ContactType = require('../contact-relay/contact-type')
+const ContactType = require('../contact-type/contact-type')
 const Validation = require('../../helpers/validation')
 
 module.exports = function(options) {
@@ -8,11 +8,6 @@ module.exports = function(options) {
         constructor() {
 
             super(...arguments);
-
-            this.contactType = arguments[this._argumentIndex++];
-            if (!ContactType._map[this.contactType]) throw "Contact Server Type"
-
-            this._keys.push('contactType');
 
             if (this.contactType === ContactType.CONTACT_TYPE_ENABLED){
 
@@ -29,10 +24,10 @@ module.exports = function(options) {
                 Validation.validatePath(this.path);
 
                 this._keys.push('protocol', 'hostname', 'port', 'path');
+                this._allKeys.push('protocol', 'hostname', 'port', 'path');
 
             }
 
-            this._allKeys.push('contactType', 'protocol', 'hostname', 'port', 'path');
 
         }
 

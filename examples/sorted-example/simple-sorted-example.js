@@ -19,9 +19,11 @@ const nodes = array.map(
         path.resolve( __dirname + '/_temp/' + index ),
         [
             KAD.plugins.PluginKademliaNodeMock,
+            KAD.plugins.PluginContactType,
             KAD.plugins.PluginKademliaNodeHTTP,
             KAD.plugins.PluginKademliaNodeWebSocket,
             KAD.plugins.PluginSortedList,
+            KAD.plugins.PluginContactRelay,
         ],
     ) )
 
@@ -64,7 +66,7 @@ async.eachLimit( array, 1, (index, next ) => {
                     console.log("iterativeStoreSortedListValue", out);
 
                     nodes[5].crawler.iterativeFindSortedList( Buffer.alloc(0), query2, (err, out)=>{
-                        console.log("iterativeFindSortedList", out);
+                        console.log("iterativeFindSortedList", out.result);
                     })
 
                 });

@@ -1,4 +1,4 @@
-const ContactType = require('../contact-relay/contact-type')
+const ContactType = require('../contact-type/contact-type')
 
 module.exports = function (options){
 

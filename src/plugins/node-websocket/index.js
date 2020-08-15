@@ -1,4 +1,4 @@
-const ContactAddressProtocolType = require('./../../contact/contact-address-protocol-type')
+const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 const PluginNodeWebsocketKademliaRules = require('./plugin-node-websocket-kademlia-rules')
 const PluginNodeWebsocketKademliaContact = require('./plugin-node-websocket-kademlia-contact')
 

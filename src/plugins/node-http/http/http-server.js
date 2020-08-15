@@ -3,7 +3,7 @@ const https = require('https');
 
 const EventEmitter = require('events');
 const publicIp = require('public-ip')
-const ContactAddressProtocolType = require('../../../contact/contact-address-protocol-type')
+const ContactAddressProtocolType = require('../../contact-type/contact-address-protocol-type')
 const HttpServerTestingFirewall = require('./http-server-testing-firewall')
 
 module.exports = class HTTPServer extends EventEmitter {

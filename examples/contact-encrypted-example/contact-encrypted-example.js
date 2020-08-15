@@ -32,6 +32,7 @@ const nodes = array.map(
         path.resolve( __dirname + '/_temp/' + index ),
         [
             KAD.plugins.PluginKademliaNodeMock,
+            KAD.plugins.PluginContactType,
             KAD.plugins.PluginKademliaNodeHTTP,
             KAD.plugins.PluginKademliaNodeWebSocket,
             KAD.plugins.PluginContactEncrypted,
@@ -42,17 +43,16 @@ const nodes = array.map(
 
 async.eachLimit( array, 1, (index, next ) => {
 
-    nodes[index].start( {port: 10000+index} ).then((out)=>{
+    nodes[index].start( {port: 10096+index} ).then((out)=>{
         next(null, out)
     })
 
 }, (err, out)=>{
 
     //encountering
-    const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];
-    async.eachLimit( connections, 1, ( connection, next) =>{
+    async.eachLimit( array.slice(1), 1, ( index, next) =>{
 
-        nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, ()=>{
+        nodes[index].bootstrap( nodes[ 0 ].contact, true, (err, out)=>{
 
             console.log("BOOTSTRAPING...");
             //fix for websockets
@@ -64,7 +64,7 @@ async.eachLimit( array, 1, (index, next ) => {
 
         let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query, (err, out)=>{
-            console.log("iterativeFindValue", out);
+            console.log("iterativeFindValue", out.result, out.length);
         })
 
         let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
@@ -72,7 +72,7 @@ async.eachLimit( array, 1, (index, next ) => {
             console.log("iterativeStoreValue", out);
 
             nodes[5].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
-                console.log("iterativeFindValue2", out);
+                console.log("iterativeFindValue2", out.result);
             })
 
         })

@@ -1,7 +1,4 @@
-const ContactType = require('./contact-type')
-const ContactAddressProtocolType = require('./../../contact/contact-address-protocol-type')
-
-const Contact = require('../../contact/contact')
+const ContactType = require('../contact-type/contact-type')
 const bencode = require('bencode');
 
 module.exports = function(options) {

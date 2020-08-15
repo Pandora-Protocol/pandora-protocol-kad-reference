@@ -1,7 +1,7 @@
 const PluginNodeMockKademliaRules = require('./plugin-node-mock-kademlia-rules')
 const PluginNodeMockKademliaContact = require('./plugin-node-mock-kademlia-contact')
 const PluginNodeMockKademliaContactStorage = require('./plugin-node-mock-kademlia-contact-storage')
-const ContactAddressProtocolType = require('./../../contact/contact-address-protocol-type')
+const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 
 module.exports = {
 

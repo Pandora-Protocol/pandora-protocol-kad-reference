@@ -1,4 +1,4 @@
-const ContactAddressProtocolType = require('./../contact/contact-address-protocol-type')
+const ContactAddressProtocolType = require('../plugins/contact-type/contact-address-protocol-type')
 
 module.exports.validateProtocol = (protocol) => {
     if (!ContactAddressProtocolType._map[protocol]) throw "invalid protocol";

@@ -1,4 +1,4 @@
-const ContactType = require('./contact-type')
+const ContactType = require('../contact-type/contact-type')
 const NextTick = require('../../helpers/next-tick')
 const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
 const PluginNodeWebsocket = require('../node-websocket/index')
@@ -209,6 +209,8 @@ module.exports = function(options){
         }
 
         _setRelayNow( next ){
+
+            if (!this._kademliaNode.contact) return next(1000); //contact was not yet created.
 
             if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED)
                 return next(5000);

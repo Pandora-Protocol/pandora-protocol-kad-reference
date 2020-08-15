@@ -50,7 +50,7 @@ module.exports = class ContactStorage {
             this._setContact( contactArgs, saveToStorage, cb );
     }
 
-    async createContactArgs( opts ){
+    async createContactArgs( opts = {} ){
 
         return {
             args: [

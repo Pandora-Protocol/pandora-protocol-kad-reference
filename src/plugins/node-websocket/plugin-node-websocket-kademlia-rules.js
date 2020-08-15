@@ -1,4 +1,4 @@
-const ContactAddressProtocolType = require('../../contact/contact-address-protocol-type')
+const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 const IsomorphicWebSocket = require('isomorphic-ws')
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')

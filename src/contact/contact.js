@@ -46,7 +46,7 @@ module.exports = class Contact{
     }
 
     toArray(){
-        return this.toArray();
+        return this._toArray();
     }
 
     //used for bencode

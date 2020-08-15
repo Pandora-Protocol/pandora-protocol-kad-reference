@@ -2,12 +2,17 @@ const PluginContactRelayKademliaRules = require('./plugin-contact-relay-kademlia
 const PluginContactRelayKademliaContact = require('./plugin-contact-relay-kademlia-contact')
 const PluginContactRelayContactStorage = require('./plugin-contact-relay-kademlia-contact-storage')
 
+const ContactType = require('../contact-type/contact-type')
+
 module.exports = {
 
     plugin: function(kademliaNode, options){
 
         if (!kademliaNode.plugins.hasPlugin('PluginNodeWebsocket'))
             throw "PluginNodeWebsocket is required";
+
+        if (!kademliaNode.plugins.hasPlugin('PluginContactType'))
+            throw "PluginContactType is required";
 
         options.Rules = PluginContactRelayKademliaRules(options);
         options.Contact = PluginContactRelayKademliaContact(options);
@@ -32,5 +37,12 @@ module.exports = {
         }
 
     },
+
+    initialize: function (){
+
+        ContactType.CONTACT_TYPE_RELAY = 3;
+        ContactType._map[3] = true;
+
+    }
 
 }

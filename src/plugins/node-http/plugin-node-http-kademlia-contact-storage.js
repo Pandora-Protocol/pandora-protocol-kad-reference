@@ -1,10 +1,10 @@
-const ContactType = require('../contact-relay/contact-type')
+const ContactType = require('../contact-type/contact-type')
 
 module.exports = function (options){
 
     return class NewContactStorage extends options.ContactStorage{
 
-        async createContactArgs ( opts ){
+        async createContactArgs ( opts = {} ){
 
             if (!opts.httpServer){
 
@@ -20,8 +20,6 @@ module.exports = function (options){
             }
 
             const out = await super.createContactArgs(opts);
-
-            out.args.push(opts.contactType);
 
             if (opts.contactType === ContactType.CONTACT_TYPE_ENABLED ){
                 out.args.push(opts.httpServer.protocol);
