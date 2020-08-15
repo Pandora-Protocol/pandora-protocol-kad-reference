@@ -23,7 +23,7 @@ npm link webpack-config ;
 Kademlia is a Distributed Hash Table.
 
 Protocol messages
-Kademlia has four messages.
+Kademlia has four basic messages.
 
 `PING` — used to verify that a node is still alive.
 
@@ -35,11 +35,12 @@ Kademlia has four messages.
 
 ### Implementation
 The reason it is pure JS is to make it low-latency. Promises and Async slow down the requests.
+Later on, a new reference code can be implemented in GO and compiled into web assembly to make it faster in the Browser.
 
 
 ### Plugins
 
-1. **Sorted Lists**. It allows kademlia nodes to store a Sorted List using `Red Black Tree`.
+1. **Sorted-Lists**. It allows kademlia nodes to store a Sorted List using `Red Black Tree`.
    
    This plugins extends Kademlia protocol with:
    
@@ -58,18 +59,25 @@ The reason it is pure JS is to make it low-latency. Promises and Async slow down
     
     `List`: O(N)
     
-2. **Mock**. It is a node interface implementation for testing on the same node instance.
+2. **Contact-Type**. It describes the contact type or the methods other kademlia peers can connect.
+    
+3. **Node-Mock**. It is a node interface implementation for testing on the same node instance. It was implemented purely for testing the reference code.
 
-3. **HTTP**. It is a node interface implementation using HTTP. Pure `http` and `https` had been used.
+4. **Node-HTTP**. It is a node interface implementation using HTTP. Pure `http` and `https` had been used.
 
-4. **WebSocket**. It is a node interface implementation using HTTP WebSocket. Pur isomorphic `websocket` had been used. 
+5. **Node-WebSocket**. It is a node interface implementation using HTTP WebSocket and extends the Node-HTTP. Pur isomorphic `websocket` had been used. 
         
-5. **Contact Encrypted**. It allows kademlia nodes to encrypt the messages exchanged between peers Elliptic Curves.
+6. **Contact-Encrypted**. It allows kademlia nodes to encrypt the messages exchanged between peers Elliptic Curves.
 
     It uses Encrypt and decrypt messages between sender and receiver using elliptic curve Diffie-Hellman key exchange. 
     
-6. **Contact Spartacus**. Well-known defense against Sybill attacks by introducing cryptographic identies using ECDSA. With Spartacus, nodes are required to prove that they own their identity by signing messages with their private EC key and including their public key in the message. The identity is thus derived from the EC public key.   
-              
+7. **Contact-Spartacus**. Well-known defense against Sybill attacks by introducing cryptographic identies using ECDSA. With Spartacus, nodes are required to prove that they own their identity by signing messages with their private EC key and including their public key in the message. The identity is thus derived from the EC public key.   
+ 
+8. **Sybil-Protect**. Extends Contact Spartacus by requiring a "nonce" generated and signed by someone to avoid spams and sybil attacks. A beacon can be used later on to establish the forgers of the sybil protect.
+
+9. **Contact-Relay**. It allows reverse connection for Backbone nodes that support **Node-WebSocket** servers and WebRTC signaling.
+
+10. **Node-WebRTC**. It allows WebRTC connections for Browsers and Backbone Nodes. **Contact-Relay** is required for the signaling process.              
 
 TO DOs:
 
