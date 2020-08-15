@@ -37,7 +37,8 @@ const nodes = array.map(
             KAD.plugins.PluginKademliaNodeWebSocket,
             KAD.plugins.PluginContactEncrypted,
             KAD.plugins.PluginContactSpartacus,
-            KAD.plugins.PluginContactSybilProtect,
+            KAD.plugins.PluginContactRelay,
+            KAD.plugins.PluginContactSybilProtect, //must be the last
         ],
     ) )
 
@@ -56,11 +57,14 @@ async.eachLimit( array, 1, (index, next ) => {
 
             console.log("BOOTSTRAPING...");
             //fix for websockets
-            setTimeout( next, 100 );
+            setTimeout( next, 1 );
 
         } );
 
     }, (err, out)=> {
+
+        for (let i=0; i < nodes.length; i++)
+            console.log(i, nodes[i].routingTable.count, nodes[i].routingTable.array.map( it => it.contact.contactType ));
 
         let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query, (err, out)=>{

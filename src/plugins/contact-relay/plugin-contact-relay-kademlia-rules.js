@@ -13,8 +13,6 @@ module.exports = function(options){
             this._relayedJoined = 0;
             this._relaySocket = null;
 
-            this._relayWait = {};
-
             this._commands['REV_CON'] = this.reverseConnect.bind(this);
             this._commands['REQ_REV_CON'] = this.requestReverseConnect.bind(this);
             this._commands['RELAY_JOIN'] = this.relayJoin.bind(this);
@@ -26,7 +24,7 @@ module.exports = function(options){
 
             const out = await super.start(opts);
 
-            this._asyncIntervalSetRelay = await setAsyncInterval( this._setRelayNow.bind(this),  1000 );
+            this._asyncIntervalSetRelay = setAsyncInterval( this._setRelayNow.bind(this),  1000 );
 
             return out;
         }
@@ -37,7 +35,7 @@ module.exports = function(options){
         }
 
         _getTimeoutWebSocketTime(ws){
-            return (ws.relayed || ws.isRelaySocket) ? KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_RELAY : KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
+            return (ws.relayed || ws.isRelaySocket) ? KAD_OPTIONS.PLUGINS.CONTACT_RELAY.T_WEBSOCKET_DISCONNECT_RELAY : KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
         }
 
         reverseConnect(req, srcContact, data, cb){
@@ -79,6 +77,9 @@ module.exports = function(options){
 
         relayJoin(req, srcContact, data, cb){
 
+            if ( !req.socketsQueue ) return cb(new Error('Relay Join is available only for WebSockets') );
+            if ( req.relayed ) return cb(new Error(''))
+
             if (srcContact) this._welcomeIfNewNode(srcContact);
 
             if (this._relayedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RELAY.RELAY_JOINED_MAX)
@@ -86,6 +87,7 @@ module.exports = function(options){
 
             this._relayedJoined++;
             req.relayed = true;
+            this._updateTimeoutWebSocket(req);
 
             cb(null, [1] );
 
@@ -155,10 +157,15 @@ module.exports = function(options){
 
                     if (err) return cb(err);
 
+                    const relay = contact.toArrayBuffer();
+
+                    if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_RELAY && this._kademliaNode.contact.relay.equals(relay) )
+                        return cb(null, contact);
+
                     this._kademliaNode.contact.contactType = ContactType.CONTACT_TYPE_RELAY;
                     this._kademliaNode.contact.addKey('relay');
 
-                    this._kademliaNode.contact.relay = contact.toArrayBuffer();
+                    this._kademliaNode.contact.relay = relay;
                     this._kademliaNode.contact.relayContact = contact;
 
                     this._kademliaNode.contact.contactUpdated();
@@ -182,7 +189,7 @@ module.exports = function(options){
                 this._relaySocket = null;
             }
 
-            delete this._pending['ws'+ws.id];
+            this._updateTimeoutWebSocket(ws);
         }
 
         _connectRelay(contact, cb){

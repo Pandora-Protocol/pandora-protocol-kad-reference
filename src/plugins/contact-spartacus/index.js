@@ -13,6 +13,22 @@ module.exports = {
         options.Rules = PluginContactSpartacusKademliaRules(options);
         options.ContactStorage = PluginContactSpartacusKademliaContactStorage(options);
 
+        const _createContact = kademliaNode.createContact.bind(kademliaNode);
+        kademliaNode.createContact = function () {
+
+            const contact = _createContact(...arguments);
+
+            //validate signature
+            if (!contact.verifySignature() )
+                throw "Invalid Contact Spartacus Signature";
+
+            //validate identity
+            if (!contact.verifyContactIdentity() )
+                throw "Invalid Contact Spartacus Identity";
+
+            return contact;
+        }
+
         return {
             name: "PluginContactSpartacus",
             version: "0.1",

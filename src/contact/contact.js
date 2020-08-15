@@ -67,7 +67,7 @@ module.exports = class Contact{
     toJSON(){
 
         const obj = {};
-        for (const key in this._keys)
+        for (const key of this._keys)
             obj[key] = this[key];
 
         return obj;

@@ -25,18 +25,6 @@ module.exports = function(options) {
             this._keys.push('nonce','timestamp','signature');
             this._allKeys.push('nonce','timestamp','signature');
 
-            const skipVerifySpartacus = arguments[this._argumentIndex++];
-            if (!skipVerifySpartacus ) {
-
-                //validate signature
-                if (!this.verifySignature() )
-                    throw "Invalid Contact Spartacus Signature";
-
-                //validate identity
-                if (!this.verifyContactIdentity() )
-                    throw "Invalid Contact Spartacus Identity";
-
-            }
         }
 
         toArray(notIncludeSignature){
@@ -79,7 +67,7 @@ module.exports = function(options) {
         isContactNewer(newContact){
 
             //at least 15 seconds
-            return this.timestamp - newContact.timestamp >= KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE;
+            return newContact.timestamp - this.timestamp  >= KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE;
 
         }
 

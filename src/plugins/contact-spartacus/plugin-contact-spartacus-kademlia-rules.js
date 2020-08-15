@@ -12,6 +12,7 @@ module.exports = function (options){
                 //at least 15 seconds
                 if ( oldContact.contact.isContactNewer( contact ) ) {
                     oldContact.contact = contact;
+                    console.log("updated")
                     return cb(null, "timestamp updated");
                 } else
                     return cb(new Error('Already have'));

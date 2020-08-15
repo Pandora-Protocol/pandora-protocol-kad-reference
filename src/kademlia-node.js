@@ -154,14 +154,11 @@ module.exports = class KademliaNode extends EventEmitter {
 
         })
 
-
     }
 
     createContact(arr){
-
         //used for bencode
         return new this.Contact( ...[ this, ...arr] );
-
     }
 
 }

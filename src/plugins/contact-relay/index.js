@@ -19,9 +19,7 @@ module.exports = {
         options.ContactStorage = PluginContactRelayContactStorage(options);
 
         const _bootstrap = kademliaNode.bootstrap.bind(kademliaNode);
-        kademliaNode.bootstrap = bootstrap;
-
-        function bootstrap(contact, first, cb = ()=>{} ){
+        kademliaNode.bootstrap = function (contact, first, cb = ()=>{} ){
 
             _bootstrap(contact, first, (err, out)=>{
                 if (err) return cb(err);

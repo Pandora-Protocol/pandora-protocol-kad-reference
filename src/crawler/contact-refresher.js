@@ -9,6 +9,8 @@ module.exports = class ContactRefresher {
 
     updateContact(cb){
 
+        console.log("updateContact");
+
         this._updateTimestamp = new Date().getTime();
         const updateTimestamp = this._updateTimestamp;
 

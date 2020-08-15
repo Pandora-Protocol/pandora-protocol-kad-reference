@@ -3,6 +3,7 @@ const IsomorphicWebSocket = require('isomorphic-ws')
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
 const blobToBuffer = require('blob-to-buffer')
+const ContactType = require('../contact-type/contact-type')
 
 module.exports = function (options){
 
@@ -85,35 +86,49 @@ module.exports = function (options){
             }
         }
 
+
+        _updateTimeoutWebSocket(ws){
+            if (this._pending['ws'+ws.id])
+                this._pending['ws'+ws.id].time = this._getTimeoutWebSocketTime(ws);
+            else
+                this._setTimeoutWebSocket(ws);
+        }
+
         _initializeWebSocket( contact, ws, cb ) {
 
-            const address = contact.hostname +':'+ contact.port + contact.path;
+            if (contact.contactType === ContactType.CONTACT_TYPE_ENABLED ){
 
-            //connected twice
-            if (this.webSocketActiveConnectionsMap[address] || this.webSocketActiveConnectionsByContactsMap[contact.identityHex]){
+                const address = contact.hostname +':'+ contact.port + contact.path;
+                //connected twice
+                if (this.webSocketActiveConnectionsMap[address] || this.webSocketActiveConnectionsByContactsMap[contact.identityHex]){
 
-                try{
+                    try{
 
-                    if (ws.readyState !== 3 && ws.readyState !== 2) //WebSocket.CLOSED
-                        ws.close();
+                        if (ws.readyState !== 3 && ws.readyState !== 2) //WebSocket.CLOSED
+                            ws.close();
 
-                }catch(err){
+                    }catch(err){
 
+                    }
+
+                    return cb(new Error('Already connected'));
                 }
 
-                return cb(new Error('Already connected'));
+                ws.address = address;
+                this.webSocketActiveConnectionsMap[address] = ws;
+
             }
 
+
+
             ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-            ws.address = address;
             ws.socketsQueue = {};
             ws._queue = [];
 
-            this.webSocketActiveConnectionsMap[address] = ws;
             this.webSocketActiveConnectionsByContactsMap[contact.identityHex] = ws;
             this.webSocketActiveConnections.push(ws);
 
-            this._setTimeoutWebSocket(ws);
+            this._updateTimeoutWebSocket(ws);
 
             ws.onopen = () => {
 
@@ -129,37 +144,36 @@ module.exports = function (options){
             ws.onerror =
                 ws.onclose = () => {
 
-                    if (this.webSocketActiveConnectionsByContactsMap[ws.identityHex] === ws){
+                    if (this.webSocketActiveConnectionsByContactsMap[ws.identityHex] === ws)
                         delete this.webSocketActiveConnectionsByContactsMap[ws.identityHex];
-                    }
 
-                    if (this.webSocketActiveConnectionsMap[ws.address] === ws) {
+                    if (ws.contactType === ContactType.CONTACT_TYPE_ENABLED)
+                        if (this.webSocketActiveConnectionsMap[ws.address] === ws) {
 
-                        for (let i = 0; i < this.webSocketActiveConnections.length; i++)
-                            if (this.webSocketActiveConnections[i] === ws) {
-                                this.webSocketActiveConnections.splice(i, 1);
-                                break;
-                            }
+                            for (let i = 0; i < this.webSocketActiveConnections.length; i++)
+                                if (this.webSocketActiveConnections[i] === ws) {
+                                    this.webSocketActiveConnections.splice(i, 1);
+                                    break;
+                                }
 
-                        delete this.webSocketActiveConnectionsMap[ws.address];
-
-                        for (const id in ws.socketsQueue) {
-                            ws.socketsQueue[id].error(new Error('Disconnected or Error'));
-                            delete this._pending['ws'+ws.id+':'+id]
+                            delete this.webSocketActiveConnectionsMap[ws.address];
                         }
 
-                        ws.socketsQueue = {};
-
-                        if (ws._queue.length) {
-                            const copy = [...ws._queue];
-                            ws._queue = [];
-                            for (const data of copy)
-                                data.cb(new Error('Disconnected or Error'))
-                        }
-
-                        if (ws.onclosed) ws.onclosed(  )
-
+                    for (const id in ws.socketsQueue) {
+                        ws.socketsQueue[id].error(new Error('Disconnected or Error'));
+                        delete this._pending['ws'+ws.id+':'+id]
                     }
+
+                    ws.socketsQueue = {};
+
+                    if (ws._queue.length) {
+                        const copy = [...ws._queue];
+                        ws._queue = [];
+                        for (const data of copy)
+                            data.cb(new Error('Disconnected or Error'))
+                    }
+
+                    if (ws.onclosed) ws.onclosed(  )
 
                 }
 
@@ -167,7 +181,7 @@ module.exports = function (options){
 
                 if (data.type !== "message") return;
 
-                this._setTimeoutWebSocket(ws);
+                this._updateTimeoutWebSocket(ws);
 
                 const message = data.data;
 
