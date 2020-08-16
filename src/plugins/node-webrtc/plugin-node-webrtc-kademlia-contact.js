@@ -17,6 +17,16 @@ module.exports = function(options){
 
         }
 
+        getProtocol(command, data){
+
+            //because of the ice candidates, they go back and forth until agreement is reached.
+            if (command === 'RNDZ_WRTC_CON')
+                return this.convertProtocolToWebSocket();
+
+            return super.getProtocol(command, data);
+        }
+
+
     }
 
 }

@@ -53,7 +53,17 @@ module.exports = {
                 url: 'turn:numb.viagenie.ca',
                 credential: 'muazkh',
                 username: 'webrtc@live.com'
-            }]
+            },
+            {urls: "turn:192.155.84.88", "username": "easyRTC", "credential": "easyRTC@pass"},
+            {urls: "turn:192.155.84.88?transport=tcp", "username": "easyRTC", "credential": "easyRTC@pass"},
+            {urls: "turn:192.155.86.24:443", "credential": "easyRTC@pass", "username": "easyRTC"},
+            {urls: "turn:192.155.86.24:443?transport=tcp", "credential": "easyRTC@pass", "username": "easyRTC"},
+            {
+                urls: "turn:numb.viagenie.ca",
+                username: "pasaseh@ether123.net",
+                credential: "12345678"
+            }
+            ]
 
         },
 

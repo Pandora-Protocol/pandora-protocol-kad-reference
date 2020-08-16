@@ -51,7 +51,7 @@ module.exports = function(options) {
             try{
 
                 const identityHex = identity.toString('hex');
-                const ws = this.webSocketActiveConnectionsByContactsMap[ identityHex ];
+                const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
                 if (!ws)
                     return cb(new Error('Node is not connected'));
 
@@ -70,7 +70,7 @@ module.exports = function(options) {
         send(destContact, command, data, cb){
 
             if ( this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED &&
-                !this.webSocketActiveConnectionsByContactsMap[destContact.identityHex] &&
+                !this._alreadyConnected[destContact.identityHex] &&
                  destContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS &&
                  destContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
 

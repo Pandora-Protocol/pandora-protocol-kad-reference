@@ -2,7 +2,7 @@ const ContactWebRTCType = require('./contact-webrtc-type')
 const ContactType = require('../contact-type/contact-type')
 const bencode = require('bencode');
 
-const WebRTCConnectionReceiver = require('./webrtc/webrtc-connection-receiver')
+const WebRTCConnectionRemote = require('./webrtc/webrtc-connection-remote')
 const WebRTCConnectionInitiator = require('./webrtc/webrtc-connection-initiator')
 
 
@@ -13,12 +13,85 @@ module.exports = function (options) {
         constructor() {
             super(...arguments);
 
+            /**
+             *
+             */
+            this._commands['REQ_ICE'] = this.requestIceCandidateWebRTCConnection.bind(this);
+
+            /**
+             * Sending an ICE candidate to the Rendezvous relay which will later forwarded the packet to the other peer.
+             */
+            this._commands['RNDZ_ICE'] = this.rendezvousIceCandidateWebRTCConnection.bind(this);
+
+            /**
+             * Forwarding the message to the 3rd party to establish a WebRTC connection with a requester.
+             */
             this._commands['REQ_WRTC_CON'] = this.requestWebRTCConnection.bind(this);
+
+            /**
+             * Sending an initiator offer to Rendezvous to establish a WebRTC connection with a third party receiver
+             */
             this._commands['RNDZ_WRTC_CON'] = this.rendezvousWebRTCConnection.bind(this);
 
-            this.webRTCActiveConnectionsByContactsMap = {};
-            this.webRTCActiveConnections = [];
+            this._webRTCActiveConnectionsByContactsMap = {};
+            this._webRTCActiveConnections = [];
 
+        }
+
+        _addWebRTConnection(contact, webRTCConnection){
+            this._alreadyConnected[contact.identityHex] = webRTCConnection;
+            this._webRTCActiveConnectionsByContactsMap[contact.identityHex] = webRTCConnection;
+            this._webRTCActiveConnections.push(webRTCConnection)
+        }
+
+        requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
+
+            try{
+
+                sourceIdentity = sourceIdentity.toString('hex');
+
+                const webRTCConnection = this._webRTCActiveConnectionsByContactsMap[ sourceIdentity ];
+                if (!webRTCConnection) return cb(new Error('Node is not connected'));
+
+                candidate = bencode.decode(candidate);
+                for (const key in candidate)
+                    if (Buffer.isBuffer(candidate[key]) )
+                        candidate[key] = candidate[key].toString();
+
+                webRTCConnection.addIceCandidate(candidate);
+
+                cb(null, 1);
+
+            }catch(err){
+                cb(new Error('Invalid contact'));
+            }
+
+
+        }
+
+        sendRequestIceCandidateWebRTCConnection(contact, sourceIdentity, candidate, cb){
+            this.send(contact, 'REQ_ICE', [sourceIdentity, candidate ], cb)
+        }
+
+        rendezvousIceCandidateWebRTCConnection(req, srcContact, [finalIdentity, candidate], cb){
+
+            try{
+
+                const finalIdentityHex = finalIdentity.toString('hex');
+
+                const ws = this._webSocketActiveConnectionsByContactsMap[ finalIdentityHex ];
+                if (!ws) return cb(new Error('Node is not connected'));
+
+                this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate, cb );
+
+            }catch(err){
+                cb(new Error('Invalid contact'));
+            }
+
+        }
+
+        sendRendezvousIceCandidateWebRTConnection(contact, identity, candidate, cb){
+            this.send(contact, 'RNDZ_ICE', [identity, bencode.encode(candidate) ], cb)
         }
 
         requestWebRTCConnection(req, srcContact, [contact, offer], cb){
@@ -28,15 +101,24 @@ module.exports = function (options) {
                 contact = this._kademliaNode.createContact( contact );
                 if (contact) this._welcomeIfNewNode(req, contact);
 
-                if (this.webRTCActiveConnectionsByContactsMap[contact.identityHex]) return cb(new Error('Already connected via WebRTC'));
-                if (this.webSocketActiveConnectionsByContactsMap[contact.identityHex]) return cb(new Error('Already connected via WebSocket'));
+                if (this._alreadyConnected[contact.identityHex]) return cb(new Error('Already connected'));
 
                 offer = bencode.decode(offer);
                 for (const key in offer)
-                    offer[key] = offer[key].toString();
+                    if (Buffer.isBuffer(offer[key]) )
+                        offer[key] = offer[key].toString();
 
-                const webrtcConnection = new WebRTCConnectionReceiver();
-                webrtcConnection.useInitiatorOffer(offer, (err, answer)=>{
+                const webRTCConnection = new WebRTCConnectionRemote();
+                this._addWebRTConnection(contact, webRTCConnection);
+
+                webRTCConnection.onicecandidate = e => {
+                    if (e.candidate)
+                        this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{
+
+                        })
+                }
+
+                webRTCConnection.useInitiatorOffer(offer, (err, answer)=>{
 
                     if (err) return err;
                     cb(null, answer);
@@ -61,9 +143,8 @@ module.exports = function (options) {
 
                 const identityHex = identity.toString('hex');
 
-                const ws = this.webSocketActiveConnectionsByContactsMap[ identityHex ];
-                if (!ws)
-                    return cb(new Error('Node is not connected'));
+                const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
+                if (!ws) return cb(new Error('Node is not connected'));
 
                 this.sendRequestWebRTConnection(ws.contact, srcContact, offer, cb );
 
@@ -81,7 +162,7 @@ module.exports = function (options) {
 
             //avoid using webrtc if reverse connection is possible
             if ( this._kademliaNode.contact.contactType !== ContactType.CONTACT_TYPE_ENABLED &&
-                 !this.webSocketActiveConnectionsByContactsMap[destContact.identityHex] &&
+                 !this._alreadyConnected[destContact.identityHex] &&
                   destContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS &&
                   destContact.webrtcType === ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED &&
                   destContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
@@ -93,22 +174,30 @@ module.exports = function (options) {
                 if (requestExistsAlready) return;
                 else {
 
-                    const webrtcConnection = new WebRTCConnectionInitiator();
+                    const webRTCConnection = new WebRTCConnectionInitiator();
+                    this._addWebRTConnection(destContact, webRTCConnection);
 
-                    return webrtcConnection.createInitiatorOffer((err, offer) => {
+                    webRTCConnection.onicecandidate = e => {
+                        if (e.candidate)
+                            this.sendRendezvousIceCandidateWebRTConnection(destContact.rendezvousContact, destContact.identity, e.candidate, (err, out) =>{
+
+                            })
+                    }
+
+                    return webRTCConnection.createInitiatorOffer((err, offer) => {
 
                         if (err)return cb(err)
                         this.sendRendezvousWebRTCConnection(destContact.rendezvousContact, destContact.identity, offer, (err, answer ) => {
 
-                            if (err) this._pendingTimeoutAll('rendezvous:webRTCConnection:' + destContact.identityHex, err);
+                            if (err || !answer) return this._pendingTimeoutAll('rendezvous:webRTCConnection:' + destContact.identityHex, err);
 
                             for (const key in answer)
-                                answer[key] = answer[key].toString();
+                                if (Buffer.isBuffer(answer[key]) )
+                                    answer[key] = answer[key].toString();
 
-                            webrtcConnection.userReceiverAnswer(answer, (err, out)=>{
+                            webRTCConnection.userRemoteAnswer(answer, (err, out)=>{
 
-                                if (err) return cb(err);
-                                this._pendingResolveAll('rendezvous:webRTCConnection:' + destContact.identityHex, resolve => resolve(true) );
+                                if (err) return this._pendingTimeoutAll('rendezvous:webRTCConnection:' + destContact.identityHex, err);
 
 
                             });

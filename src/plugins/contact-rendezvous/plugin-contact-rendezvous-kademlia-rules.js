@@ -37,7 +37,7 @@ module.exports = function(options){
         sendUpdateContact(contact, cb){
 
             const data = [];
-            if ( this.webSocketActiveConnectionsByContactsMap[contact.identityHex]  )
+            if ( this._webSocketActiveConnectionsByContactsMap[contact.identityHex]  )
                 data.push(this._kademliaNode.contact);
 
             this.send(contact, 'UPD_CONTACT', data, cb)
@@ -138,7 +138,7 @@ module.exports = function(options){
             let protocol = contact.convertProtocolToWebSocket(  );
             if (!protocol) return cb(new Error('Protocol is invalid'));
 
-            let ws = this.webSocketActiveConnectionsMap[address];
+            let ws = this._webSocketActiveConnectionsMap[address];
             if (ws) {
                 this._socketConnectedAsRendezvousSocket(ws);
                 return cb(null, ws )

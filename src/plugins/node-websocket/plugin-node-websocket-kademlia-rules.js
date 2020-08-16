@@ -12,9 +12,11 @@ module.exports = function (options){
         constructor() {
             super(...arguments);
 
-            this.webSocketActiveConnections = [];
-            this.webSocketActiveConnectionsMap = {};
-            this.webSocketActiveConnectionsByContactsMap = {};
+            this._webSocketActiveConnections = [];
+            this._webSocketActiveConnectionsMap = {};
+            this._webSocketActiveConnectionsByContactsMap = {};
+
+            this._alreadyConnected = {};
 
             if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET === undefined) throw new Error('WebSocket protocol was not initialized.');
             this._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET] =
@@ -30,7 +32,7 @@ module.exports = function (options){
         _sendGetProtocol(destContact){
 
             // the destContact is already contacted via a websocket
-            if (this.webSocketActiveConnectionsByContactsMap[destContact.identityHex])
+            if (this._webSocketActiveConnectionsByContactsMap[destContact.identityHex])
                 return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
 
             return super._sendGetProtocol(...arguments);
@@ -103,7 +105,7 @@ module.exports = function (options){
 
                 const address = contact.hostname +':'+ contact.port + contact.path;
                 //connected twice
-                if (this.webSocketActiveConnectionsMap[address] || this.webSocketActiveConnectionsByContactsMap[contact.identityHex]){
+                if (this._webSocketActiveConnectionsMap[address] || this._alreadyConnected[contact.identityHex]){
 
                     try{
 
@@ -118,7 +120,7 @@ module.exports = function (options){
                 }
 
                 ws.address = address;
-                this.webSocketActiveConnectionsMap[address] = ws;
+                this._webSocketActiveConnectionsMap[address] = ws;
 
             }
 
@@ -130,8 +132,9 @@ module.exports = function (options){
             ws.socketsQueue = {};
             ws._queue = [];
 
-            this.webSocketActiveConnectionsByContactsMap[contact.identityHex] = ws;
-            this.webSocketActiveConnections.push(ws);
+            this._webSocketActiveConnectionsByContactsMap[contact.identityHex] = ws;
+            this._alreadyConnected[contact.identityHex] = ws;
+            this._webSocketActiveConnections.push(ws);
 
             this._updateTimeoutWebSocket(ws);
 
@@ -149,17 +152,20 @@ module.exports = function (options){
             ws.onerror =
                 ws.onclose = () => {
 
-                    if (this.webSocketActiveConnectionsByContactsMap[contact.identityHex] === ws)
-                        delete this.webSocketActiveConnectionsByContactsMap[contact.identityHex];
+                    if (this._webSocketActiveConnectionsByContactsMap[contact.identityHex] === ws)
+                        delete this._webSocketActiveConnectionsByContactsMap[contact.identityHex];
 
-                    for (let i = 0; i < this.webSocketActiveConnections.length; i++)
-                        if (this.webSocketActiveConnections[i] === ws) {
-                            this.webSocketActiveConnections.splice(i, 1);
+                    if (this._alreadyConnected[contact.identityHex] === ws)
+                        delete this._alreadyConnected[contact.identityHex];
+
+                    for (let i = 0; i < this._webSocketActiveConnections.length; i++)
+                        if (this._webSocketActiveConnections[i] === ws) {
+                            this._webSocketActiveConnections.splice(i, 1);
                             break;
                         }
 
-                    if (ws.address && this.webSocketActiveConnectionsMap[ws.address] === ws)
-                        delete this.webSocketActiveConnectionsMap[ws.address];
+                    if (ws.address && this._webSocketActiveConnectionsMap[ws.address] === ws)
+                        delete this._webSocketActiveConnectionsMap[ws.address];
 
                     for (const id in ws.socketsQueue) {
                         ws.socketsQueue[id].error(new Error('Disconnected or Error'));
@@ -267,8 +273,8 @@ module.exports = function (options){
             const buffer = bencode.encode( [0, id, data] );
 
             //connected once already already
-            if (this.webSocketActiveConnectionsByContactsMap[destContact.identityHex])
-                return this._sendWebSocketWaitAnswer( this.webSocketActiveConnectionsByContactsMap[destContact.identityHex], id, buffer, cb);
+            if (this._webSocketActiveConnectionsByContactsMap[destContact.identityHex])
+                return this._sendWebSocketWaitAnswer( this._webSocketActiveConnectionsByContactsMap[destContact.identityHex], id, buffer, cb);
 
             const address = destContact.hostname +':'+ destContact.port + destContact.path;
             this._createWebSocket(address, destContact, protocol,(err, ws) => {
