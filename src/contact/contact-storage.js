@@ -1,6 +1,4 @@
-const BufferUtils = require('./../helpers/buffer-utils')
 const bencode = require('bencode')
-const Contact = require('./contact')
 
 module.exports = class ContactStorage {
 
@@ -56,7 +54,6 @@ module.exports = class ContactStorage {
             args: [
                 opts.app || KAD_OPTIONS.VERSION.APP,
                 opts.version || KAD_OPTIONS.VERSION.VERSION,
-                opts.identity || BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH),
             ]
         };
     }

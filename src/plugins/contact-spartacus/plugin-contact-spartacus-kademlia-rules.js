@@ -6,33 +6,7 @@ module.exports = function (options){
         constructor() {
             super(...arguments);
 
-            this._commands['UPD_CONTACT'] = this.updateContact.bind(this);
         }
-
-        updateContact(req, srcContact, [contact], cb){
-            this._welcomeIfNewNode(req, srcContact);
-
-            if (contact && req.isWebSocket){
-                try{
-                    contact = this._kademliaNode.createContact(contact);
-                    this._welcomeIfNewNode(req, contact);
-                }catch(err){
-
-                }
-            }
-
-            cb(null, [1]);
-        }
-
-        sendUpdateContact(contact, cb){
-
-            const data = [];
-            if ( this.webSocketActiveConnectionsByContactsMap[contact.identityHex]  )
-                data.push(this._kademliaNode.contact);
-
-            this.send(contact, 'UPD_CONTACT', data, cb)
-        }
-
 
         _welcomeIfNewNode(req, contact, cb = ()=>{} ){
 
@@ -56,8 +30,6 @@ module.exports = function (options){
 
         }
 
-
     }
-
 
 }

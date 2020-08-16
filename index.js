@@ -19,6 +19,7 @@ const PluginContactSpartacus = require('./src/plugins/contact-spartacus/index')
 const PluginContactSybilProtect = require('./src/plugins/contact-sybil-protect/index')
 const PluginContactRelay = require('./src/plugins/contact-relay/index')
 const PluginContactType = require('./src/plugins/contact-type/index')
+const PluginContactIdentity = require('./src/plugins/contact-identity/index')
 
 const BufferUtils = require('./src/helpers/buffer-utils')
 const StringUtils = require('./src/helpers/string-utils')
@@ -69,6 +70,7 @@ module.exports = {
         PluginKademliaNodeHTTP,
         PluginKademliaNodeWebSocket,
         PluginSortedList,
+        PluginContactIdentity,
         PluginContactRelay,
         PluginContactEncrypted,
         PluginContactSpartacus,

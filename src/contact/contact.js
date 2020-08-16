@@ -17,10 +17,8 @@ module.exports = class Contact{
         if (this.version < KAD_OPTIONS.VERSION.VERSION_COMPATIBILITY )
             throw "Contact Version is not compatible"
 
-        this.identity = arguments[this._argumentIndex++];
-
-        this._keys = ['app', 'version', 'identity'];
-        this._allKeys = ['app', 'version', 'identity'];
+        this._keys = ['app', 'version'];
+        this._allKeys = ['app', 'version'];
 
     }
 

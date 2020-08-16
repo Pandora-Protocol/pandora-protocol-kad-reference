@@ -1,6 +1,7 @@
 const PluginContactRelayKademliaRules = require('./plugin-contact-relay-kademlia-rules')
 const PluginContactRelayKademliaContact = require('./plugin-contact-relay-kademlia-contact')
 const PluginContactRelayContactStorage = require('./plugin-contact-relay-kademlia-contact-storage')
+const PluginContactRelayCrawler = require('./plugin-contact-relay-kademlia-crawler')
 
 const ContactType = require('../contact-type/contact-type')
 
@@ -17,6 +18,7 @@ module.exports = {
         options.Rules = PluginContactRelayKademliaRules(options);
         options.Contact = PluginContactRelayKademliaContact(options);
         options.ContactStorage = PluginContactRelayContactStorage(options);
+        options.Crawler = PluginContactRelayCrawler(options);
 
         const _bootstrap = kademliaNode.bootstrap.bind(kademliaNode);
         kademliaNode.bootstrap = function (contact, first, cb = ()=>{} ){

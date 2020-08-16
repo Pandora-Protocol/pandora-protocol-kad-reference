@@ -10,7 +10,6 @@ module.exports = function (options){
 
             this.contactRefresher = new ContactRefresher(this._kademliaNode);
 
-
         }
 
     }

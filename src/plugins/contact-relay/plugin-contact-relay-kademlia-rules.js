@@ -17,10 +17,33 @@ module.exports = function(options){
             this._commands['REQ_REV_CON'] = this.requestReverseConnect.bind(this);
             this._commands['RELAY_JOIN'] = this.relayJoin.bind(this);
             this._commands['RELAY_REV_CON'] = this.relayReverseConnection.bind(this);
+            this._commands['UPD_CONTACT'] = this.updateContact.bind(this);
 
         }
 
+        updateContact(req, srcContact, [contact], cb){
+            this._welcomeIfNewNode(req, srcContact);
 
+            if (contact && req.isWebSocket){
+                try{
+                    contact = this._kademliaNode.createContact(contact);
+                    this._welcomeIfNewNode(req, contact);
+                }catch(err){
+
+                }
+            }
+
+            cb(null, [1]);
+        }
+
+        sendUpdateContact(contact, cb){
+
+            const data = [];
+            if ( this.webSocketActiveConnectionsByContactsMap[contact.identityHex]  )
+                data.push(this._kademliaNode.contact);
+
+            this.send(contact, 'UPD_CONTACT', data, cb)
+        }
 
         async start(opts){
 
