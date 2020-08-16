@@ -45,6 +45,18 @@ module.exports = {
             T_WEBSOCKET_DISCONNECT_INACTIVITY: 2*60*1000,
         },
 
+        NODE_WEBRTC: {
+
+            ICE_SERVERS: [ {
+                url: 'stun:stun1.l.google.com:19302'
+            }, {
+                url: 'turn:numb.viagenie.ca',
+                credential: 'muazkh',
+                username: 'webrtc@live.com'
+            }]
+
+        },
+
         CONTACT_SPARTACUS: {
             T_CONTACT_TIMESTAMP_MAX_DRIFT: 60,
             T_CONTACT_TIMESTAMP_DIFF_UPDATE: 15,

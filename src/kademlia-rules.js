@@ -411,7 +411,7 @@ module.exports = class KademliaRules {
         for (const key in this._pending) {
 
             const pending = this._pending[key];
-            for (let i = pending.length; i >= 0 ; i-- ){
+            for (let i = pending.length-1; i >= 0 ; i-- ){
 
                 if (now >= pending[i].timestamp + (pending[i].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT)) {
 
