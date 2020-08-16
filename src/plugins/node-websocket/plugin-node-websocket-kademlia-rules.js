@@ -81,18 +81,17 @@ module.exports = function (options){
         }
 
         _setTimeoutWebSocket(ws){
-            this._pending['ws'+ws.id] = {
-                timestamp: new Date().getTime(),
-                time: this._getTimeoutWebSocketTime(ws),
-                timeout: () => ws.close(),
-            }
+            this._pendingAdd( 'ws'+ws.id, () => ws.close(), ()=>{}, this._getTimeoutWebSocketTime(ws) );
         }
 
 
         _updateTimeoutWebSocket(ws){
-            if (this._pending['ws'+ws.id]) {
-                this._pending['ws' + ws.id].timestamp = new Date().getTime();
-                this._pending['ws' + ws.id].time = this._getTimeoutWebSocketTime(ws);
+            const pending = this._pending['ws'+ws.id];
+            if (pending) {
+                for (let i=0; i < pending.length; i++){
+                    pending.timestamp = new Date().getTime();
+                    pending.time = this._getTimeoutWebSocketTime(ws);
+                }
             }
             else
                 this._setTimeoutWebSocket(ws);
@@ -244,14 +243,10 @@ module.exports = function (options){
                     error: () => cb(new Error('Disconnected or Error')),
                 };
 
-                this._pending['ws'+ws.id+':'+id] = {
-                    timestamp: new Date().getTime(),
-                    timeout: ()=>{
-                        delete ws.socketsQueue[id];
-                        cb(new Error('Timeout'));
-                    },
-                    resolve: cb,
-                }
+                this._pendingAdd('ws'+ws.id+':'+id, ()=>{
+                    delete ws.socketsQueue[id];
+                    cb(new Error('Timeout'));
+                }, cb );
 
                 ws.send( buffer )
             }

@@ -6,7 +6,6 @@ module.exports = function (options){
 
         async createContactArgs ( opts ){
 
-            if (opts.contactType === undefined) opts.contactType = ContactType.CONTACT_TYPE_DISABLED;
             if (opts.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS)
                 opts.contactType = ContactType.CONTACT_TYPE_DISABLED;
 
@@ -16,7 +15,6 @@ module.exports = function (options){
                 ...out,
                 args: [
                     ...out.args,
-                    opts.contactType,
                 ]
             }
         }

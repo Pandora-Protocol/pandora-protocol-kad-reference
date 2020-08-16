@@ -37,6 +37,41 @@ module.exports = class KademliaRules {
 
     }
 
+    _pendingAdd(key, timeout, resolve, time){
+
+        if (!this._pending[key])
+            this._pending[key] = [];
+
+        this._pending[key].push({
+            key, timeout, resolve, time,
+            timestamp: new Date().getTime(),
+        })
+    }
+
+    _pendingResolveAll(key, cb){
+
+        const pending = this._pending[key];
+        if (!pending) return false;
+
+        for (let i=0; i < pending.length; i++)
+            cb ( pending[i].resolve );
+
+        delete this._pending[key];
+        return true;
+    }
+
+    _pendingTimeoutAll(key, err){
+
+        const pending = this._pending[key];
+        if (!pending) return false;
+
+        for (let i=0; i < pending.length; i++)
+            pending[i].timeout(err);
+
+        delete this._pending[key];
+        return true;
+    }
+
     async start(opts){
         /**
          * USED to avoid memory leaks, from time to time, we have to clean this._replicatedStoreToNewNodesAlready
@@ -373,17 +408,29 @@ module.exports = class KademliaRules {
 
         const now = new Date().getTime();
 
-        for (const key in this._pending)
-            if (now >= this._pending[key].timestamp + (this._pending[key].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
+        for (const key in this._pending) {
 
-                try{
-                    this._pending[key].timeout.call(this, key, this._pending[key]);
-                }catch(err){
-                    console.error("_timeoutPending raised an error", err);
+            const pending = this._pending[key];
+            for (let i = pending.length; i >= 0 ; i-- ){
+
+                if (now >= pending[i].timestamp + (pending[i].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT)) {
+
+                    try {
+                        pending[i].timeout.call( this, key, pending[i] );
+                    } catch (err) {
+                        console.error("_timeoutPending raised an error", err);
+                    }
+
+                    pending.splice(i, 1);
                 }
 
-                delete this._pending[key];
             }
+
+            if ( !pending.length )
+                delete this._pending[key];
+
+
+        }
 
         next(null)
     }

@@ -45,14 +45,7 @@ module.exports = class HTTPRequest {
         //optional path
         if ( destContact.path) reqopts.path = destContact.path;
 
-        this._kademliaRules._pending['http'+id] = {
-            timestamp: new Date().getTime(),
-            response: out => {
-                delete this._kademliaRules._pending['http'+id];
-                return callback(null, out );
-            },
-            timeout: () => callback(new Error('Timeout'))
-        };
+        this._kademliaRules._pendingAdd('http'+id,  () => callback(new Error('Timeout')), out => callback(null, out ) );
 
         const request = this._createRequest( reqopts, (response) =>{
 

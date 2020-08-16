@@ -16,12 +16,7 @@ module.exports = function(options) {
 
         reverseConnect(req, srcContact, data, cb){
 
-            const pending = this._pending['rendezvous:' + srcContact.identityHex];
-            if (pending) {
-                delete this._pending['rendezvous:' + srcContact.identityHex];
-                pending.resolve(null, true);
-            }
-
+            this._pendingResolveAll('rendezvous:' + srcContact.identityHex, (resolve) => resolve(null, true ));
             cb(null, 1);
 
         }
@@ -76,24 +71,23 @@ module.exports = function(options) {
             if ( !this.webSocketActiveConnectionsByContactsMap[destContact.identityHex] && destContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS){
 
                 //reverse connection
-                if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED){
+                if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED) {
+
+                    //reverse connection is pending...
+                    let exists = false;
+                    if (this._pending['rendezvous:' + destContact.identityHex])
+                        exists = true;
 
                     if (destContact.rendezvousContact.contactType !== ContactType.CONTACT_TYPE_ENABLED )
                         return cb(new Error("RendezvousContact type is invalid"));
 
-                    this._pending['rendezvous:'+destContact.identityHex] = {
-                        timestamp: new Date().getTime(),
-                        timeout: ()=> cb(new Error('Timeout')),
-                        time: 2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT,
-                        resolve: (out) => super.send(destContact, command, data, cb),
-                    }
+                    this._pendingAdd('rendezvous:'+destContact.identityHex, ()=> cb(new Error('Timeout')), (out) => super.send(destContact, command, data, cb), 2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT);
 
-                    return this.sendRendezvousReverseConnection( destContact.rendezvousContact, destContact.identity, (err, out) => {
+                    if (exists) return;
+                    else return this.sendRendezvousReverseConnection( destContact.rendezvousContact, destContact.identity, (err, out) => {
 
-                        if (err && this._pending['rendezvous:'+destContact.identityHex]) {
-                            delete this._pending['rendezvous:'+destContact.identityHex];
-                            return cb(err);
-                        }
+                        if (err && this._pending['rendezvous:'+destContact.identityHex])
+                            this._pendingTimeoutAll('rendezvous:'+destContact.identityHex, err);
 
                     }  );
 

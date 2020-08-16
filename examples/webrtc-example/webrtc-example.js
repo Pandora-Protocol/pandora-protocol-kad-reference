@@ -36,11 +36,11 @@ const nodes = array.map(
             KAD.plugins.PluginNodeHTTP,
             KAD.plugins.PluginNodeWebSocket,
             KAD.plugins.PluginContactEncrypted,
-            KAD.plugins.PluginContactSpartacus,
-            KAD.plugins.PluginContactSybilProtect, //must be the last
             KAD.plugins.PluginContactRendezvous,
             KAD.plugins.PluginReverseConnection,
             KAD.plugins.PluginNodeWebRTC,
+            KAD.plugins.PluginContactSpartacus,
+            KAD.plugins.PluginContactSybilProtect, //must be the last
         ],
     ) )
 
@@ -68,18 +68,22 @@ async.eachLimit( array, 1, (index, next ) => {
         for (let i=0; i < nodes.length; i++)
             console.log(i, nodes[i].routingTable.count, nodes[i].routingTable.array.map( it => it.contact.contactType ));
 
-        let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+        const query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query, (err, out)=>{
             console.log("iterativeFindValue", out.result, out.length);
         })
 
-        let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+        const query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         nodes[3].crawler.iterativeStoreValue( Buffer.alloc(0), query2, 'query2', (err, out)=>{
             console.log("iterativeStoreValue", out);
 
             nodes[5].crawler.iterativeFindValue( Buffer.alloc(0), query2, (err, out)=>{
                 console.log("iterativeFindValue2", out.result);
             })
+
+            nodes[4].rules.sendPing( nodes[5].contact,(err, out)=>{
+                console.log("ping out", err, out);
+            } )
 
         })
 

@@ -12,7 +12,6 @@ module.exports = function(options){
             if (!ContactWebRTCType._map[this.webrtcType])
                 throw "Contact WebRTC type is invalid";
 
-
             this._keys.push('webrtcType');
             this._allKeys.push('webrtcType');
 
