@@ -5,6 +5,7 @@ module.exports = function(options) {
     return class Rules extends options.Rules {
 
         constructor() {
+
             super(...arguments);
 
             this._commands['REV_CON'] = this.reverseConnect.bind(this);

@@ -4,7 +4,6 @@ module.exports = function (options){
 
         constructor() {
             super(...arguments);
-
         }
 
         _welcomeIfNewNode(req, contact, cb = ()=>{} ){

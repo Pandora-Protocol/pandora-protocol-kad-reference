@@ -19,10 +19,10 @@ const nodes = array.map(
         path.resolve( __dirname + '/_temp/' + index ),
         [
             KAD.plugins.PluginContactIdentity,
-            KAD.plugins.PluginKademliaNodeMock,
+            KAD.plugins.PluginNodeMock,
             KAD.plugins.PluginContactType,
-            KAD.plugins.PluginKademliaNodeHTTP,
-            KAD.plugins.PluginKademliaNodeWebSocket,
+            KAD.plugins.PluginNodeHTTP,
+            KAD.plugins.PluginNodeWebSocket,
             KAD.plugins.PluginSortedList,
             KAD.plugins.PluginContactRendezvous,
             KAD.plugins.PluginReverseConnection,

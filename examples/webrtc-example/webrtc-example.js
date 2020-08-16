@@ -2,7 +2,7 @@ const KAD = require('../../index');
 const async = require('async');
 const path = require('path')
 
-console.log("Simple Encrypted Contact KAD");
+console.log("WebRTC KAD");
 
 const sybilKeys = {
     privateKey: Buffer.from("68a595199d55260b90d97e6714f27c2a22548f9ee4b2c61956eb628189a8e2ed", "hex"),
@@ -40,12 +40,13 @@ const nodes = array.map(
             KAD.plugins.PluginContactSybilProtect, //must be the last
             KAD.plugins.PluginContactRendezvous,
             KAD.plugins.PluginReverseConnection,
+            KAD.plugins.PluginNodeWebRTC,
         ],
     ) )
 
 async.eachLimit( array, 1, (index, next ) => {
 
-    nodes[index].start( {port: 10096+index} ).then((out)=>{
+    nodes[index].start( {port: 10097+index} ).then((out)=>{
         console.log("BOOTSTRAPING...", nodes[index].contact.identityHex, nodes[index].contact.port );
         next(null, out)
     })

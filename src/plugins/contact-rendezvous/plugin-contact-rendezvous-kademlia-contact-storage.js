@@ -4,17 +4,6 @@ module.exports = function (options){
 
     return class ContactStorage extends options.ContactStorage{
 
-        _setContact(contactArgs, saveToStorage, cb){
-
-            super._setContact(contactArgs, saveToStorage, (err, out)=>{
-
-                if (err) return cb(err);
-                cb(null, out);
-
-            })
-
-        }
-
         async createContactArgs ( opts ){
 
             if (opts.contactType === undefined) opts.contactType = ContactType.CONTACT_TYPE_DISABLED;

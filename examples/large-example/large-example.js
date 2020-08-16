@@ -5,9 +5,6 @@ const path = require('path')
 KAD.init({});
 console.log("Large KAD");
 
-KAD.plugins.PluginKademliaNodeMock.initialize();
-KAD.plugins.PluginKademliaNodeHTTP.initialize();
-
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP;
 // KAD_OPTIONS.TEST_PROTOCOL = KAD.ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
@@ -32,10 +29,10 @@ const nodes = array.map(
         path.resolve( __dirname + '/_temp/' + index ),
         [
             KAD.plugins.PluginContactIdentity,
-            KAD.plugins.PluginKademliaNodeMock,
+            KAD.plugins.PluginNodeMock,
             KAD.plugins.PluginContactType,
-            KAD.plugins.PluginKademliaNodeHTTP,
-            KAD.plugins.PluginKademliaNodeWebSocket,
+            KAD.plugins.PluginNodeHTTP,
+            KAD.plugins.PluginNodeWebSocket,
             KAD.plugins.PluginContactRendezvous,
             KAD.plugins.PluginReverseConnection,
         ],

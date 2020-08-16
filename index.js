@@ -10,9 +10,10 @@ const ContactAddressProtocolType = require('./src/plugins/contact-type/contact-a
 
 const RoutingTable = require('./src/routing-table/routing-table')
 
-const PluginKademliaNodeMock = require('./src/plugins/node-mock/index')
-const PluginKademliaNodeHTTP = require('./src/plugins/node-http/index')
-const PluginKademliaNodeWebSocket = require('./src/plugins/node-websocket/index')
+const PluginNodeMock = require('./src/plugins/node-mock/index')
+const PluginNodeHTTP = require('./src/plugins/node-http/index')
+const PluginNodeWebSocket = require('./src/plugins/node-websocket/index')
+const PluginNodeWebRTC = require('./src/plugins/node-webrtc/index')
 const PluginSortedList = require('./src/plugins/sorted-list/index')
 const PluginContactEncrypted = require('./src/plugins/contact-encrypted/index')
 const PluginContactSpartacus = require('./src/plugins/contact-spartacus/index')
@@ -66,13 +67,14 @@ module.exports = {
     },
 
     plugins: {
-        PluginKademliaNodeMock,
-        PluginContactType,
-        PluginKademliaNodeHTTP,
-        PluginKademliaNodeWebSocket,
-        PluginSortedList,
         PluginContactIdentity,
+        PluginSortedList,
+        PluginNodeMock,
+        PluginContactType,
+        PluginNodeHTTP,
+        PluginNodeWebSocket,
         PluginContactRendezvous,
+        PluginNodeWebRTC,
         PluginReverseConnection,
         PluginContactEncrypted,
         PluginContactSpartacus,
