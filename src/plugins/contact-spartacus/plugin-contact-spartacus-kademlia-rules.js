@@ -1,4 +1,3 @@
-const bencode = require('bencode');
 module.exports = function (options){
 
     return class MyRules extends options.Rules {
@@ -17,7 +16,8 @@ module.exports = function (options){
                 if ( oldContact.contact.isContactNewer( contact ) ) {
 
                     oldContact.contact = contact;
-                    if (req.isWebSocket)
+
+                    if (req.isWebSocket && req.contact.identity.equals(contact.identity))
                         req.contact = contact;
 
                     return cb(null, "timestamp updated");

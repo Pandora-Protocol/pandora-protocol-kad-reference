@@ -1,5 +1,7 @@
 const PluginContactTypeKademliaContact = require('./plugin-contact-type-kademlia-contact')
 const PluginContactTypeContactStorage = require('./plugin-contact-type-kademlia-contact-storage')
+const ContactType = require('./contact-type')
+const ContactAddressProtocolType = require('./contact-address-protocol-type')
 
 module.exports = {
 
@@ -15,5 +17,8 @@ module.exports = {
         }
 
     },
+
+    ContactType,
+    ContactAddressProtocolType,
 
 }

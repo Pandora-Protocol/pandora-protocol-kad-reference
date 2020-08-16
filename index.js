@@ -17,7 +17,8 @@ const PluginSortedList = require('./src/plugins/sorted-list/index')
 const PluginContactEncrypted = require('./src/plugins/contact-encrypted/index')
 const PluginContactSpartacus = require('./src/plugins/contact-spartacus/index')
 const PluginContactSybilProtect = require('./src/plugins/contact-sybil-protect/index')
-const PluginContactRelay = require('./src/plugins/contact-relay/index')
+const PluginContactRendezvous = require('./src/plugins/contact-rendezvous/index')
+const PluginReverseConnection = require('./src/plugins/reverse-connection/index')
 const PluginContactType = require('./src/plugins/contact-type/index')
 const PluginContactIdentity = require('./src/plugins/contact-identity/index')
 
@@ -71,7 +72,8 @@ module.exports = {
         PluginKademliaNodeWebSocket,
         PluginSortedList,
         PluginContactIdentity,
-        PluginContactRelay,
+        PluginContactRendezvous,
+        PluginReverseConnection,
         PluginContactEncrypted,
         PluginContactSpartacus,
         PluginContactSybilProtect,

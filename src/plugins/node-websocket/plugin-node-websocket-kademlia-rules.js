@@ -176,8 +176,6 @@ module.exports = function (options){
                             data.cb(new Error('Disconnected or Error'))
                     }
 
-                    if (ws.onclosed) ws.onclosed(  )
-
                 }
 
             ws.onmessage =  (data) => {

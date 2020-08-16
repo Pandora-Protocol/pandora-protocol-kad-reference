@@ -38,7 +38,8 @@ const nodes = array.map(
             KAD.plugins.PluginContactEncrypted,
             KAD.plugins.PluginContactSpartacus,
             KAD.plugins.PluginContactSybilProtect, //must be the last
-            KAD.plugins.PluginContactRelay,
+            KAD.plugins.PluginContactRendezvous,
+            KAD.plugins.PluginReverseConnection,
         ],
     ) )
 

@@ -24,7 +24,8 @@ const nodes = array.map(
             KAD.plugins.PluginKademliaNodeHTTP,
             KAD.plugins.PluginKademliaNodeWebSocket,
             KAD.plugins.PluginSortedList,
-            KAD.plugins.PluginContactRelay,
+            KAD.plugins.PluginContactRendezvous,
+            KAD.plugins.PluginReverseConnection,
         ],
     ) )
 

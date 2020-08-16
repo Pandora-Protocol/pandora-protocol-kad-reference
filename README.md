@@ -75,9 +75,9 @@ Later on, a new reference code can be implemented in GO and compiled into web as
  
 8. **Sybil-Protect**. Extends Contact Spartacus by requiring a "nonce" generated and signed by someone to avoid spams and sybil attacks. A beacon can be used later on to establish the forgers of the sybil protect.
 
-9. **Contact-Relay**. It allows reverse connection for Backbone nodes that support **Node-WebSocket** servers and WebRTC signaling.
+9. **Contact-Rendezvous**. It allows reverse connection for Backbone nodes that support **Node-WebSocket** servers and WebRTC signaling.
 
-10. **Node-WebRTC**. It allows WebRTC connections for Browsers and Backbone Nodes. **Contact-Relay** is required for the signaling process.              
+10. **Node-WebRTC**. It allows WebRTC connections for Browsers and Backbone Nodes. **Contact-Rendezvous** is required for the signaling process.              
 
 TO DOs:
 
