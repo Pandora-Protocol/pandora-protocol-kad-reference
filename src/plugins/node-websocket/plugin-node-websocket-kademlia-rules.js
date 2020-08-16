@@ -90,8 +90,10 @@ module.exports = function (options){
 
 
         _updateTimeoutWebSocket(ws){
-            if (this._pending['ws'+ws.id])
-                this._pending['ws'+ws.id].time = this._getTimeoutWebSocketTime(ws);
+            if (this._pending['ws'+ws.id]) {
+                this._pending['ws' + ws.id].timestamp = new Date().getTime();
+                this._pending['ws' + ws.id].time = this._getTimeoutWebSocketTime(ws);
+            }
             else
                 this._setTimeoutWebSocket(ws);
         }
