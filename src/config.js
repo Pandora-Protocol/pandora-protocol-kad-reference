@@ -28,7 +28,7 @@ module.exports = {
     T_STORE_GARBAGE_COLLECTOR: 5*60*3600,
     T_STORE_GARBAGE_COLLECTOR_SLEEP: 25, //25 ms for iterator
 
-    T_RESPONSE_TIMEOUT: 5000, //Time to wait for RPC response
+    T_RESPONSE_TIMEOUT: 10000, //Time to wait for RPC response
 
     MAX_UNIMPROVED_REFRESHES: 3, // MAX_UNIMPROVED_REFRESHES - Quit refreshing no improvement
 

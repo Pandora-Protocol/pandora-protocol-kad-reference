@@ -151,17 +151,14 @@ module.exports = function (options){
                     if (this.webSocketActiveConnectionsByContactsMap[contact.identityHex] === ws)
                         delete this.webSocketActiveConnectionsByContactsMap[contact.identityHex];
 
-                    if (ws.contactType === ContactType.CONTACT_TYPE_ENABLED)
-                        if (this.webSocketActiveConnectionsMap[ws.address] === ws) {
-
-                            for (let i = 0; i < this.webSocketActiveConnections.length; i++)
-                                if (this.webSocketActiveConnections[i] === ws) {
-                                    this.webSocketActiveConnections.splice(i, 1);
-                                    break;
-                                }
-
-                            delete this.webSocketActiveConnectionsMap[ws.address];
+                    for (let i = 0; i < this.webSocketActiveConnections.length; i++)
+                        if (this.webSocketActiveConnections[i] === ws) {
+                            this.webSocketActiveConnections.splice(i, 1);
+                            break;
                         }
+
+                    if (ws.address && this.webSocketActiveConnectionsMap[ws.address] === ws)
+                        delete this.webSocketActiveConnectionsMap[ws.address];
 
                     for (const id in ws.socketsQueue) {
                         ws.socketsQueue[id].error(new Error('Disconnected or Error'));
