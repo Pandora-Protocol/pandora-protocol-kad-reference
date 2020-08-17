@@ -11,6 +11,7 @@ module.exports = function (options) {
     return class MyRules extends options.Rules {
 
         constructor() {
+
             super(...arguments);
 
             /**
@@ -42,6 +43,23 @@ module.exports = function (options) {
             this._alreadyConnected[contact.identityHex] = webRTCConnection;
             this._webRTCActiveConnectionsByContactsMap[contact.identityHex] = webRTCConnection;
             this._webRTCActiveConnections.push(webRTCConnection)
+            
+            webRTCConnection.ondisconnect = ()=>{
+
+                if (this._alreadyConnected[contact.identityHex] === webRTCConnection)
+                    delete this._alreadyConnected[contact.identityHex];
+
+                if (this._webRTCActiveConnectionsByContactsMap[contact.identityHex] === webRTCConnection) {
+                    delete this._webRTCActiveConnectionsByContactsMap[contact.identityHex];
+
+                    for (let i=this._webRTCActiveConnections.length-1; i>=0; i--) {
+                        this._webRTCActiveConnections.splice(i, 1);
+                        break;
+                    }
+
+                }
+
+            }
         }
 
         requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){

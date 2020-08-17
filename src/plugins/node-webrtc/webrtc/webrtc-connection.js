@@ -8,7 +8,6 @@ module.exports = class WebRTCConnection extends WebRTC.RTCPeerConnection{
 
         this._readyState = 'close';
 
-
     }
 
     _onChannelMessageCallback(event, channel){
