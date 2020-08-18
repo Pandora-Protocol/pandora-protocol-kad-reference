@@ -16,7 +16,7 @@ module.exports = function(options) {
 
         reverseConnect(req, srcContact, data, cb){
 
-            this._pendingResolveAll('rendezvous:reverseConnection:' + srcContact.identityHex, (resolve) => resolve(null, true ));
+            this.pending.pendingResolveAll('rendezvous:reverseConnection:' + srcContact.identityHex,  resolve => resolve(null, true ));
             cb(null, 1);
 
         }
@@ -75,14 +75,20 @@ module.exports = function(options) {
                  destContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
 
                 //reverse connection is pending...
-                const requestExistsAlready = !!this._pending['rendezvous:reverseConnection:' + destContact.identityHex];
+                const requestExistsAlready = !!this.pending.list['rendezvous:reverseConnection:' + destContact.identityHex];
 
-                this._pendingAdd('rendezvous:reverseConnection:'+destContact.identityHex, ()=> cb(new Error('Timeout')), (out) => super.send(destContact, command, data, cb), 2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT);
+                this.pending.pendingAdd(
+                    'rendezvous:reverseConnection:'+destContact.identityHex,
+                    undefined,
+                    () => cb(new Error('Timeout')),
+                    () => super.send(destContact, command, data, cb),
+                    2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
+                );
 
                 if (requestExistsAlready) return;
                 else return this.sendRendezvousReverseConnection( destContact.rendezvousContact, destContact.identity, (err, out) => {
 
-                    if (err) this._pendingTimeoutAll('rendezvous:reverseConnection:'+destContact.identityHex, err);
+                    if (err) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+destContact.identityHex, timeout => timeout() );
                     //already solved... if successful
 
                 }  );

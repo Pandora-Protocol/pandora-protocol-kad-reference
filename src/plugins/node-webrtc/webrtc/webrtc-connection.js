@@ -7,6 +7,8 @@ module.exports = class WebRTCConnection extends WebRTC.RTCPeerConnection{
         super(...arguments);
 
         this._readyState = 'close';
+        this.onconnect = undefined;
+        this.ondisconnect = undefined;
 
     }
 
@@ -16,12 +18,23 @@ module.exports = class WebRTCConnection extends WebRTC.RTCPeerConnection{
     }
 
     _onChannelStateChange(event, channel){
+        console.log(channel.readyState)
         this._readyState = channel.readyState;
+        if (channel.readyState === 'open' && this.onconnect) this.onconnect(this);
+        if (channel.readyState === 'close' && this.ondisconnect) this.ondisconnect(this);
     }
 
     sendData(data) {
         this._channel.send(data);
     }
 
+    processData(data){
+
+        for (const key in data)
+            if (Buffer.isBuffer(data[key]) )
+                data[key] = data[key].toString();
+
+        return data;
+    }
 
 }

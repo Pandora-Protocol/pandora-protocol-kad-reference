@@ -23,7 +23,7 @@ module.exports = class HTTPRequest {
      */
     request( id, destContact,  protocol, buffer, callback) {
 
-        if (this._kademliaRules._pending['http'+id])
+        if (this._kademliaRules.pending.list['http:'+id])
             return callback(new Error('Pending Id already exists'));
 
         // NB: If originating an outbound request...
@@ -45,12 +45,12 @@ module.exports = class HTTPRequest {
         //optional path
         if ( destContact.path) reqopts.path = destContact.path;
 
-        this._kademliaRules._pendingAdd('http'+id,  () => callback(new Error('Timeout')), out => callback(null, out ) );
+        this._kademliaRules.pending.pendingAdd('http:'+id, '',  () => callback(new Error('Timeout')), out => callback(null, out ),  );
 
         const request = this._createRequest( reqopts, (response) =>{
 
             response.on('error', (err) => {
-                delete this._kademliaRules._pending['http'+id]
+                delete this._kademliaRules.pending.list['http:'+id]
                 callback(err)
             });
 
@@ -67,8 +67,8 @@ module.exports = class HTTPRequest {
 
                 const bufferAnswer = Buffer.concat(data);
 
-                if (this._kademliaRules._pending['http'+id]) {
-                    delete this._kademliaRules._pending['http'+id];
+                if (this._kademliaRules.pending.list['http:'+id]) {
+                    delete this._kademliaRules.pending.list['http:'+id];
                     callback(null, bufferAnswer);
                 }
 
@@ -81,8 +81,8 @@ module.exports = class HTTPRequest {
             err.dispose = id;
             request.emit('error', err);
 
-            if (this._kademliaNode.rules._pending['http'+id]) {
-                delete this._kademliaNode.rules._pending['http'+id];
+            if (this._kademliaNode.rules.pending.list['http:'+id]) {
+                delete this._kademliaNode.rules.pending.list['http:'+id];
                 callback(err)
             }
 

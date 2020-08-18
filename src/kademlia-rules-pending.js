@@ -1,0 +1,131 @@
+const {setAsyncInterval, clearAsyncInterval} = require('./helpers/async-interval')
+
+module.exports = class KademliaRulesPending {
+
+    constructor(kademliaRules) {
+
+        this._kademliaRules = kademliaRules;
+        this.list = {}
+        this._counts = {};
+
+    }
+
+    async start(opts){
+
+        this._asyncIntervalPending = setAsyncInterval(
+            next => this._timeoutPending(next),
+            KAD_OPTIONS.T_RESPONSE_TIMEOUT
+        );
+
+    }
+
+    stop(){
+        clearAsyncInterval(this._asyncIntervalPending);
+    }
+
+    pendingAdd(key, key2, timeout, resolve, time ){
+
+        if (!this.list[key]) {
+            this.list[key] = {};
+            this._counts[key] = 0;
+        }
+        if (key2 === undefined) key2 = Math.floor( Math.random() ).toString() + '_' + Math.floor( Math.random() ).toString();
+
+        this.list[key][key2] = {
+            key,
+            key2,
+            timeout,
+            resolve,
+            time,
+            timestamp: new Date().getTime(),
+        }
+
+        this._counts[key] += 1;
+    }
+
+    pendingResolveAll(key, cb){
+
+        const pending = this.list[key];
+        if (!pending) return false;
+
+        for (const key2 in pending)
+            cb ( pending[key2].resolve, key, key2 );
+
+        delete this.list[key];
+        delete this._counts[key];
+        return true;
+    }
+
+    pendingResolve(key, key2, cb){
+
+        if (!this.list[key]) return false;
+        if (!this.list[key][key2]) return false;
+
+        cb(this.list[key][key2].resolve, key, key2);
+
+        delete this.list[key][key2];
+        this._counts[key]--;
+
+        if (this._counts[key] === 0){
+            delete this.list[key];
+            delete this._counts[key];
+        }
+
+        return true;
+    }
+
+    pendingTimeoutAll(key, cb){
+
+        const pending = this.list[key];
+        if (!pending) return false;
+
+        for (const key2 in pending)
+            cb( pending[key2].timeout, key, key2 );
+
+        delete this.list[key];
+        delete this._counts[key];
+
+        return true;
+    }
+
+
+    /**
+     * Every T_RESPONSETIMEOUT, we destroy any open sockets that are still
+     * waiting
+     * @private
+     */
+    _timeoutPending(next) {
+
+        const now = new Date().getTime();
+
+        for (const key in this.pending) {
+
+            const pending = this.pending[key];
+            for (const key2 in pending){
+
+                if (now >= pending[key2].timestamp + (pending[key2].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
+
+                    try {
+                        pending[key2].timeout( key, key2, pending[key2] );
+                    } catch (err) {
+                        console.error("_timeoutPending raised an error", err);
+                    }
+
+                    delete pending[key2];
+                    this._counts[key]--;
+                }
+
+            }
+
+            if ( this._counts[key] === 0 ) {
+                delete this.pending[key];
+                delete this._counts[key];
+            }
+
+
+        }
+
+        next(null)
+    }
+
+}

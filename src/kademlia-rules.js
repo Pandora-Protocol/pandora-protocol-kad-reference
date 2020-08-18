@@ -4,8 +4,8 @@ const NextTick = require('./helpers/next-tick')
 const {setAsyncInterval, clearAsyncInterval} = require('./helpers/async-interval')
 const {preventConvoy} = require('./helpers/utils')
 const bencode = require('bencode');
-const Contact = require('./contact/contact')
 const BufferHelper = require('./helpers/buffer-utils')
+const KademliaRulesPending = require('./kademlia-rules-pending')
 
 module.exports = class KademliaRules {
 
@@ -33,43 +33,8 @@ module.exports = class KademliaRules {
 
         }
 
-        this._pending = {}
+        this.pending = new KademliaRulesPending();
 
-    }
-
-    _pendingAdd(key, timeout, resolve, time){
-
-        if (!this._pending[key])
-            this._pending[key] = [];
-
-        this._pending[key].push({
-            key, timeout, resolve, time,
-            timestamp: new Date().getTime(),
-        })
-    }
-
-    _pendingResolveAll(key, cb){
-
-        const pending = this._pending[key];
-        if (!pending) return false;
-
-        for (let i=0; i < pending.length; i++)
-            cb ( pending[i].resolve );
-
-        delete this._pending[key];
-        return true;
-    }
-
-    _pendingTimeoutAll(key, err){
-
-        const pending = this._pending[key];
-        if (!pending) return false;
-
-        for (let i=0; i < pending.length; i++)
-            pending[i].timeout(err);
-
-        delete this._pending[key];
-        return true;
     }
 
     async start(opts){
@@ -82,10 +47,7 @@ module.exports = class KademliaRules {
             KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY +  preventConvoy(KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
         );
 
-        this._asyncIntervalPending = setAsyncInterval(
-            next => this._timeoutPending(next),
-            KAD_OPTIONS.T_RESPONSE_TIMEOUT
-        );
+        await this.pending.start(opts);
 
         return {rules: true}
     }
@@ -96,7 +58,7 @@ module.exports = class KademliaRules {
 
     stop(){
         clearAsyncInterval(this._asyncIntervalReplicatedStoreToNewNodeExpire)
-        clearAsyncInterval(this._asyncIntervalPending);
+        this.pending.stop();
     }
 
     _sendProcess(destContact, command, data, cb){
@@ -396,43 +358,6 @@ module.exports = class KademliaRules {
 
         }
 
-    }
-
-
-    /**
-     * Every T_RESPONSETIMEOUT, we destroy any open sockets that are still
-     * waiting
-     * @private
-     */
-    _timeoutPending(next) {
-
-        const now = new Date().getTime();
-
-        for (const key in this._pending) {
-
-            const pending = this._pending[key];
-            for (let i = pending.length-1; i >= 0 ; i-- ){
-
-                if (now >= pending[i].timestamp + (pending[i].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT)) {
-
-                    try {
-                        pending[i].timeout.call( this, key, pending[i] );
-                    } catch (err) {
-                        console.error("_timeoutPending raised an error", err);
-                    }
-
-                    pending.splice(i, 1);
-                }
-
-            }
-
-            if ( !pending.length )
-                delete this._pending[key];
-
-
-        }
-
-        next(null)
     }
 
     version(req, srcContact, data, cb){

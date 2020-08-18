@@ -83,17 +83,15 @@ module.exports = function (options){
         }
 
         _setTimeoutWebSocket(ws){
-            this._pendingAdd( 'ws'+ws.id, () => ws.close(), ()=>{}, this._getTimeoutWebSocketTime(ws) );
+            this.pending.pendingAdd( 'ws:'+ws.id, '',() => ws.close(), ()=>{}, this._getTimeoutWebSocketTime(ws),  );
         }
 
 
         _updateTimeoutWebSocket(ws){
-            const pending = this._pending['ws'+ws.id];
+            const pending = this.pending.list['ws:'+ws.id];
             if (pending) {
-                for (let i=0; i < pending.length; i++){
-                    pending.timestamp = new Date().getTime();
-                    pending.time = this._getTimeoutWebSocketTime(ws);
-                }
+                pending[''].timestamp = new Date().getTime();
+                pending[''].time = this._getTimeoutWebSocketTime(ws);
             }
             else
                 this._setTimeoutWebSocket(ws);
@@ -129,7 +127,7 @@ module.exports = function (options){
             ws.contact = contact;
             ws.isWebSocket = true;
             ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-            ws.socketsQueue = {};
+            ws.socketPending = {};
             ws._queue = [];
 
             this._webSocketActiveConnectionsByContactsMap[contact.identityHex] = ws;
@@ -167,18 +165,12 @@ module.exports = function (options){
                     if (ws.address && this._webSocketActiveConnectionsMap[ws.address] === ws)
                         delete this._webSocketActiveConnectionsMap[ws.address];
 
-                    for (const id in ws.socketsQueue) {
-                        ws.socketsQueue[id].error(new Error('Disconnected or Error'));
-                        delete this._pending['ws'+ws.id+':'+id]
-                    }
-
-                    ws.socketsQueue = {};
+                    this.pending.pendingTimeoutAll('ws:'+ws.id, timeout => timeout() );
 
                     if (ws._queue.length) {
-                        const copy = [...ws._queue];
-                        ws._queue = [];
-                        for (const data of copy)
+                        for (const data of  ws._queue)
                             data.cb(new Error('Disconnected or Error'))
+                        ws._queue = [];
                     }
 
                 }
@@ -214,15 +206,8 @@ module.exports = function (options){
 
             if ( status === 1 ){ //received an answer
 
-                if (ws.socketsQueue[id]){ //in case it was not deleted
-
-                    const socketQueue = ws.socketsQueue[id];
-                    delete ws.socketsQueue[id];
-                    delete this._pending['ws'+ws.id+':'+id];
-
-                    socketQueue.resolve( null, decoded[2] );
-
-                }
+                if (this.pending.list['ws:'+ws.id] && this.pending.list['ws:'+ws.id][id])
+                    this.pending.pendingResolve('ws:'+ws.id, id, (resolve) => resolve( null, decoded[2] ));
 
             } else {
 
@@ -244,17 +229,9 @@ module.exports = function (options){
                 ws._queue.push( {id, buffer, cb} );
             else {
 
-                ws.socketsQueue[id] = {
-                    resolve: cb,
-                    error: () => cb(new Error('Disconnected or Error')),
-                };
-
-                this._pendingAdd('ws'+ws.id+':'+id, ()=>{
-                    delete ws.socketsQueue[id];
-                    cb(new Error('Timeout'));
-                }, cb );
-
+                this.pending.pendingAdd('ws:'+ws.id, id, undefined, cb);
                 ws.send( buffer )
+                
             }
 
         }

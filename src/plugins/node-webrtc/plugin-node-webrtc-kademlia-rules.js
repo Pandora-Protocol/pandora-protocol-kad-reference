@@ -5,6 +5,7 @@ const bencode = require('bencode');
 const WebRTCConnectionRemote = require('./webrtc/webrtc-connection-remote')
 const WebRTCConnectionInitiator = require('./webrtc/webrtc-connection-initiator')
 
+const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 
 module.exports = function (options) {
 
@@ -37,22 +38,39 @@ module.exports = function (options) {
             this._webRTCActiveConnectionsByContactsMap = {};
             this._webRTCActiveConnections = [];
 
+            if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC === undefined) throw new Error('WebSocket protocol was not initialized.');
+            this._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC] = {
+                sendSerialize: this._webrtcSendSerialize.bind(this),
+                sendSerialized: this._webrtcSendSerialized.bind(this),
+                receiveSerialize: this._webrtcReceiveSerialize.bind(this),
+            }
+
         }
 
-        _addWebRTConnection(contact, webRTCConnection){
-            this._alreadyConnected[contact.identityHex] = webRTCConnection;
-            this._webRTCActiveConnectionsByContactsMap[contact.identityHex] = webRTCConnection;
-            this._webRTCActiveConnections.push(webRTCConnection)
-            
-            webRTCConnection.ondisconnect = ()=>{
+        _addWebRTConnection(contact, webRTC){
 
-                if (this._alreadyConnected[contact.identityHex] === webRTCConnection)
+            webRTC.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+            webRTC.contact = contact;
+
+            this._alreadyConnected[contact.identityHex] = webRTC;
+            this._webRTCActiveConnectionsByContactsMap[contact.identityHex] = webRTC;
+            this._webRTCActiveConnections.push(webRTC)
+
+            webRTC.onconnect = () => {
+                this.pending.pendingResolveAll('rendezvous:webRTC:' + contact.identityHex, (resolve) => resolve(null, true ) );
+            }
+
+            webRTC.ondisconnect = ()=>{
+
+                this.pending.pendingTimeoutAll('webrtc:'+webRTC.id, timeout => timeout() );
+
+                if (this._alreadyConnected[contact.identityHex] === webRTC)
                     delete this._alreadyConnected[contact.identityHex];
 
-                if (this._webRTCActiveConnectionsByContactsMap[contact.identityHex] === webRTCConnection) {
+                if (this._webRTCActiveConnectionsByContactsMap[contact.identityHex] === webRTC) {
                     delete this._webRTCActiveConnectionsByContactsMap[contact.identityHex];
 
-                    for (let i=this._webRTCActiveConnections.length-1; i>=0; i--) {
+                    for (let i = this._webRTCActiveConnections.length-1; i >= 0; i--){
                         this._webRTCActiveConnections.splice(i, 1);
                         break;
                     }
@@ -68,15 +86,15 @@ module.exports = function (options) {
 
                 sourceIdentity = sourceIdentity.toString('hex');
 
-                const webRTCConnection = this._webRTCActiveConnectionsByContactsMap[ sourceIdentity ];
-                if (!webRTCConnection) return cb(new Error('Node is not connected'));
+                const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentity ];
+                if (!webRTC) return cb(new Error('Node is not connected'));
 
                 candidate = bencode.decode(candidate);
-                for (const key in candidate)
-                    if (Buffer.isBuffer(candidate[key]) )
-                        candidate[key] = candidate[key].toString();
+                webRTC.processData(candidate);
 
-                webRTCConnection.addIceCandidate(candidate);
+                webRTC.addIceCandidate(candidate)
+                    .then( answer => {} )
+                    .catch(err => { });
 
                 cb(null, 1);
 
@@ -122,21 +140,18 @@ module.exports = function (options) {
                 if (this._alreadyConnected[contact.identityHex]) return cb(new Error('Already connected'));
 
                 offer = bencode.decode(offer);
-                for (const key in offer)
-                    if (Buffer.isBuffer(offer[key]) )
-                        offer[key] = offer[key].toString();
 
-                const webRTCConnection = new WebRTCConnectionRemote();
-                this._addWebRTConnection(contact, webRTCConnection);
+                const webRTC = new WebRTCConnectionRemote();
 
-                webRTCConnection.onicecandidate = e => {
+                this._addWebRTConnection(contact, webRTC);
+
+                webRTC.onicecandidate = e => {
                     if (e.candidate)
-                        this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{
-
-                        })
+                        this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{ })
                 }
 
-                webRTCConnection.useInitiatorOffer(offer, (err, answer)=>{
+                webRTC.processData(offer);
+                webRTC.useInitiatorOffer(offer, (err, answer)=>{
 
                     if (err) return err;
                     cb(null, answer);
@@ -185,37 +200,38 @@ module.exports = function (options) {
                   destContact.webrtcType === ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED &&
                   destContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
 
-                const requestExistsAlready = !!this._pending['rendezvous:webrtc:' + destContact.identityHex];
+                const requestExistsAlready = !!this.pending.list['rendezvous:webRTC:' + destContact.identityHex];
 
-                this._pendingAdd('rendezvous:webRTCConnection:'+destContact.identityHex, ()=> cb(new Error('Timeout')), (out) => super.send(destContact, command, data, cb), 2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT);
+                this.pending.pendingAdd(
+                    'rendezvous:webRTC:'+destContact.identityHex,
+                    undefined,
+                    ()=> cb(new Error('Timeout')),
+                    (out) => super.send(destContact, command, data, cb),
+                    4 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
+                );
 
                 if (requestExistsAlready) return;
                 else {
 
-                    const webRTCConnection = new WebRTCConnectionInitiator();
-                    this._addWebRTConnection(destContact, webRTCConnection);
+                    const webRTC = new WebRTCConnectionInitiator();
+                    this._addWebRTConnection(destContact, webRTC);
 
-                    webRTCConnection.onicecandidate = e => {
+                    webRTC.onicecandidate = e => {
                         if (e.candidate)
-                            this.sendRendezvousIceCandidateWebRTConnection(destContact.rendezvousContact, destContact.identity, e.candidate, (err, out) =>{
-
-                            })
+                            this.sendRendezvousIceCandidateWebRTConnection(destContact.rendezvousContact, destContact.identity, e.candidate, (err, out) =>{})
                     }
 
-                    return webRTCConnection.createInitiatorOffer((err, offer) => {
+                    return webRTC.createInitiatorOffer((err, offer) => {
 
                         if (err)return cb(err)
                         this.sendRendezvousWebRTCConnection(destContact.rendezvousContact, destContact.identity, offer, (err, answer ) => {
 
-                            if (err || !answer) return this._pendingTimeoutAll('rendezvous:webRTCConnection:' + destContact.identityHex, err);
+                            if (err || !answer) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
 
-                            for (const key in answer)
-                                if (Buffer.isBuffer(answer[key]) )
-                                    answer[key] = answer[key].toString();
+                            webRTC.processData(answer);
+                            webRTC.userRemoteAnswer(answer, (err, out)=>{
 
-                            webRTCConnection.userRemoteAnswer(answer, (err, out)=>{
-
-                                if (err) return this._pendingTimeoutAll('rendezvous:webRTCConnection:' + destContact.identityHex, err);
+                                if (err) this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
 
 
                             });
@@ -229,6 +245,37 @@ module.exports = function (options) {
             }
 
             super.send(destContact, command, data, cb);
+        }
+
+
+
+        _webrtcSendSerialize (destContact, command, data) {
+            const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
+            return {
+                id,
+                out: [ command, data ],
+            }
+        }
+
+        _webrtcSendSerialized (id, destContact, protocol, command, data, cb)  {
+
+            const buffer = bencode.encode( [0, id, data] );
+
+            //connected once already already
+            const webRTC = this._webRTCActiveConnectionsByContactsMap[destContact.identityHex];
+            if (!webRTC)
+                cb(new Error('WebRTC Not connected'));
+
+            this.pending.pendingAdd('webrtc:'+webRTC.id+':'+id, '', () => cb(new Error('Timeout')), cb );
+
+            webRTC.send( buffer )
+
+            return this._sendWebSocketWaitAnswer( this._webSocketActiveConnectionsByContactsMap[destContact.identityHex], id, buffer, cb);
+
+        }
+
+        _webrtcReceiveSerialize (id, srcContact, out ) {
+            return bencode.encode( BufferHelper.serializeData([ 1, id, out] ) )
         }
 
     }
