@@ -2,6 +2,7 @@ const ContactAddressProtocolType = require('../contact-type/contact-address-prot
 const PluginNodeWebRTCKademliaRules = require('./plugin-node-webrtc-kademlia-rules')
 const PluginNodeWebRTCKademliaContact = require('./plugin-node-webrtc-kademlia-contact')
 const PluginNodeWebRTCKademliaContactStorage = require('./plugin-node-webrtc-kademlia-contact-storage')
+const PluginNodeWebRTCRendezvousKademliaRules = require('./plugin-node-webrtc-rendezvous-kademlia-rules')
 
 module.exports = {
 
@@ -13,6 +14,7 @@ module.exports = {
         options.Contact = PluginNodeWebRTCKademliaContact(options);
         options.ContactStorage = PluginNodeWebRTCKademliaContactStorage(options);
         options.Rules = PluginNodeWebRTCKademliaRules(options);
+        options.Rules = PluginNodeWebRTCRendezvousKademliaRules(options);
 
         return {
             name: "PluginNodeWebRTC",

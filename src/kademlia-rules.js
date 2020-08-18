@@ -62,7 +62,7 @@ module.exports = class KademliaRules {
         this.pending.stop();
     }
 
-    _sendProcess(destContact, command, data, cb){
+    _sendProcess(destContact, protocol, command, data, cb){
         cb(null, bencode.encode(BufferHelper.serializeData(data) ) );
     }
 
@@ -80,13 +80,13 @@ module.exports = class KademliaRules {
         if ( destContact.identity && destContact.identity.equals(this._kademliaNode.contact.identity) )
             return cb(new Error("Can't contact myself"));
 
-        let protocol = this._sendGetProtocol(destContact, command, data);
+        const protocol = this._sendGetProtocol(destContact, command, data);
         if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
 
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
         let { id, out } = sendSerialize(destContact, command, data);
 
-        this._sendProcess(destContact, command, out, (err, buffer)=>{
+        this._sendProcess(destContact, protocol, command, out, (err, buffer)=>{
 
             if (err) return cb(err);
 
@@ -94,7 +94,7 @@ module.exports = class KademliaRules {
 
                 if (err) return cb(err);
 
-                this.sendReceivedSerialized(destContact, command, buffer, cb);
+                this.sendReceivedSerialized(destContact, protocol, command, buffer, cb);
 
             });
 
@@ -102,13 +102,13 @@ module.exports = class KademliaRules {
 
     }
 
-    _receivedProcess(destContact, command, buffer, cb){
+    _receivedProcess(destContact, protocol, command, buffer, cb){
         cb(null, buffer );
     }
 
-    sendReceivedSerialized(destContact, command, buffer, cb){
+    sendReceivedSerialized(destContact, protocol, command, buffer, cb){
 
-        this._receivedProcess(destContact, command, buffer, (err, buffer)=>{
+        this._receivedProcess(destContact, protocol, command, buffer, (err, buffer)=>{
 
             if (err) return cb(err);
 

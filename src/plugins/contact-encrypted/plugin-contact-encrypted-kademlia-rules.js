@@ -11,20 +11,28 @@ module.exports = function (options) {
 
             super(...arguments);
 
-            if (typeof window === "undefined" && this._kademliaNode.plugins.hasPlugin('PluginNodeHTTP')){
+            if (!this._skipProtocolEncryptions) this._skipProtocolEncryptions = {};
+
+            if (typeof window === "undefined" && this._kademliaNode.plugins.hasPlugin('PluginNodeHTTP'))
                 this._httpServer.onReceive = this.receiveSerialized.bind(this);
-            }
+
 
         }
 
-        _sendProcess(destContact, command, data, cb){
+        _sendProcess(destContact, protocol, command, data, cb){
+
+            if (this._skipProtocolEncryptions[protocol]) return super._sendProcess(...arguments);
+
             ECCUtils.encrypt(destContact.publicKey,  bencode.encode(BufferHelper.serializeData(data) ), (err, out)=>{
                 if (err) return cb(err);
                 cb(null, bencode.encode(out));
             });
         }
 
-        _receivedProcess(destContact, command, buffer, cb){
+        _receivedProcess(destContact, protocol, command, buffer, cb){
+
+            if (this._skipProtocolEncryptions[protocol]) return super._receivedProcess(...arguments);
+
             let decoded = buffer;
             if (Buffer.isBuffer(buffer)) decoded = bencode.decode(buffer);
 
@@ -33,6 +41,8 @@ module.exports = function (options) {
         }
 
         receiveSerialized( req, id, srcContact, protocol, buffer, cb){
+
+            if (this._skipProtocolEncryptions[protocol]) return super.receiveSerialized(...arguments);
 
             let decoded;
             if (Buffer.isBuffer(buffer) ) decoded = bencode.decode(buffer);
@@ -76,8 +86,5 @@ module.exports = function (options) {
         }
 
     }
-
-
-
 
 }

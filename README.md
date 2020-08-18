@@ -79,6 +79,8 @@ Later on, a new reference code can be implemented in GO and compiled into web as
 
 10. **Node-WebRTC**. It allows WebRTC connections for Browsers and Backbone Nodes. **Contact-Rendezvous** is required for the signaling process.              
 
+    Node-WebRTC will not use **Contact-Encrypted** plugin to encrypt the data because WebRTC uses by default end to end encryption. See explanation https://webrtchacks.com/you-dont-have-end-to-end-encryption-e2ee/ 
+
 TO DOs:
 
 1. UnPn

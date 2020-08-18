@@ -1,9 +1,11 @@
 const WebSocket = require('isomorphic-ws')
 const bencode = require('bencode');
+const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 
 module.exports = class WebSocketServer extends WebSocket.Server {
 
     constructor(kademliaNode, options) {
+
         super(options);
 
         this._kademliaNode = kademliaNode;
@@ -14,7 +16,7 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
     newClientConnection(ws){
 
-        this._kademliaNode.rules._receivedProcess( null,'', Buffer.from( ws.protocol, "hex"), (err, out) =>{
+        this._kademliaNode.rules._receivedProcess( null, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET,  '', Buffer.from( ws.protocol, "hex"), (err, out) =>{
 
             if (err)
                 return ws.close();
