@@ -10,8 +10,8 @@ module.exports = function (options) {
 
             super(...arguments);
 
-            this._commands.FIND_SORTED_LIST = this.findSortedList.bind(this);
-            this._commands.STORE_SORTED_LIST_VALUE = this.storeSortedListValue.bind(this);
+            this._commands.FIND_SORTED_LIST = this._findSortedList.bind(this);
+            this._commands.STORE_SORTED_LIST_VALUE = this._storeSortedListValue.bind(this);
 
             this._allowedStoreSortedListTables = {
                 '': true,
@@ -19,7 +19,7 @@ module.exports = function (options) {
 
         }
 
-        storeSortedListValue(req, srcContact, [table, key, value, score], cb){
+        _storeSortedListValue(req, srcContact, [table, key, value, score], cb){
 
             if (!this._allowedStoreSortedListTables[table.toString('ascii')])
                 return cb(new Error('Table is not allowed'));
@@ -45,7 +45,7 @@ module.exports = function (options) {
          * @param key
          * @param cb
          */
-        findSortedList(req, srcContact, [table, key], cb){
+        _findSortedList(req, srcContact, [table, key], cb){
 
             if (srcContact) this._welcomeIfNewNode(req, srcContact);
 

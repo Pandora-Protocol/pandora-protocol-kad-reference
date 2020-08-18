@@ -42,7 +42,7 @@ module.exports = {
         },
 
         NODE_WEBSOCKET:{
-            T_WEBSOCKET_DISCONNECT_INACTIVITY: 2*60*1000,
+            T_WEBSOCKET_DISCONNECT_INACTIVITY: 3*60*1000,
         },
 
         NODE_WEBRTC: {

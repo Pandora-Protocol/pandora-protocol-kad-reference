@@ -16,13 +16,13 @@ module.exports = class KademliaRules {
         this._replicatedStoreToNewNodesAlready = {};
 
         this._commands = {
-            'V': this.version,
-            'APP': this.app,
-            'IDENTITY': this.identity,
-            'PING': this.ping,
-            'STORE': this.store,
-            'FIND_NODE': this.findNode,
-            'FIND_VALUE': this.findValue,
+            'V': this._version,
+            'APP': this._app,
+            'IDENTITY': this._identity,
+            'PING': this._ping,
+            'STORE': this._storeCommand,
+            'FIND_NODE': this._findNode,
+            'FIND_VALUE': this._findValue,
         }
 
         this._allowedStoreTables = {
@@ -34,6 +34,7 @@ module.exports = class KademliaRules {
         }
 
         this.pending = new KademliaRulesPending();
+        this._alreadyConnected = {};
 
     }
 
@@ -66,6 +67,11 @@ module.exports = class KademliaRules {
     }
 
     _sendGetProtocol(destContact, command, data){
+
+        // the destContact is already contacted via a websocket
+        if (this._alreadyConnected[destContact.identityHex])
+            return this._alreadyConnected[destContact.identityHex].protocol;
+
         return KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
     }
 
@@ -151,7 +157,7 @@ module.exports = class KademliaRules {
      * used to verify that a node is still alive.
      * @param cb
      */
-    ping(req, srcContact, data, cb) {
+    _ping(req, srcContact, data, cb) {
 
         if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, [1] );
@@ -168,7 +174,7 @@ module.exports = class KademliaRules {
      * @param value
      * @param cb
      */
-    store(req, srcContact, [table, key, value], cb) {
+    _storeCommand(req, srcContact, [table, key, value], cb) {
 
         if (!this._allowedStoreTables[table.toString('ascii')])
             return cb(new Error('Table is not allowed'));
@@ -193,7 +199,7 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    findNode( req, srcContact, [key], cb ){
+    _findNode( req, srcContact, [key], cb ){
 
         const err = Validation.checkIdentity(key);
         if (err) return cb(err);
@@ -212,7 +218,7 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    findValue( req, srcContact, [table, key], cb){
+    _findValue( req, srcContact, [table, key], cb){
 
         if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
@@ -360,17 +366,17 @@ module.exports = class KademliaRules {
 
     }
 
-    version(req, srcContact, data, cb){
+    _version(req, srcContact, data, cb){
         if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, KAD_OPTIONS.VERSION.VERSION);
     }
 
-    app(req, srcContact, data, cb){
+    _app(req, srcContact, data, cb){
         if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, KAD_OPTIONS.VERSION.APP);
     }
 
-    identity(req, srcContact, data, cb){
+    _identity(req, srcContact, data, cb){
         if (srcContact) this._welcomeIfNewNode(req, srcContact);
         cb(null, this._kademliaNode.contact.identity);
     }

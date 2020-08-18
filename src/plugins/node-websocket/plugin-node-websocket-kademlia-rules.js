@@ -4,6 +4,7 @@ const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
 const blobToBuffer = require('blob-to-buffer')
 const ContactType = require('../contact-type/contact-type')
+const WebSocketServer = typeof BROWSER === "undefined" ? require('./web-socket-server') : undefined;
 
 module.exports = function (options){
 
@@ -16,8 +17,6 @@ module.exports = function (options){
             this._webSocketActiveConnectionsMap = {};
             this._webSocketActiveConnectionsByContactsMap = {};
 
-            this._alreadyConnected = {};
-
             if (ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET === undefined) throw new Error('WebSocket protocol was not initialized.');
             this._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET] =
             this._protocolSpecifics[ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET] = {
@@ -29,27 +28,17 @@ module.exports = function (options){
         }
 
 
-        _sendGetProtocol(destContact){
-
-            // the destContact is already contacted via a websocket
-            if (this._webSocketActiveConnectionsByContactsMap[destContact.identityHex])
-                return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
-
-            return super._sendGetProtocol(...arguments);
-        }
-
         async start(opts){
 
             const out = await super.start(opts);
 
             //Node.js
-            if ( typeof BROWSER === "undefined" && this._kademliaNode.plugins.hasPlugin('PluginNodeHTTP') ){
-                const WebSocketServer = require('./web-socket-server')
+            if ( typeof BROWSER === "undefined" && this._kademliaNode.plugins.hasPlugin('PluginNodeHTTP') )
                 this._webSocketServer = new WebSocketServer(this._kademliaNode, {
                     server: this._httpServer.server,
                     'Access-Control-Allow-Origin': "*",
                 });
-            }
+
 
             return out;
         }
@@ -125,7 +114,9 @@ module.exports = function (options){
 
 
             ws.contact = contact;
+            ws.protocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
             ws.isWebSocket = true;
+
             ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             ws.socketPending = {};
             ws._queue = [];
@@ -185,7 +176,7 @@ module.exports = function (options){
 
                 if (typeof Blob !== 'undefined' && message instanceof Blob){
                     blobToBuffer(message, (err, buffer)=>{
-                        if (err) throw err;
+                        if (err) return err;
 
                         this.processWebSocketMessage( ws, buffer);
                     })

@@ -6,6 +6,7 @@ const WebRTCConnectionRemote = require('./webrtc/webrtc-connection-remote')
 const WebRTCConnectionInitiator = require('./webrtc/webrtc-connection-initiator')
 
 const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
+const BufferHelper = require('../../helpers/buffer-utils')
 
 module.exports = function (options) {
 
@@ -18,22 +19,22 @@ module.exports = function (options) {
             /**
              *
              */
-            this._commands['REQ_ICE'] = this.requestIceCandidateWebRTCConnection.bind(this);
+            this._commands['REQ_ICE'] = this._requestIceCandidateWebRTCConnection.bind(this);
 
             /**
              * Sending an ICE candidate to the Rendezvous relay which will later forwarded the packet to the other peer.
              */
-            this._commands['RNDZ_ICE'] = this.rendezvousIceCandidateWebRTCConnection.bind(this);
+            this._commands['RNDZ_ICE'] = this._rendezvousIceCandidateWebRTCConnection.bind(this);
 
             /**
              * Forwarding the message to the 3rd party to establish a WebRTC connection with a requester.
              */
-            this._commands['REQ_WRTC_CON'] = this.requestWebRTCConnection.bind(this);
+            this._commands['REQ_WRTC_CON'] = this._requestWebRTCConnection.bind(this);
 
             /**
              * Sending an initiator offer to Rendezvous to establish a WebRTC connection with a third party receiver
              */
-            this._commands['RNDZ_WRTC_CON'] = this.rendezvousWebRTCConnection.bind(this);
+            this._commands['RNDZ_WRTC_CON'] = this._rendezvousWebRTCConnection.bind(this);
 
             this._webRTCActiveConnectionsByContactsMap = {};
             this._webRTCActiveConnections = [];
@@ -51,6 +52,8 @@ module.exports = function (options) {
 
             webRTC.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             webRTC.contact = contact;
+            webRTC.protocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;
+            webRTC.isWebRTC = true;
 
             this._alreadyConnected[contact.identityHex] = webRTC;
             this._webRTCActiveConnectionsByContactsMap[contact.identityHex] = webRTC;
@@ -70,17 +73,18 @@ module.exports = function (options) {
                 if (this._webRTCActiveConnectionsByContactsMap[contact.identityHex] === webRTC) {
                     delete this._webRTCActiveConnectionsByContactsMap[contact.identityHex];
 
-                    for (let i = this._webRTCActiveConnections.length-1; i >= 0; i--){
-                        this._webRTCActiveConnections.splice(i, 1);
-                        break;
-                    }
+                    for (let i = this._webRTCActiveConnections.length-1; i >= 0; i--)
+                        if (this._webRTCActiveConnections[i] === webRTC){
+                            this._webRTCActiveConnections.splice(i, 1);
+                            break;
+                        }
 
                 }
 
             }
         }
 
-        requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
+        _requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
 
             try{
 
@@ -109,7 +113,7 @@ module.exports = function (options) {
             this.send(contact, 'REQ_ICE', [sourceIdentity, candidate ], cb)
         }
 
-        rendezvousIceCandidateWebRTCConnection(req, srcContact, [finalIdentity, candidate], cb){
+        _rendezvousIceCandidateWebRTCConnection(req, srcContact, [finalIdentity, candidate], cb){
 
             try{
 
@@ -130,7 +134,7 @@ module.exports = function (options) {
             this.send(contact, 'RNDZ_ICE', [identity, bencode.encode(candidate) ], cb)
         }
 
-        requestWebRTCConnection(req, srcContact, [contact, offer], cb){
+        _requestWebRTCConnection(req, srcContact, [contact, offer], cb){
 
             try{
 
@@ -170,7 +174,7 @@ module.exports = function (options) {
             this.send(contact, 'REQ_WRTC_CON', [contactFinal, offer ], cb)
         }
 
-        rendezvousWebRTCConnection(req, srcContact, [identity, offer], cb){
+        _rendezvousWebRTCConnection(req, srcContact, [identity, offer], cb){
 
             try{
 
@@ -259,19 +263,16 @@ module.exports = function (options) {
 
         _webrtcSendSerialized (id, destContact, protocol, command, data, cb)  {
 
-            const buffer = bencode.encode( [0, id, data] );
+            const buffer = bencode.encode( [id, data] );
 
             //connected once already already
             const webRTC = this._webRTCActiveConnectionsByContactsMap[destContact.identityHex];
             if (!webRTC)
                 cb(new Error('WebRTC Not connected'));
 
-            this.pending.pendingAdd('webrtc:'+webRTC.id+':'+id, '', () => cb(new Error('Timeout')), cb );
+            this.pending.pendingAdd('webrtc:'+webRTC.id, id, () => cb(new Error('Timeout')), cb );
 
-            webRTC.send( buffer )
-
-            return this._sendWebSocketWaitAnswer( this._webSocketActiveConnectionsByContactsMap[destContact.identityHex], id, buffer, cb);
-
+            webRTC.sendData( buffer )
         }
 
         _webrtcReceiveSerialize (id, srcContact, out ) {

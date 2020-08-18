@@ -8,13 +8,13 @@ module.exports = function(options) {
 
             super(...arguments);
 
-            this._commands['REV_CON'] = this.reverseConnect.bind(this);
-            this._commands['REQ_REV_CON'] = this.requestReverseConnect.bind(this);
-            this._commands['RNDZ_REV_CON'] = this.rendezvousReverseConnection.bind(this);
+            this._commands['REV_CON'] = this._reverseConnect.bind(this);
+            this._commands['REQ_REV_CON'] = this._requestReverseConnect.bind(this);
+            this._commands['RNDZ_REV_CON'] = this._rendezvousReverseConnection.bind(this);
 
         }
 
-        reverseConnect(req, srcContact, data, cb){
+        _reverseConnect(req, srcContact, data, cb){
 
             this.pending.pendingResolveAll('rendezvous:reverseConnection:' + srcContact.identityHex,  resolve => resolve(null, true ));
             cb(null, 1);
@@ -25,7 +25,7 @@ module.exports = function(options) {
             this.send(contact, 'REV_CON', [], cb)
         }
 
-        requestReverseConnect(req, srcContact, [contact], cb ){
+        _requestReverseConnect(req, srcContact, [contact], cb ){
 
             if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
@@ -46,7 +46,7 @@ module.exports = function(options) {
             this.send(contact, 'REQ_REV_CON', [contactFinal], cb)
         }
 
-        rendezvousReverseConnection(req, srcContact, [identity], cb){
+        _rendezvousReverseConnection(req, srcContact, [identity], cb){
 
             try{
 

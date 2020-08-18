@@ -14,12 +14,12 @@ module.exports = function(options){
             this._rendezvousedJoined = 0;
             this._myRendezvousRelaySocket = null;
 
-            this._commands['RNDZ_JOIN'] = this.rendezvousJoin.bind(this);
-            this._commands['UPD_CONTACT'] = this.updateContact.bind(this);
+            this._commands['RNDZ_JOIN'] = this._rendezvousJoin.bind(this);
+            this._commands['UPD_CONTACT'] = this._updateContact.bind(this);
 
         }
 
-        updateContact(req, srcContact, [contact], cb){
+        _updateContact(req, srcContact, [contact], cb){
             this._welcomeIfNewNode(req, srcContact);
 
             if (contact && req.isWebSocket){
@@ -61,7 +61,7 @@ module.exports = function(options){
             return (ws.rendezvoused || ws.isMyRendezvousSocket) ? KAD_OPTIONS.PLUGINS.CONTACT_RENDEZVOUS.T_WEBSOCKET_DISCONNECT_RENDEZVOUS : KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
         }
 
-        rendezvousJoin(req, srcContact, data, cb){
+        _rendezvousJoin(req, srcContact, data, cb){
 
             if ( !req.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
             if ( req.rendezvoused ) return cb(new Error(''))
