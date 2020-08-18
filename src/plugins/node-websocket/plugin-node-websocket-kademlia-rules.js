@@ -114,7 +114,7 @@ module.exports = function (options){
 
 
             ws.contact = contact;
-            ws.protocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
+            ws.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
             ws.isWebSocket = true;
 
             ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );

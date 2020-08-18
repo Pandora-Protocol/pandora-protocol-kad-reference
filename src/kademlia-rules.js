@@ -70,7 +70,7 @@ module.exports = class KademliaRules {
 
         // the destContact is already contacted via a websocket
         if (this._alreadyConnected[destContact.identityHex])
-            return this._alreadyConnected[destContact.identityHex].protocol;
+            return this._alreadyConnected[destContact.identityHex].contactProtocol;
 
         return KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
     }

@@ -1,2 +1,1 @@
-const wrtc = require('wrtc')
-module.exports = wrtc
+module.exports = require('wrtc')

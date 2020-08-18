@@ -97,7 +97,6 @@ module.exports = function (options) {
                 offer = bencode.decode(offer);
 
                 const webRTC = new WebRTCConnectionRemote();
-
                 this._addWebRTConnection(contact, webRTC);
 
                 webRTC.onicecandidate = e => {
@@ -179,6 +178,8 @@ module.exports = function (options) {
                     return webRTC.createInitiatorOffer((err, offer) => {
 
                         if (err)return cb(err)
+                        const data = [offer, webRTC.getMaxChunkSize() ];
+
                         this.sendRendezvousWebRTCConnection(destContact.rendezvousContact, destContact.identity, offer, (err, answer ) => {
 
                             if (err || !answer) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
@@ -186,7 +187,7 @@ module.exports = function (options) {
                             webRTC.processData(answer);
                             webRTC.userRemoteAnswer(answer, (err, out)=>{
 
-                                if (err) this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
+                                if (err) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
 
 
                             });

@@ -29,7 +29,7 @@ module.exports = function (options) {
 
             webRTC.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             webRTC.contact = contact;
-            webRTC.protocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;
+            webRTC.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;
             webRTC.isWebRTC = true;
 
             this._alreadyConnected[contact.identityHex] = webRTC;
@@ -37,7 +37,7 @@ module.exports = function (options) {
             this._webRTCActiveConnections.push(webRTC)
 
             webRTC.onconnect = () => {
-                this.pending.pendingResolveAll('rendezvous:webRTC:' + contact.identityHex, (resolve) => resolve(null, true ) );
+                this.pending.pendingResolveAll('rendezvous:webRTC:' + contact.identityHex, resolve => resolve(null, true ) );
             }
 
             webRTC.ondisconnect = ()=>{

@@ -48,11 +48,12 @@ module.exports = class KademliaRulesPending {
         const pending = this.list[key];
         if (!pending) return false;
 
+        delete this.list[key];
+        delete this._counts[key];
+
         for (const key2 in pending)
             cb ( pending[key2].resolve, key, key2 );
 
-        delete this.list[key];
-        delete this._counts[key];
         return true;
     }
 
@@ -79,11 +80,12 @@ module.exports = class KademliaRulesPending {
         const pending = this.list[key];
         if (!pending) return false;
 
+        delete this.list[key];
+        delete this._counts[key];
+
         for (const key2 in pending)
             cb( pending[key2].timeout, key, key2 );
 
-        delete this.list[key];
-        delete this._counts[key];
 
         return true;
     }
