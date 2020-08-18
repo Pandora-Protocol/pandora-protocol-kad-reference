@@ -1,4 +1,4 @@
-const WebRTC = require('./webrtc/webrtc')
+const WebRTC = require('./webrtc/isomorphic-webrtc')
 const ContactWebRTCType = require('./contact-webrtc-type')
 
 module.exports = function(options) {

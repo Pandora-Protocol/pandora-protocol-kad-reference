@@ -65,7 +65,7 @@ module.exports = function (options) {
 
             webRTC.ondisconnect = ()=>{
 
-                this.pending.pendingTimeoutAll('webrtc:'+webRTC.id, timeout => timeout() );
+                this.pending.pendingTimeoutAll('webRTC:'+webRTC.id, timeout => timeout() );
 
                 if (this._alreadyConnected[contact.identityHex] === webRTC)
                     delete this._alreadyConnected[contact.identityHex];
@@ -82,6 +82,33 @@ module.exports = function (options) {
                 }
 
             }
+
+
+            webRTC.onmessage = (data) => {
+
+                const decoded = bencode.decode(data);
+                const status = decoded[0];
+                const id = decoded[1];
+
+                if ( status === 1 ){ //received an answer
+
+                    if (this.pending.list['webRTC:'+webRTC.id] && this.pending.list['webRTC:'+webRTC.id][id])
+                        this.pending.pendingResolve('webRTC:'+webRTC.id, id, (resolve) => resolve( null, decoded[2] ));
+
+                } else {
+
+                    this._kademliaNode.rules.receiveSerialized( webRTC, id, webRTC.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, decoded[2], (err, buffer )=>{
+
+                        if (err) return;
+
+                        webRTC.sendData(buffer);
+
+                    });
+
+                }
+
+            }
+
         }
 
         _requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
@@ -263,14 +290,14 @@ module.exports = function (options) {
 
         _webrtcSendSerialized (id, destContact, protocol, command, data, cb)  {
 
-            const buffer = bencode.encode( [id, data] );
+            const buffer = bencode.encode( [0, id, data] );
 
             //connected once already already
             const webRTC = this._webRTCActiveConnectionsByContactsMap[destContact.identityHex];
             if (!webRTC)
                 cb(new Error('WebRTC Not connected'));
 
-            this.pending.pendingAdd('webrtc:'+webRTC.id, id, () => cb(new Error('Timeout')), cb );
+            this.pending.pendingAdd('webRTC:'+webRTC.id, id, () => cb(new Error('Timeout')), cb );
 
             webRTC.sendData( buffer )
         }

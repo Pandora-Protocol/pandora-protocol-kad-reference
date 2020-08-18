@@ -166,7 +166,7 @@ module.exports = function (options){
 
                 }
 
-            ws.onmessage =  (data) => {
+            ws.onmessage = (data) => {
 
                 if (data.type !== "message") return;
 

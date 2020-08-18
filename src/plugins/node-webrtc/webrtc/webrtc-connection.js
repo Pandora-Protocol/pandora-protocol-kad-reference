@@ -1,4 +1,4 @@
-const WebRTC = require('./webrtc')
+const WebRTC = require('./isomorphic-webrtc')
 
 module.exports = class WebRTCConnection extends WebRTC.RTCPeerConnection{
 
@@ -10,13 +10,15 @@ module.exports = class WebRTCConnection extends WebRTC.RTCPeerConnection{
 
         this.onconnect = undefined;
         this.ondisconnect = undefined;
+        this.onmessage = undefined;
 
     }
 
     _onChannelMessageCallback(event, channel){
 
         const data = Buffer.from(event.data);
-        return data;
+        if (this.onmessage)
+            this.onmessage(data);
 
     }
 
