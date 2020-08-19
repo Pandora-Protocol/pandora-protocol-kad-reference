@@ -147,8 +147,12 @@ module.exports = class KademliaRules {
 
     receive(req, id, srcContact, command, data, cb){
 
-        if (this._commands[command])
-            return this._commands[command].call(this, req, srcContact, data, cb);
+        try{
+            if (this._commands[command])
+                return this._commands[command].call(this, req, srcContact, data, cb);
+        }catch(err){
+            cb(err);
+        }
 
         throw "invalid command";
     }

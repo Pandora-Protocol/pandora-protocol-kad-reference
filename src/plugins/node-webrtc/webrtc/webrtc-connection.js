@@ -12,6 +12,16 @@ module.exports = class WebRTCConnection extends WebRTC.RTCPeerConnection{
         this.ondisconnect = undefined;
         this.onmessage = undefined;
 
+        this.chunkSize = 0;
+
+    }
+
+    setChunkSize(otherPeerMaxChunkSize, myMaxChunkSize = this.getMaxChunkSize()){
+
+        if ( typeof otherPeerMaxChunkSize !== "number") throw "invalid otherPeerMaxChunkSize";
+        if (otherPeerMaxChunkSize < 16*1024) throw "invalid value otherPeerMaxChunkSize";
+
+        this.chunkSize = Math.min(otherPeerMaxChunkSize, myMaxChunkSize)
     }
 
     _onChannelMessageCallback(event, channel){

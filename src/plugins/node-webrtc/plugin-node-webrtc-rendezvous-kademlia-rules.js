@@ -1,5 +1,6 @@
 const ContactWebRTCType = require('./contact-webrtc-type')
 const ContactType = require('../contact-type/contact-type')
+const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 const bencode = require('bencode');
 
 const WebRTCConnectionRemote = require('./webrtc/webrtc-connection-remote')
@@ -85,38 +86,54 @@ module.exports = function (options) {
             this.send(contact, 'RNDZ_ICE', [identity, bencode.encode(candidate) ], cb)
         }
 
-        _requestWebRTCConnection(req, srcContact, [contact, offer], cb){
+        _requestWebRTCConnection(req, srcContact, [contact, data], cb){
 
-            try{
+            data = bencode.decode(data);
+
+            this._kademliaNode.rules._receivedProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET,  '', data, (err, info) =>{
+
+                if (err) return cb(err);
 
                 contact = this._kademliaNode.createContact( contact );
                 if (contact) this._welcomeIfNewNode(req, contact);
 
                 if (this._alreadyConnected[contact.identityHex]) return cb(new Error('Already connected'));
 
-                offer = bencode.decode(offer);
+                try{
 
-                const webRTC = new WebRTCConnectionRemote();
-                this._addWebRTConnection(contact, webRTC);
+                    const [offer, otherPeerMaxChunkSize ] = bencode.decode(info);
 
-                webRTC.onicecandidate = e => {
-                    if (e.candidate)
-                        this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{ })
+                    const webRTC = new WebRTCConnectionRemote();
+                    this._addWebRTConnection(contact, webRTC);
+
+                    webRTC.onicecandidate = e => {
+                        if (e.candidate)
+                            this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{ })
+                    }
+
+                    const chunkMaxSize = webRTC.getMaxChunkSize();
+                    webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
+
+                    webRTC.processData(offer);
+                    webRTC.useInitiatorOffer(offer, (err, answer)=>{
+
+                        if (err) return err;
+
+                        const data = [ answer, chunkMaxSize ];
+                        this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, '', data , (err, data) =>{
+
+                            if (err) return cb(err);
+                            cb(null, data );
+
+                        });
+
+                    })
+
+                }catch(err){
+                    cb(err);
                 }
 
-                webRTC.processData(offer);
-                webRTC.useInitiatorOffer(offer, (err, answer)=>{
-
-                    if (err) return err;
-                    cb(null, answer);
-
-                })
-
-
-            }catch(err){
-                cb(new Error('Invalid Contact'));
-            }
-
+            });
 
         }
 
@@ -161,7 +178,7 @@ module.exports = function (options) {
                     undefined,
                     ()=> cb(new Error('Timeout')),
                     (out) => super.send(destContact, command, data, cb),
-                    4 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
+                    2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
                 );
 
                 if (requestExistsAlready) return;
@@ -178,21 +195,43 @@ module.exports = function (options) {
                     return webRTC.createInitiatorOffer((err, offer) => {
 
                         if (err)return cb(err)
-                        const data = [offer, webRTC.getMaxChunkSize() ];
 
-                        this.sendRendezvousWebRTCConnection(destContact.rendezvousContact, destContact.identity, offer, (err, answer ) => {
+                        try{
+                            const chunkMaxSize = webRTC.getMaxChunkSize();
+                            const data = [ offer, chunkMaxSize ];
 
-                            if (err || !answer) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
-
-                            webRTC.processData(answer);
-                            webRTC.userRemoteAnswer(answer, (err, out)=>{
+                            //encrypt it
+                            this._sendProcess( destContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, '', data , (err, data) =>{
 
                                 if (err) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
 
+                                this.sendRendezvousWebRTCConnection(destContact.rendezvousContact, destContact.identity, data, (err, info ) => {
+
+                                    if (err || !info) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
+
+                                    this._kademliaNode.rules._receivedProcess( destContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET,  '', info, (err, info) =>{
+
+                                        const [answer, otherPeerMaxChunkSize ] =  bencode.decode(info);
+
+                                        webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
+
+                                        webRTC.processData(answer);
+                                        webRTC.userRemoteAnswer(answer, (err, out)=>{
+
+                                            if (err) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
+
+
+                                        });
+
+                                    });
+
+                                });
 
                             });
 
-                        });
+                        }catch(err){
+                            this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
+                        }
 
                     })
 
