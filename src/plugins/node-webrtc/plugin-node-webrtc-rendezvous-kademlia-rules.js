@@ -90,7 +90,7 @@ module.exports = function (options) {
 
             data = bencode.decode(data);
 
-            this._kademliaNode.rules._receivedProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET,  '', data, (err, info) =>{
+            this._kademliaNode.rules._receivedProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, data, {forceEncryption:  true}, (err, info) =>{
 
                 if (err) return cb(err);
 
@@ -120,7 +120,7 @@ module.exports = function (options) {
                         if (err) return err;
 
                         const data = [ answer, chunkMaxSize ];
-                        this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, '', data , (err, data) =>{
+                        this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true} , (err, data) =>{
 
                             if (err) return cb(err);
                             cb(null, data );
@@ -201,7 +201,7 @@ module.exports = function (options) {
                             const data = [ offer, chunkMaxSize ];
 
                             //encrypt it
-                            this._sendProcess( destContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, '', data , (err, data) =>{
+                            this._sendProcess( destContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true}, (err, data) =>{
 
                                 if (err) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
 
@@ -209,7 +209,7 @@ module.exports = function (options) {
 
                                     if (err || !info) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + destContact.identityHex, timeout => timeout() );
 
-                                    this._kademliaNode.rules._receivedProcess( destContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET,  '', info, (err, info) =>{
+                                    this._kademliaNode.rules._receivedProcess( destContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true}, (err, info) =>{
 
                                         const [answer, otherPeerMaxChunkSize ] =  bencode.decode(info);
 

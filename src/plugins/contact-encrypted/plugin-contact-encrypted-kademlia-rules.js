@@ -19,9 +19,9 @@ module.exports = function (options) {
 
         }
 
-        _sendProcess(destContact, protocol, command, data, cb){
+        _sendProcess(destContact, protocol, data, opts = {}, cb){
 
-            if (this._skipProtocolEncryptions[protocol]) return super._sendProcess(...arguments);
+            if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super._sendProcess(...arguments);
 
             ECCUtils.encrypt(destContact.publicKey,  bencode.encode(BufferHelper.serializeData(data) ), (err, out)=>{
                 if (err) return cb(err);
@@ -29,9 +29,9 @@ module.exports = function (options) {
             });
         }
 
-        _receivedProcess(destContact, protocol, command, buffer, cb){
+        _receivedProcess(destContact, protocol, buffer, opts = {}, cb){
 
-            if (this._skipProtocolEncryptions[protocol]) return super._receivedProcess(...arguments);
+            if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super._receivedProcess(...arguments);
 
             let decoded = buffer;
             if (Buffer.isBuffer(buffer)) decoded = bencode.decode(buffer);
@@ -40,9 +40,9 @@ module.exports = function (options) {
             ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, cb);
         }
 
-        receiveSerialized( req, id, srcContact, protocol, buffer, cb){
+        receiveSerialized( req, id, srcContact, protocol, buffer, opts = {}, cb){
 
-            if (this._skipProtocolEncryptions[protocol]) return super.receiveSerialized(...arguments);
+            if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super.receiveSerialized(...arguments);
 
             let decoded;
             if (Buffer.isBuffer(buffer) ) decoded = bencode.decode(buffer);

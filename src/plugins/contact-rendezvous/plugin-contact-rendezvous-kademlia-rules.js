@@ -37,7 +37,7 @@ module.exports = function(options){
         sendUpdateContact(contact, cb){
 
             const data = [];
-            if ( this._webSocketActiveConnectionsByContactsMap[contact.identityHex]  )
+            if ( this._alreadyConnected[contact.identityHex]  )
                 data.push(this._kademliaNode.contact);
 
             this.send(contact, 'UPD_CONTACT', data, cb)

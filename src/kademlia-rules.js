@@ -62,7 +62,7 @@ module.exports = class KademliaRules {
         this.pending.stop();
     }
 
-    _sendProcess(destContact, protocol, command, data, cb){
+    _sendProcess(destContact, protocol, data, opts, cb){
         cb(null, bencode.encode(BufferHelper.serializeData(data) ) );
     }
 
@@ -86,7 +86,7 @@ module.exports = class KademliaRules {
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
         let { id, out } = sendSerialize(destContact, command, data);
 
-        this._sendProcess(destContact, protocol, command, out, (err, buffer)=>{
+        this._sendProcess(destContact, protocol, out, {},(err, buffer)=>{
 
             if (err) return cb(err);
 
@@ -102,13 +102,13 @@ module.exports = class KademliaRules {
 
     }
 
-    _receivedProcess(destContact, protocol, command, buffer, cb){
+    _receivedProcess(destContact, protocol, buffer, opts, cb){
         cb(null, buffer );
     }
 
     sendReceivedSerialized(destContact, protocol, command, buffer, cb){
 
-        this._receivedProcess(destContact, protocol, command, buffer, (err, buffer)=>{
+        this._receivedProcess(destContact, protocol, buffer, {},(err, buffer)=>{
 
             if (err) return cb(err);
 
@@ -121,7 +121,7 @@ module.exports = class KademliaRules {
 
     }
 
-    receiveSerialized( req, id, srcContact, protocol, buffer, cb){
+    receiveSerialized( req, id, srcContact, protocol, buffer, opts, cb){
 
         const decoded = this.decodeReceiveAnswer( id, srcContact, buffer );
         if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));

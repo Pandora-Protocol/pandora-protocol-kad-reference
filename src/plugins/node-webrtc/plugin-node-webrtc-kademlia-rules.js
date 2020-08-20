@@ -74,7 +74,7 @@ module.exports = function (options) {
 
                 } else {
 
-                    this.receiveSerialized( webRTC, id, webRTC.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, decoded[2], (err, buffer )=>{
+                    this.receiveSerialized( webRTC, id, webRTC.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, decoded[2], {}, (err, buffer )=>{
 
                         if (err) return;
 

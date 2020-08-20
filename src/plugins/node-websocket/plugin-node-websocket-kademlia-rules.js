@@ -50,7 +50,7 @@ module.exports = function (options){
         _createWebSocket( address, dstContact, protocol, cb ) {
 
             const data = this._kademliaNode.contact.toArray();
-            this._sendProcess(dstContact, protocol, '', data , (err, data) =>{
+            this._sendProcess(dstContact, protocol, data, {forceEncryption: true}, (err, data) =>{
 
                 if (err) return cb(err);
 
@@ -202,10 +202,9 @@ module.exports = function (options){
 
             } else {
 
-                this.receiveSerialized( ws, id, ws.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, decoded[2], (err, buffer )=>{
+                this.receiveSerialized( ws, id, ws.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, decoded[2], {}, (err, buffer )=>{
 
                     if (err) return;
-
                     ws.send(buffer);
 
                 });

@@ -16,7 +16,7 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
     newClientConnection(ws){
 
-        this._kademliaNode.rules._receivedProcess( null, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET,  '', Buffer.from( ws.protocol, "hex"), (err, out) =>{
+        this._kademliaNode.rules._receivedProcess( null, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, Buffer.from( ws.protocol, "hex"), {forceEncryption:  true}, (err, out) =>{
 
             if (err)
                 return ws.close();
