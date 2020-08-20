@@ -19,69 +19,56 @@ module.exports = function (options) {
 
         }
 
-        _sendProcess(destContact, protocol, command, data, cb){
+        _sendProcess(destContact, protocol, command, data, opts = {}){
 
-            if (this._skipProtocolEncryptions[protocol]) return super._sendProcess(...arguments);
+            if (this._skipProtocolEncryptions[protocol] && !opts.skipProtocolEncryption) return super._sendProcess(...arguments);
 
-            ECCUtils.encrypt(destContact.publicKey,  bencode.encode(BufferHelper.serializeData(data) ), (err, out)=>{
-                if (err) return cb(err);
-                cb(null, bencode.encode(out));
-            });
+            return ECCUtils.encrypt( bencode.encode(BufferHelper.serializeData(data) ), destContact.boxPublicKey, this._kademliaNode.contact.boxPrivateKey  )
         }
 
-        _receivedProcess(destContact, protocol, command, buffer, cb){
+        _receivedProcess(destContact, protocol, command, buffer, opts = {}){
 
             if (this._skipProtocolEncryptions[protocol]) return super._receivedProcess(...arguments);
 
-            let decoded = buffer;
-            if (Buffer.isBuffer(buffer)) decoded = bencode.decode(buffer);
+            const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
+            if (!decoded) return null;
 
-            if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
-            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, cb);
+            return ECCUtils.decrypt( decoded[1], decoded[0], this._kademliaNode.contact.privateKey);
         }
 
         receiveSerialized( req, id, srcContact, protocol, buffer, cb){
 
             if (this._skipProtocolEncryptions[protocol]) return super.receiveSerialized(...arguments);
 
-            let decoded;
-            if (Buffer.isBuffer(buffer) ) decoded = bencode.decode(buffer);
-            else decoded = buffer;
-
+            const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
             if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
-            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, payload)=>{
+            const payload = ECCUtils.decrypt( decoded[1], decoded[0], srcContact.boxPublicKey, this._kademliaNode.contact.boxPrivateKey );
+            if (!payload) return cb(new Error('Error decoding. Invalid received data'));
+
+            const decodedAnswer = this.decodeReceiveAnswer( id, srcContact, payload );
+            if (!decodedAnswer) cb( new Error('Error decoding data. Invalid bencode'));
+
+            let c = 0;
+            if (id === undefined) id = decodedAnswer[c++];
+            if (srcContact === undefined) srcContact = decodedAnswer[c++];
+
+            this.receive( req, id, srcContact, decodedAnswer[c++], decodedAnswer[c++], (err, out )=>{
 
                 if (err) return cb(err);
 
-                const decoded = this.decodeReceiveAnswer( id, srcContact, payload );
-                if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
+                const buffer = bencode.encode( BufferHelper.serializeData(out) );
+                const final = ECCUtils.encrypt( buffer,srcContact.publicKey, this._kademliaNode.contact.privateKey );
+                if (!final) return cb(new Error("ECC couldn't decrypt "))
 
-                let c = 0;
-                if (id === undefined) id = decoded[c++];
-                if (srcContact === undefined) srcContact = decoded[c++];
+                if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
 
-                this.receive( req, id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
+                const {receiveSerialize} = this._protocolSpecifics[protocol];
+                const finalBuffer = receiveSerialize(id, srcContact, final );
+                cb(null, buffer );
 
-                    if (err) return cb(err);
+            });
 
-                    const buffer = bencode.encode( BufferHelper.serializeData(out) );
-                    ECCUtils.encrypt( srcContact.publicKey, buffer, (err, out)=>{
-
-                        if (err) return cb(err);
-
-                        if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
-
-                        const {receiveSerialize} = this._protocolSpecifics[protocol];
-                        const buffer = receiveSerialize(id, srcContact, out );
-                        cb(null, buffer );
-
-                    });
-
-                });
-
-
-            })
 
         }
 

@@ -50,20 +50,17 @@ module.exports = function (options){
         _createWebSocket( address, dstContact, protocol, cb ) {
 
             const data = this._kademliaNode.contact.toArray();
-            this._sendProcess(dstContact, protocol, '', data , (err, data) =>{
+            const buffer = this._sendProcess(dstContact, protocol, '', data);
+            if (!buffer) return cb(new Error("Couldn't encrypt protocol"));
 
-                if (err) return cb(err);
+            if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET) address = 'ws://'+address;
+            else if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) address = 'wss://'+address;
+            else return cb(new Error('invalid protocol type'));
 
-                if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET) address = 'ws://'+address;
-                else if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET) address = 'wss://'+address;
-                else return cb(new Error('invalid protocol type'));
+            const ws = new IsomorphicWebSocket(address, data.toString('hex') );
+            ws._kadInitialized = true;
 
-                const ws = new IsomorphicWebSocket(address, data.toString('hex') );
-                ws._kadInitialized = true;
-
-                this._initializeWebSocket(dstContact, ws, cb);
-
-            } );
+            this._initializeWebSocket(dstContact, ws, cb);
 
         }
 

@@ -12,7 +12,8 @@ module.exports = function (options){
             if (index === undefined)
                 index = Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
 
-            const sybilSignature = ECCUtils.sign( KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[index].privateKey, CryptoUtils.sha256( message ) );
+            const hash = CryptoUtils.sha256( message );
+            const sybilSignature = ECCUtils.sign( hash, KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[index].privateKey );
 
             let hex = index.toString(16, 2);
             if (hex.length === 1) hex = "0"+hex;

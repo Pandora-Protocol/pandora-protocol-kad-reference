@@ -14,7 +14,6 @@ npm install
 download, and install the other repositories
 ```
 npm link pandora-protocol-red-black-tree-js ;
-npm link pandora-protocol-eccrypto ;
 npm link webpack-config ;
 ```
 

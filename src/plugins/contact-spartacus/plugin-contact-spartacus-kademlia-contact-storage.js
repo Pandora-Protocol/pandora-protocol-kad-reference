@@ -22,7 +22,7 @@ module.exports = function (options){
             out.args.push(opts.nonce)
             out.args.push(opts.timestamp)
 
-            const signature = ECCUtils.sign( opts.privateKey, CryptoUtils.sha256( bencode.encode( out.args ) ) );
+            const signature = ECCUtils.sign( CryptoUtils.sha256( bencode.encode( out.args ) ) , opts.privateKey);
 
             return {
                 ...out,

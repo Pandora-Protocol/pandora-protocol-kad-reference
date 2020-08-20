@@ -43,14 +43,14 @@ module.exports = function(options) {
         sign(){
             const buffer = bencode.encode( this.toArray(true) );
             const msg = CryptoUtils.sha256(buffer);
-            return ECCUtils.sign(this.privateKey, msg);
+            return ECCUtils.sign( msg, this.privateKey);
         }
 
         //verify signature
         verifySignature(){
             const buffer = bencode.encode( this.toArray(true) );
             const msg = CryptoUtils.sha256(buffer);
-            return ECCUtils.verifySignature(this.publicKey, msg, this.signature );
+            return ECCUtils.verifySignature( msg, this.signature, this.publicKey );
         }
 
         computeContactIdentity(){

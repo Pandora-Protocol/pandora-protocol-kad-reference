@@ -4,9 +4,11 @@ const path = require('path')
 
 console.log("Simple Encrypted Contact KAD");
 
+//const out = KAD.helpers.ECCUtils.createPair();
+
 const sybilKeys = {
-    privateKey: Buffer.from("68a595199d55260b90d97e6714f27c2a22548f9ee4b2c61956eb628189a8e2ed", "hex"),
-    publicKey: Buffer.from("049cf62611922a64575439fd14e0a1190c40184c4d20a1c7179828693d574e84b94b70c3f3995b7a2cd826e1e8ef9eb8ccf90e578891ecfe10de6a4dc9371cd19a", "hex"),
+    privateKey: Buffer.from("a19159851fcc0edfd00067de2d3565066b75733208cdd3032647b2db70a8a25379bc55860049bc29f2c5c986d639956bda51878c905d7d584a6bc44f53911b80", "hex"),
+    publicKey: Buffer.from("79bc55860049bc29f2c5c986d639956bda51878c905d7d584a6bc44f53911b80", "hex"),
 };
 
 KAD.init({

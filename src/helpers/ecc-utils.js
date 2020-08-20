@@ -1,53 +1,49 @@
-const eccrypto = require("pandora-protocol-eccrypto");
+const nacl = require('tweetnacl')
 
 module.exports =  {
 
     createPair(){
-        const privateKey = this.createPrivateKey();
-        return {
-            privateKey,
-            publicKey: this.getPublicKey(privateKey),
-        }
-    },
 
-    createPrivateKey(){
-        return eccrypto.generatePrivate();
+        const keyPair = nacl.sign.keyPair()
+        return {
+            privateKey: Buffer.from(keyPair.secretKey),
+            publicKey: Buffer.from(keyPair.publicKey)
+        }
     },
 
     getPublicKey(privateKey){
-        return Buffer.from( eccrypto.getPublic(privateKey) );
-    },
 
-    encrypt(publicKey, message, cb){
-        eccrypto.encrypt(publicKey, message)
-            .then( out => cb(null, out) )
-            .catch( cb )
-    },
+        const keyPair = nacl.sign.keyPair.fromSecretKey(privateKey)
 
-    decrypt(privateKey, message, cb){
-        eccrypto.decrypt( privateKey, message, )
-            .then( out => cb(null, out) )
-            .catch( cb )
-    },
-
-    sign(privateKey, msg){
-
-        const out = eccrypto.sign(privateKey, msg);
-        if (out.length !== 64) throw "invalid args";
-        return out;
-
-    },
-
-    verifySignature(publicKey, msg, sig){
-
-        try{
-            const out = eccrypto.verify( publicKey, msg, sig);
-            if (out === true) return true;
-        }catch(err){
-
+        return {
+            privateKey: Buffer.from(keyPair.secretKey),
+            publicKey: Buffer.from(keyPair.publicKey)
         }
 
-        return false;
+    },
+
+    encrypt( message, theirPublicKey, myPrivateKey ){
+
+        const nonce = nacl.randomBytes(nacl.box.nonceLength)
+        const data = nacl.box(message, nonce, theirPublicKey, myPrivateKey)
+        return [
+            Buffer.from(data),
+            Buffer.from(nonce),
+        ]
+    },
+
+    decrypt(message, nonce, theirPublicKey, myPrivateKey, ){
+        const out = nacl.box.open( message, nonce, theirPublicKey, myPrivateKey)
+        return out ? Buffer.from(out) : out;
+    },
+
+    sign(msg, privateKey){
+        const out = nacl.sign.detached(msg, privateKey)
+        return out ? Buffer.from(out) : out;
+    },
+
+    verifySignature(msg, signature, publicKey){
+        return nacl.sign.detached.verify(msg, signature, publicKey);
     }
 
 }

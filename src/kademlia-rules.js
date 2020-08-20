@@ -62,8 +62,8 @@ module.exports = class KademliaRules {
         this.pending.stop();
     }
 
-    _sendProcess(destContact, protocol, command, data, cb){
-        cb(null, bencode.encode(BufferHelper.serializeData(data) ) );
+    _sendProcess(destContact, protocol, command, data){
+        return bencode.encode(BufferHelper.serializeData(data) );
     }
 
     _sendGetProtocol(destContact, command, data){
@@ -86,19 +86,16 @@ module.exports = class KademliaRules {
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
         let { id, out } = sendSerialize(destContact, command, data);
 
-        this._sendProcess(destContact, protocol, command, out, (err, buffer)=>{
+        const buffer = this._sendProcess(destContact, protocol, command, out);
+        if (!buffer) return cb(new Error('Invalid arguments'));
+
+        sendSerialized( id, destContact, protocol, command, buffer, (err, buffer)=>{
 
             if (err) return cb(err);
 
-            sendSerialized( id, destContact, protocol, command, buffer, (err, buffer)=>{
+            this.sendReceivedSerialized(destContact, protocol, command, buffer, cb);
 
-                if (err) return cb(err);
-
-                this.sendReceivedSerialized(destContact, protocol, command, buffer, cb);
-
-            });
-
-        })
+        });
 
     }
 
