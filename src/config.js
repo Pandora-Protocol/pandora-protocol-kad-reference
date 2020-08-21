@@ -42,6 +42,7 @@ module.exports = {
         },
 
         NODE_WEBSOCKET:{
+            MAX_TRANSFER_PAYLOAD_SIZE: 5 * 1024 * 1024, //5mb
             T_WEBSOCKET_DISCONNECT_INACTIVITY: 3*60*1000,
         },
 

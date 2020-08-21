@@ -1,8 +1,7 @@
 const ContactType = require('../contact-type/contact-type')
 const NextTick = require('../../helpers/next-tick')
 const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
-const PluginNodeWebsocket = require('../node-websocket/index')
-
+const PluginContactRendezvousWebSocketExtends = require("./plugin-contact-rendezvous-websocket-extends")
 module.exports = function(options){
 
     return class Rules extends options.Rules{
@@ -16,6 +15,8 @@ module.exports = function(options){
 
             this._commands['RNDZ_JOIN'] = this._rendezvousJoin.bind(this);
             this._commands['UPD_CONTACT'] = this._updateContact.bind(this);
+
+            this.PluginNodeWebsocketExtends = PluginContactRendezvousWebSocketExtends(this.PluginNodeWebsocketExtends);
 
         }
 
@@ -57,10 +58,6 @@ module.exports = function(options){
             clearAsyncInterval( this._asyncIntervalSetRendezvous );
         }
 
-        _getTimeoutWebSocketTime(ws){
-            return (ws.rendezvoused || ws.isMyRendezvousSocket) ? KAD_OPTIONS.PLUGINS.CONTACT_RENDEZVOUS.T_WEBSOCKET_DISCONNECT_RENDEZVOUS : KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
-        }
-
         _rendezvousJoin(req, srcContact, data, cb){
 
             if ( !req.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
@@ -79,7 +76,7 @@ module.exports = function(options){
                 delete req.rendezvoused;
             });
 
-            this._updateTimeoutWebSocket(req);
+            req._updateTimeoutWebSocket();
 
             cb(null, [1] );
 
@@ -119,17 +116,7 @@ module.exports = function(options){
 
         }
 
-        _socketConnectedAsRendezvousSocket(ws){
 
-            ws.isMyRendezvousRelaySocket = true;
-            this._myRendezvousRelaySocket = ws;
-
-            ws.addEventListener("close", function(event) {
-                this._myRendezvousRelaySocket = null;
-            });
-
-            this._updateTimeoutWebSocket(ws);
-        }
 
         _connectRendezvous(contact, cb){
 
@@ -140,14 +127,14 @@ module.exports = function(options){
 
             let ws = this._webSocketActiveConnectionsMap[address];
             if (ws) {
-                this._socketConnectedAsRendezvousSocket(ws);
+                ws.socketConnectedAsRendezvousSocket();
                 return cb(null, ws )
             }
 
             this._createWebSocket(address, contact, protocol,(err, ws) => {
 
                 if (err) return cb(err);
-                this._socketConnectedAsRendezvousSocket(ws);
+                ws.socketConnectedAsRendezvousSocket();
                 cb(null, ws);
 
             });

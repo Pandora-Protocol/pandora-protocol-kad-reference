@@ -58,7 +58,6 @@ module.exports = function (options) {
                 cb(new Error('Invalid contact'));
             }
 
-
         }
 
         sendRequestIceCandidateWebRTCConnection(contact, sourceIdentity, candidate, cb){
@@ -104,7 +103,7 @@ module.exports = function (options) {
                     const [offer, otherPeerMaxChunkSize ] = info[2];
 
                     const webRTC = new WebRTCConnectionRemote();
-                    this._addWebRTConnection(contact, webRTC);
+                    webRTC.init(this, contact);
 
                     webRTC.onicecandidate = e => {
                         if (e.candidate)
@@ -185,7 +184,7 @@ module.exports = function (options) {
                 else {
 
                     const webRTC = new WebRTCConnectionInitiator();
-                    this._addWebRTConnection(dstContact, webRTC);
+                    webRTC.init(this, dstContact);
 
                     webRTC.onicecandidate = e => {
                         if (e.candidate)

@@ -17,7 +17,7 @@ module.exports = {
     },
     initialize: function(){
         ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET = 3;
-        ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_SECURED_WEBSOCKET = 4;
+        ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET_SECURED = 4;
         ContactAddressProtocolType._map[3] = true;
         ContactAddressProtocolType._map[4] = true;
     },

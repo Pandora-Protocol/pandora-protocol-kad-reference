@@ -25,87 +25,6 @@ module.exports = function (options) {
 
         }
 
-        _setTimeoutWebRTC(webrtc){
-            this.pending.pendingAdd( 'webrtc:'+webrtc.id, '',() => webrtc.close(), ()=>{}, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_WEBRTC_DISCONNECT_INACTIVITY,  );
-        }
-
-        _updateTimeoutWebRTC(webrtc){
-            const pending = this.pending.list['webrtc:'+webrtc.id];
-            if (pending) {
-                pending[''].timestamp = new Date().getTime();
-            }
-            else this._setTimeoutWebRTC(webrtc);
-        }
-
-        _addWebRTConnection(contact, webRTC){
-
-            webRTC.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-            webRTC.contact = contact;
-            webRTC.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;
-            webRTC.isWebRTC = true;
-
-            this._alreadyConnected[contact.identityHex] = webRTC;
-            this._webRTCActiveConnectionsByContactsMap[contact.identityHex] = webRTC;
-            this._webRTCActiveConnections.push(webRTC)
-
-            this._updateTimeoutWebRTC(webRTC);
-
-            webRTC.onconnect = () => {
-                this.pending.pendingResolveAll('rendezvous:webRTC:' + contact.identityHex, resolve => resolve(null, true ) );
-            }
-
-            webRTC.ondisconnect = ()=>{
-
-                this.pending.pendingTimeoutAll('webRTC:'+webRTC.id, timeout => timeout() );
-
-                if (this._alreadyConnected[contact.identityHex] === webRTC)
-                    delete this._alreadyConnected[contact.identityHex];
-
-                if (this._webRTCActiveConnectionsByContactsMap[contact.identityHex] === webRTC) {
-                    delete this._webRTCActiveConnectionsByContactsMap[contact.identityHex];
-
-                    for (let i = this._webRTCActiveConnections.length-1; i >= 0; i--)
-                        if (this._webRTCActiveConnections[i] === webRTC){
-                            this._webRTCActiveConnections.splice(i, 1);
-                            break;
-                        }
-
-                }
-
-            }
-
-
-            webRTC.onmessage = (data) => {
-
-                this._updateTimeoutWebRTC(webRTC);
-
-                const decoded = bencode.decode(data);
-                const status = decoded[0];
-                const id = decoded[1];
-
-                if ( status === 1 ){ //received an answer
-
-                    if (this.pending.list['webRTC:'+webRTC.id] && this.pending.list['webRTC:'+webRTC.id][id])
-                        this.pending.pendingResolve('webRTC:'+webRTC.id, id, (resolve) => resolve( null, decoded[2] ));
-
-                } else {
-
-                    this.receiveSerialized( webRTC, id, webRTC.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, decoded[2], {}, (err, buffer )=>{
-
-                        if (err) return;
-
-                        webRTC.sendData(buffer);
-
-                    });
-
-                }
-
-            }
-
-        }
-
-
-
 
         _webrtcSendSerialize (dstContact, command, data) {
             const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
@@ -117,20 +36,20 @@ module.exports = function (options) {
 
         _webrtcSendSerialized (id, dstContact, protocol, command, data, cb)  {
 
-            const buffer = bencode.encode( [0, id, data] );
+            const buffer = bencode.encode( [0, data] );
 
             //connected once already already
             const webRTC = this._webRTCActiveConnectionsByContactsMap[dstContact.identityHex];
             if (!webRTC)
                 cb(new Error('WebRTC Not connected'));
 
-            this.pending.pendingAdd('webRTC:'+webRTC.id, id, () => cb(new Error('Timeout')), cb );
+            this.pending.pendingAdd('webrtc:'+webRTC.id, id, () => cb(new Error('Timeout')), cb );
 
-            webRTC.sendData( buffer )
+            webRTC.sendData( id, buffer )
         }
 
         _webrtcReceiveSerialize (id, srcContact, out ) {
-            return bencode.encode( BufferHelper.serializeData([ 1, id, out] ) )
+            return bencode.encode( BufferHelper.serializeData([ 1, out] ) )
         }
 
     }
