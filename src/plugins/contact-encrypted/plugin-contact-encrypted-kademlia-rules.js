@@ -1,6 +1,6 @@
 const bencode = require('bencode');
-const Contact = require('../../contact/contact')
 const ECCUtils = require('../../helpers/ecc-utils')
+const CryptoUtils = require('../../helpers/crypto-utils')
 const BufferHelper = require('../../helpers/buffer-utils')
 
 module.exports = function (options) {
@@ -23,13 +23,15 @@ module.exports = function (options) {
 
             if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super._sendProcess(...arguments);
 
-            ECCUtils.encrypt(destContact.publicKey,  bencode.encode(BufferHelper.serializeData(data) ), (err, out)=>{
+            data = bencode.encode( BufferHelper.serializeData(data) );
+            const signature = this._kademliaNode.contact.sign( CryptoUtils.sha256( data ) );
+            data = [data, signature]
+
+            ECCUtils.encrypt(destContact.publicKey, bencode.encode(data), (err, out)=>{
 
                 if (err) return cb(err);
-
-                out.unshift(this._kademliaNode.contact.sign(out[3]));
-
                 cb(null, bencode.encode(out));
+
             });
         }
 
@@ -42,15 +44,13 @@ module.exports = function (options) {
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
             if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
-            const signatureBuffer = decoded[4];
-            const signature = decoded[0];
-            decoded.splice(0, 1);
-
-            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, payload)=>{
+            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, info)=>{
 
                 if (err) return cb(err);
 
-                if (!destContact.verify( signatureBuffer, signature )) return cb(new Error('Signature for encrypted message is invalid'));
+                const [payload, signature ] = bencode.decode(info);
+
+                if (!destContact.verify( CryptoUtils.sha256(payload), signature )) return cb(new Error('Signature for encrypted message is invalid'));
                 cb(null, payload);
 
             });
@@ -63,13 +63,11 @@ module.exports = function (options) {
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
             if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
-            const signatureBuffer = decoded[4];
-            const signature = decoded[0];
-            decoded.splice(0, 1);
-
-            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, payload)=>{
+            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, info ) => {
 
                 if (err) return cb(err);
+
+                const [payload, signature ] = bencode.decode(info);
 
                 const decoded = this.decodeReceiveAnswer( id, srcContact, payload );
                 if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
@@ -78,21 +76,21 @@ module.exports = function (options) {
                 if (id === undefined) id = decoded[c++];
                 if (srcContact === undefined) srcContact = decoded[c++];
 
-                if (!srcContact.verify( signatureBuffer, signature )) return cb(new Error('Signature for encrypted message is invalid'));
+                if (!srcContact.verify( CryptoUtils.sha256(payload), signature )) return cb(new Error('Signature for encrypted message is invalid'));
                 if (opts.returnNotAllowed) return cb(null, decoded);
 
                 this.receive( req, id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
 
                     if (err) return cb(err);
 
-                    const buffer = bencode.encode( BufferHelper.serializeData(out) );
-                    ECCUtils.encrypt( srcContact.publicKey, buffer, (err, out)=>{
+                    out = bencode.encode( BufferHelper.serializeData(out) );
+                    const signature = this._kademliaNode.contact.sign( CryptoUtils.sha256( out ) );
+                    out = [out, signature]
+
+                    ECCUtils.encrypt( srcContact.publicKey, bencode.encode( out ), (err, out)=>{
 
                         if (err) return cb(err);
-
                         if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
-
-                        out.unshift(this._kademliaNode.contact.sign(out[3]));
 
                         const {receiveSerialize} = this._protocolSpecifics[protocol];
                         const buffer = receiveSerialize(id, srcContact, out );
