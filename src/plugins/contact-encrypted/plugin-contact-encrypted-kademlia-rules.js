@@ -48,7 +48,9 @@ module.exports = function (options) {
 
                 if (err) return cb(err);
 
-                const [payload, signature ] = bencode.decode(info);
+                info = bencode.decode(info);
+                if (!info) return cb(new Error("Error decoding the encrypted info"));
+                const [payload, signature ] = info;
 
                 if (!destContact.verify( CryptoUtils.sha256(payload), signature )) return cb(new Error('Signature for encrypted message is invalid'));
                 cb(null, payload);
@@ -67,7 +69,9 @@ module.exports = function (options) {
 
                 if (err) return cb(err);
 
-                const [payload, signature ] = bencode.decode(info);
+                info = bencode.decode(info);
+                if (!info) return cb(new Error("Error decoding the encrypted info"));
+                const [payload, signature ] = info;
 
                 const decoded = this.decodeReceiveAnswer( id, srcContact, payload );
                 if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));

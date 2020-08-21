@@ -50,7 +50,7 @@ module.exports = function (options){
         _createWebSocket( address, dstContact, protocol, cb ) {
 
             const data = [ this._kademliaNode.contact.toArray(), ''];
-            this._sendProcess(dstContact, protocol, data, {}, (err, data) =>{
+            this._sendProcess(dstContact, protocol, data, {forceEncryption: true}, (err, data) =>{
 
                 if (err) return cb(err);
 
