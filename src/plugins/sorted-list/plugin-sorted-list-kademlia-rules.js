@@ -62,7 +62,7 @@ module.exports = function (options) {
         }
 
 
-        decodeSendAnswer(destContact, command, data, decodedAlready = false){
+        decodeSendAnswer(dstContact, command, data, decodedAlready = false){
 
             if (!decodedAlready && Buffer.isBuffer(data)) data = bencode.decode(data);
 
@@ -81,7 +81,7 @@ module.exports = function (options) {
                 }
             }
 
-            return super.decodeSendAnswer(destContact, command, data, true);
+            return super.decodeSendAnswer(dstContact, command, data, true);
         }
 
 

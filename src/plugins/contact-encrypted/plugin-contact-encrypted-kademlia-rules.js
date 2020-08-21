@@ -19,7 +19,7 @@ module.exports = function (options) {
 
         }
 
-        _sendProcess(destContact, protocol, data, opts = {}, cb){
+        _sendProcess(dstContact, protocol, data, opts = {}, cb){
 
             if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super._sendProcess(...arguments);
 
@@ -27,7 +27,7 @@ module.exports = function (options) {
             const signature = this._kademliaNode.contact.sign( CryptoUtils.sha256( data ) );
             data = [data, signature]
 
-            ECCUtils.encrypt(destContact.publicKey, bencode.encode(data), (err, out)=>{
+            ECCUtils.encrypt(dstContact.publicKey, bencode.encode(data), (err, out)=>{
 
                 if (err) return cb(err);
                 cb(null, bencode.encode(out));
@@ -35,11 +35,11 @@ module.exports = function (options) {
             });
         }
 
-        _receivedProcess(destContact, protocol, buffer, opts, cb){
+        _receivedProcess(dstContact, protocol, buffer, opts, cb){
 
             if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super._receivedProcess(...arguments);
 
-            if (!destContact) return cb(new Error('destContact needs to be set for decryption'));
+            if (!dstContact) return cb(new Error('dstContact needs to be set for decryption'));
 
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
             if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
@@ -52,7 +52,7 @@ module.exports = function (options) {
                 if (!info) return cb(new Error("Error decoding the encrypted info"));
                 const [payload, signature ] = info;
 
-                if (!destContact.verify( CryptoUtils.sha256(payload), signature )) return cb(new Error('Signature for encrypted message is invalid'));
+                if (!dstContact.verify( CryptoUtils.sha256(payload), signature )) return cb(new Error('Signature for encrypted message is invalid'));
                 cb(null, payload);
 
             });

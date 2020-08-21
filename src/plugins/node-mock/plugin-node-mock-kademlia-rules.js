@@ -50,7 +50,7 @@ module.exports = function (options) {
 
         }
 
-        _mockSendSerialize (destContact, command, data) {
+        _mockSendSerialize (dstContact, command, data) {
             const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             return {
                 id,
@@ -58,16 +58,16 @@ module.exports = function (options) {
             }
         }
 
-        _mockSendSerialized (id, destContact, protocol, command, buffer, cb)  {
+        _mockSendSerialized (id, dstContact, protocol, command, buffer, cb)  {
 
             //fake some unreachbility
-            if (!KAD_MOCKUP[destContact.mockId] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
-                console.error("LOG: Message couldn't be sent", command, destContact.identityHex, destContact.hostname, destContact.port );
+            if (!KAD_MOCKUP[dstContact.mockId] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
+                console.error("LOG: Message couldn't be sent", command, dstContact.identityHex, dstContact.hostname, dstContact.port );
                 return cb(new Error("Message couldn't be sent"), null);
             }
 
             setTimeout(()=>{
-                KAD_MOCKUP[destContact.mockId].receiveSerialized( undefined, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK, buffer, {}, cb );
+                KAD_MOCKUP[dstContact.mockId].receiveSerialized( undefined, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK, buffer, {}, cb );
             }, Math.floor( Math.random() * 100) + 10)
 
         }

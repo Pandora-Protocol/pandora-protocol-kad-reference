@@ -47,6 +47,8 @@ module.exports = {
 
         NODE_WEBRTC: {
 
+            T_WEBRTC_DISCONNECT_INACTIVITY: 3*60*1000,
+
             ICE_SERVERS: [ {
                 url: 'stun:stun1.l.google.com:19302'
             }, {

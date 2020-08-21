@@ -67,35 +67,35 @@ module.exports = function(options) {
             this.send(contact, 'RNDZ_REV_CON', [ identity],  cb);
         }
 
-        send(destContact, command, data, cb){
+        send(dstContact, command, data, cb){
 
             if ( this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED &&
-                !this._alreadyConnected[destContact.identityHex] &&
-                 destContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS &&
-                 destContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
+                !this._alreadyConnected[dstContact.identityHex] &&
+                dstContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS &&
+                dstContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
 
                 //reverse connection is pending...
-                const requestExistsAlready = !!this.pending.list['rendezvous:reverseConnection:' + destContact.identityHex];
+                const requestExistsAlready = !!this.pending.list['rendezvous:reverseConnection:' + dstContact.identityHex];
 
                 this.pending.pendingAdd(
-                    'rendezvous:reverseConnection:'+destContact.identityHex,
+                    'rendezvous:reverseConnection:'+dstContact.identityHex,
                     undefined,
                     () => cb(new Error('Timeout')),
-                    () => super.send(destContact, command, data, cb),
+                    () => super.send(dstContact, command, data, cb),
                     2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
                 );
 
                 if (requestExistsAlready) return;
-                else return this.sendRendezvousReverseConnection( destContact.rendezvousContact, destContact.identity, (err, out) => {
+                else return this.sendRendezvousReverseConnection( dstContact.rendezvousContact, dstContact.identity, (err, out) => {
 
-                    if (err) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+destContact.identityHex, timeout => timeout() );
+                    if (err) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+dstContact.identityHex, timeout => timeout() );
                     //already solved... if successful
 
                 }  );
 
             }
 
-            super.send(destContact, command, data, cb);
+            super.send(dstContact, command, data, cb);
         }
 
 

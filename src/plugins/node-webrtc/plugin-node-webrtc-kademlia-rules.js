@@ -25,6 +25,18 @@ module.exports = function (options) {
 
         }
 
+        _setTimeoutWebRTC(webrtc){
+            this.pending.pendingAdd( 'webrtc:'+webrtc.id, '',() => webrtc.close(), ()=>{}, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_WEBRTC_DISCONNECT_INACTIVITY,  );
+        }
+
+        _updateTimeoutWebRTC(webrtc){
+            const pending = this.pending.list['webrtc:'+webrtc.id];
+            if (pending) {
+                pending[''].timestamp = new Date().getTime();
+            }
+            else this._setTimeoutWebRTC(webrtc);
+        }
+
         _addWebRTConnection(contact, webRTC){
 
             webRTC.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
@@ -35,6 +47,8 @@ module.exports = function (options) {
             this._alreadyConnected[contact.identityHex] = webRTC;
             this._webRTCActiveConnectionsByContactsMap[contact.identityHex] = webRTC;
             this._webRTCActiveConnections.push(webRTC)
+
+            this._updateTimeoutWebRTC(webRTC);
 
             webRTC.onconnect = () => {
                 this.pending.pendingResolveAll('rendezvous:webRTC:' + contact.identityHex, resolve => resolve(null, true ) );
@@ -62,6 +76,8 @@ module.exports = function (options) {
 
 
             webRTC.onmessage = (data) => {
+
+                this._updateTimeoutWebRTC(webRTC);
 
                 const decoded = bencode.decode(data);
                 const status = decoded[0];
@@ -91,7 +107,7 @@ module.exports = function (options) {
 
 
 
-        _webrtcSendSerialize (destContact, command, data) {
+        _webrtcSendSerialize (dstContact, command, data) {
             const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             return {
                 id,
@@ -99,12 +115,12 @@ module.exports = function (options) {
             }
         }
 
-        _webrtcSendSerialized (id, destContact, protocol, command, data, cb)  {
+        _webrtcSendSerialized (id, dstContact, protocol, command, data, cb)  {
 
             const buffer = bencode.encode( [0, id, data] );
 
             //connected once already already
-            const webRTC = this._webRTCActiveConnectionsByContactsMap[destContact.identityHex];
+            const webRTC = this._webRTCActiveConnectionsByContactsMap[dstContact.identityHex];
             if (!webRTC)
                 cb(new Error('WebRTC Not connected'));
 

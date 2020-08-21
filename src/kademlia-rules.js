@@ -62,39 +62,39 @@ module.exports = class KademliaRules {
         this.pending.stop();
     }
 
-    _sendProcess(destContact, protocol, data, opts, cb){
+    _sendProcess(dstContact, protocol, data, opts, cb){
         cb(null, bencode.encode(BufferHelper.serializeData(data) ) );
     }
 
-    _sendGetProtocol(destContact, command, data){
+    _sendGetProtocol(dstContact, command, data){
 
-        // the destContact is already contacted via a websocket
-        if (this._alreadyConnected[destContact.identityHex])
-            return this._alreadyConnected[destContact.identityHex].contactProtocol;
+        // the dstContact is already contacted via a websocket
+        if (this._alreadyConnected[dstContact.identityHex])
+            return this._alreadyConnected[dstContact.identityHex].contactProtocol;
 
-        return KAD_OPTIONS.TEST_PROTOCOL || destContact.getProtocol(command, data);
+        return KAD_OPTIONS.TEST_PROTOCOL || dstContact.getProtocol(command, data);
     }
 
-    send(destContact, command, data, cb){
+    send(dstContact, command, data, cb){
 
-        if ( destContact.identity && destContact.identity.equals(this._kademliaNode.contact.identity) )
+        if ( dstContact.identity && dstContact.identity.equals(this._kademliaNode.contact.identity) )
             return cb(new Error("Can't contact myself"));
 
-        const protocol = this._sendGetProtocol(destContact, command, data);
+        const protocol = this._sendGetProtocol(dstContact, command, data);
         if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
 
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
-        let { id, out } = sendSerialize(destContact, command, data);
+        let { id, out } = sendSerialize(dstContact, command, data);
 
-        this._sendProcess(destContact, protocol, out, {},(err, buffer)=>{
+        this._sendProcess(dstContact, protocol, out, {},(err, buffer)=>{
 
             if (err) return cb(err);
 
-            sendSerialized( id, destContact, protocol, command, buffer, (err, buffer)=>{
+            sendSerialized( id, dstContact, protocol, command, buffer, (err, buffer)=>{
 
                 if (err) return cb(err);
 
-                this.sendReceivedSerialized(destContact, protocol, command, buffer, cb);
+                this.sendReceivedSerialized(dstContact, protocol, command, buffer, cb);
 
             });
 
@@ -102,17 +102,17 @@ module.exports = class KademliaRules {
 
     }
 
-    _receivedProcess(destContact, protocol, buffer, opts, cb){
+    _receivedProcess(dstContact, protocol, buffer, opts, cb){
         cb(null, buffer );
     }
 
-    sendReceivedSerialized(destContact, protocol, command, buffer, cb){
+    sendReceivedSerialized(dstContact, protocol, command, buffer, cb){
 
-        this._receivedProcess(destContact, protocol, buffer, {},(err, buffer)=>{
+        this._receivedProcess(dstContact, protocol, buffer, {},(err, buffer)=>{
 
             if (err) return cb(err);
 
-            const decoded = this.decodeSendAnswer(destContact, command, buffer);
+            const decoded = this.decodeSendAnswer(dstContact, command, buffer);
             if (!decoded) return cb(new Error('Error decoding data'));
 
             cb(null, decoded);
@@ -326,7 +326,7 @@ module.exports = class KademliaRules {
         next()
     }
 
-    decodeSendAnswer(destContact, command, data, decodedAlready = false){
+    decodeSendAnswer(dstContact, command, data, decodedAlready = false){
 
         if (!decodedAlready && Buffer.isBuffer(data)) data = bencode.decode(data);
 

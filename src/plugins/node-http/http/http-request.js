@@ -21,7 +21,7 @@ module.exports = class HTTPRequest {
      * Implements the writable interface
      * @private
      */
-    request( id, destContact,  protocol, buffer, callback) {
+    request( id, dstContact,  protocol, buffer, callback) {
 
         if (this._kademliaRules.pending.list['http:'+id])
             return callback(new Error('Pending Id already exists'));
@@ -32,8 +32,8 @@ module.exports = class HTTPRequest {
         else throw "invalid protocol"
 
         const reqopts = {
-            hostname: destContact.hostname,
-            port: destContact.port,
+            hostname: dstContact.hostname,
+            port: dstContact.port,
             protocol: protocol,
             method: 'POST',
             headers: {
@@ -43,7 +43,7 @@ module.exports = class HTTPRequest {
         };
 
         //optional path
-        if ( destContact.path) reqopts.path = destContact.path;
+        if ( dstContact.path) reqopts.path = dstContact.path;
 
         this._kademliaRules.pending.pendingAdd('http:'+id, '',  () => callback(new Error('Timeout')), out => callback(null, out ),  );
 

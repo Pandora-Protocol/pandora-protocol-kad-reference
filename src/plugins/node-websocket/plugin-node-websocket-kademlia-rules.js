@@ -230,7 +230,7 @@ module.exports = function (options){
         }
 
 
-        _websocketSendSerialize (destContact, command, data) {
+        _websocketSendSerialize (dstContact, command, data) {
             const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             return {
                 id,
@@ -238,16 +238,16 @@ module.exports = function (options){
             }
         }
 
-        _websocketSendSerialized (id, destContact, protocol, command, data, cb)  {
+        _websocketSendSerialized (id, dstContact, protocol, command, data, cb)  {
 
             const buffer = bencode.encode( [0, id, data] );
 
             //connected once already already
-            if (this._webSocketActiveConnectionsByContactsMap[destContact.identityHex])
-                return this._sendWebSocketWaitAnswer( this._webSocketActiveConnectionsByContactsMap[destContact.identityHex], id, buffer, cb);
+            if (this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex])
+                return this._sendWebSocketWaitAnswer( this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex], id, buffer, cb);
 
-            const address = destContact.hostname +':'+ destContact.port + destContact.path;
-            this._createWebSocket(address, destContact, protocol,(err, ws) => {
+            const address = dstContact.hostname +':'+ dstContact.port + dstContact.path;
+            this._createWebSocket(address, dstContact, protocol,(err, ws) => {
                 if (err) return cb(err);
                 this._sendWebSocketWaitAnswer(ws, id, buffer, cb);
             });

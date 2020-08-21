@@ -50,7 +50,7 @@ module.exports = function (options) {
                 this._httpServer.stop();
         }
 
-        _httpSendSerialize (destContact, command, data) {
+        _httpSendSerialize (dstContact, command, data) {
             const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             return {
                 id,
@@ -58,9 +58,9 @@ module.exports = function (options) {
             }
         }
 
-        _httpSendSerialized (id, destContact, protocol, command, data, cb) {
+        _httpSendSerialized (id, dstContact, protocol, command, data, cb) {
             const buffer = Buffer.isBuffer(data) ? data : bencode.encode( data );
-            this._httpRequest.request( id, destContact, protocol, buffer, cb )
+            this._httpRequest.request( id, dstContact, protocol, buffer, cb )
         }
 
         _httpReceiveSerialize (id, srcContact, out )  {
