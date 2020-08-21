@@ -22,7 +22,7 @@ module.exports = {
             const contact = _createContact(...arguments);
 
             //validate signature
-            if (!contact.verifySignature() )
+            if (!contact.verifyContact() )
                 throw "Invalid Contact Spartacus Signature";
 
             contact.identity = contact.computeContactIdentity()

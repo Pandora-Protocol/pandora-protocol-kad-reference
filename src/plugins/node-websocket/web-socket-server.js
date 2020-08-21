@@ -16,17 +16,14 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
     newClientConnection(ws){
 
-        this._kademliaNode.rules._receivedProcess( null, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, Buffer.from( ws.protocol, "hex"), {forceEncryption:  true}, (err, out) =>{
+        this._kademliaNode.rules.receiveSerialized( ws, 0, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, Buffer.from( ws.protocol, "hex"), {returnNotAllowed: true}, (err, out) =>{
 
-            if (err)
-                return ws.close();
+            if (err) return ws.close();
 
             try{
-                const decoded = bencode.decode( out );
-                const contact = this._kademliaNode.createContact( decoded );
                 ws._kadInitialized = true;
 
-                this._kademliaNode.rules._initializeWebSocket(  contact, ws, (err, ws)=>{
+                this._kademliaNode.rules._initializeWebSocket(  out[0], ws, (err, ws)=>{
                     if (err)
                         return ws.close();
                 })

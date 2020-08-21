@@ -38,7 +38,7 @@ module.exports =  {
 
     },
 
-    verifySignature(publicKey, msg, sig){
+    verify(publicKey, msg, sig){
 
         try{
             const out = eccrypto.verify( publicKey, msg, sig);

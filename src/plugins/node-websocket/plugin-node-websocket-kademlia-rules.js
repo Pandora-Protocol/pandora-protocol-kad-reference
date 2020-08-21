@@ -49,8 +49,8 @@ module.exports = function (options){
 
         _createWebSocket( address, dstContact, protocol, cb ) {
 
-            const data = this._kademliaNode.contact.toArray();
-            this._sendProcess(dstContact, protocol, data, {forceEncryption: true}, (err, data) =>{
+            const data = [ this._kademliaNode.contact.toArray(), ''];
+            this._sendProcess(dstContact, protocol, data, {}, (err, data) =>{
 
                 if (err) return cb(err);
 
@@ -219,7 +219,10 @@ module.exports = function (options){
                 ws._queue.push( {id, buffer, cb} );
             else {
 
-                this.pending.pendingAdd('ws:'+ws.id, id, undefined, cb);
+                this.pending.pendingAdd('ws:'+ws.id, id, ()=>{
+                    cb(new Error('Timeout'));
+                    ws.close();
+                }, cb);
                 ws.send( buffer )
                 
             }

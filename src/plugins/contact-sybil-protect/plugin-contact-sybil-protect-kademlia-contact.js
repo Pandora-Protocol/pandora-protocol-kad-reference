@@ -18,7 +18,7 @@ module.exports = function(options) {
             const sybilSignature = Buffer.alloc(64);
             this.nonce.copy(sybilSignature, 0, 1)
 
-            if ( !ECCUtils.verifySignature( sybilPublicKey, nonceMessage, sybilSignature ))
+            if ( !ECCUtils.verify( sybilPublicKey, nonceMessage, sybilSignature ))
                 throw "Nonce is invalid";
 
         }

@@ -1,3 +1,5 @@
+const ECCUtils = require('../../helpers/ecc-utils')
+const CryptoUtils = require('../../helpers/crypto-utils')
 
 module.exports = function(options) {
 
@@ -12,6 +14,16 @@ module.exports = function(options) {
 
             this._keys.push('publicKey');
             this._allKeys.push('publicKey');
+        }
+
+        //sign signature
+        sign(buffer){
+            return ECCUtils.sign(this.privateKey, buffer );
+        }
+
+        //verify signature
+        verify(buffer, signature){
+            return ECCUtils.verify(this.publicKey, buffer, signature );
         }
 
     }

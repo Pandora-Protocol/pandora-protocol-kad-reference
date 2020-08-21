@@ -40,17 +40,17 @@ module.exports = function(options) {
         }
 
         //sign signature
-        sign(){
+        signContact(){
             const buffer = bencode.encode( this.toArray(true) );
             const msg = CryptoUtils.sha256(buffer);
-            return ECCUtils.sign(this.privateKey, msg);
+            return this.sign(msg);
         }
 
         //verify signature
-        verifySignature(){
+        verifyContact(){
             const buffer = bencode.encode( this.toArray(true) );
             const msg = CryptoUtils.sha256(buffer);
-            return ECCUtils.verifySignature(this.publicKey, msg, this.signature );
+            return this.verify(msg, this.signature)
         }
 
         computeContactIdentity(){
@@ -73,7 +73,7 @@ module.exports = function(options) {
 
         contactUpdated(){
             this.timestamp = Math.floor(new Date().getTime() / 1000);
-            this.signature = this.sign();
+            this.signature = this.signContact();
         }
 
 

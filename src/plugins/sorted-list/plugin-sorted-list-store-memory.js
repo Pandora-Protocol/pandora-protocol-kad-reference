@@ -75,7 +75,7 @@ module.exports = function (options){
             if (err1 || err2 || err3) return cb(err1||err2||err3);
 
             const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + key + ':' + value );
-            if (!foundNode) cb(null, 0);
+            if (!foundNode) return cb(null, 0);
 
             const tree = this._memorySortedList.get(table + ':' + key);
             tree.removeNode(foundNode);

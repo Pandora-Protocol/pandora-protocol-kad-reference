@@ -124,16 +124,15 @@ module.exports = class KademliaRules {
     receiveSerialized( req, id, srcContact, protocol, buffer, opts, cb){
 
         const decoded = this.decodeReceiveAnswer( id, srcContact, buffer );
-        if (!decoded) cb( new Error('Error decoding data. Invalid bencode'));
+        if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
 
         let c = 0;
         if (id === undefined) id = decoded[c++];
         if (srcContact === undefined) srcContact = decoded[c++];
 
-        const command = decoded[c++];
-        const data = decoded[c++];
+        if (opts.returnNotAllowed) return cb(null, decoded);
 
-        this.receive( req, id, srcContact, command, data, (err, out )=>{
+        this.receive( req, id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
 
             if (err) return cb(err);
 
@@ -348,17 +347,12 @@ module.exports = class KademliaRules {
 
         try{
 
-            let decoded;
-            if (Buffer.isBuffer(buffer))
-                decoded = bencode.decode(buffer);
-            else decoded = buffer;
+            const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
 
             let c = 0;
-            if (id === undefined)
-                decoded[c] = Number.parseInt(decoded[c++]);
 
-            if (!srcContact)
-                decoded[c] = this._kademliaNode.createContact( decoded[c++] )
+            if (id === undefined) decoded[c] = Number.parseInt(decoded[c++]);
+            if (!srcContact) decoded[c] = this._kademliaNode.createContact( decoded[c++] )
 
             decoded[c] = decoded[c++].toString()
 

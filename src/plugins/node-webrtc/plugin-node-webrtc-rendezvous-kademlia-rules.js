@@ -86,22 +86,22 @@ module.exports = function (options) {
             this.send(contact, 'RNDZ_ICE', [identity, bencode.encode(candidate) ], cb)
         }
 
-        _requestWebRTCConnection(req, srcContact, [contact, data], cb){
+        _requestWebRTCConnection(req, srcContact, data, cb){
 
             data = bencode.decode(data);
 
-            this._kademliaNode.rules._receivedProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, data, {forceEncryption:  true}, (err, info) =>{
+            this._kademliaNode.rules.receiveSerialized( req, 0, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, data, {returnNotAllowed: true}, (err, info) =>{
 
                 if (err) return cb(err);
 
-                contact = this._kademliaNode.createContact( contact );
-                if (contact) this._welcomeIfNewNode(req, contact);
-
-                if (this._alreadyConnected[contact.identityHex]) return cb(new Error('Already connected'));
-
                 try{
 
-                    const [offer, otherPeerMaxChunkSize ] = bencode.decode(info);
+                    const contact = info[0];
+                    this._welcomeIfNewNode(req, contact);
+
+                    if (this._alreadyConnected[contact.identityHex]) return cb(new Error('Already connected'));
+
+                    const [offer, otherPeerMaxChunkSize ] = info[2];
 
                     const webRTC = new WebRTCConnectionRemote();
                     this._addWebRTConnection(contact, webRTC);
@@ -137,8 +137,8 @@ module.exports = function (options) {
 
         }
 
-        sendRequestWebRTConnection(contact, contactFinal, offer, cb){
-            this.send(contact, 'REQ_WRTC_CON', [contactFinal, offer ], cb)
+        sendRequestWebRTConnection(contact, offer, cb){
+            this.send(contact, 'REQ_WRTC_CON', offer, cb)
         }
 
         _rendezvousWebRTCConnection(req, srcContact, [identity, offer], cb){
@@ -150,7 +150,7 @@ module.exports = function (options) {
                 const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
                 if (!ws) return cb(new Error('Node is not connected'));
 
-                this.sendRequestWebRTConnection(ws.contact, srcContact, offer, cb );
+                this.sendRequestWebRTConnection(ws.contact, offer, cb );
 
             }catch(err){
                 cb(new Error('Invalid contact'));
@@ -198,7 +198,7 @@ module.exports = function (options) {
 
                         try{
                             const chunkMaxSize = webRTC.getMaxChunkSize();
-                            const data = [ offer, chunkMaxSize ];
+                            const data = [ this._kademliaNode.contact, '', [ offer, chunkMaxSize] ];
 
                             //encrypt it
                             this._sendProcess( destContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true}, (err, data) =>{

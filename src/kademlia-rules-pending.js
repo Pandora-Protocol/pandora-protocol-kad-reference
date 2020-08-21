@@ -93,7 +93,7 @@ module.exports = class KademliaRulesPending {
 
         try{
             for (const key2 in pending)
-                cb( pending[key2].timeout, key, key2 );
+                cb( pending[key2].timeout );
         }catch(err){
             console.error('pendingTimeoutAll', err);
         }
