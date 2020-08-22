@@ -38,6 +38,7 @@ module.exports = class WebRTCConnection {
         this._updateTimeoutWebRTC();
 
         this.onconnect = () => {
+            console.log("webrtc connected");
             this._kademliaRules.pending.pendingResolveAll('rendezvous:webRTC:' + contact.identityHex, resolve => resolve(null, true ) );
         }
 

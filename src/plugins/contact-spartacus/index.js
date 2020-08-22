@@ -30,6 +30,18 @@ module.exports = {
             return contact;
         }
 
+        kademliaNode.updateContact = function(newContact){
+
+            const oldContact = this.routingTable.map[ newContact.identityHex ];
+            oldContact.contact = newContact;
+
+            if (this.rules._alreadyConnected)
+                if (this.rules._alreadyConnected[oldContact.identityHex])
+                    this.rules._alreadyConnected[oldContact.identityHex].contact = newContact;
+
+
+        }
+
         return {
             name: "PluginContactSpartacus",
             version: "0.1",

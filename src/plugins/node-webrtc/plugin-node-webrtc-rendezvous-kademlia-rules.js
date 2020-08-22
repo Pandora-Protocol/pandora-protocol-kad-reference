@@ -38,12 +38,12 @@ module.exports = function (options) {
 
         _requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
 
+            sourceIdentity = sourceIdentity.toString('hex');
+
+            const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentity ];
+            if (!webRTC) return cb(null, []);
+
             try{
-
-                sourceIdentity = sourceIdentity.toString('hex');
-
-                const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentity ];
-                if (!webRTC) return cb(new Error('Node is not connected'));
 
                 candidate = bencode.decode(candidate);
                 webRTC.processData(candidate);
@@ -55,7 +55,7 @@ module.exports = function (options) {
                 cb(null, [1] );
 
             }catch(err){
-                cb(new Error('Invalid contact'));
+                return cb(null, []);
             }
 
         }
