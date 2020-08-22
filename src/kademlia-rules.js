@@ -75,10 +75,7 @@ module.exports = class KademliaRules {
         return KAD_OPTIONS.TEST_PROTOCOL || dstContact.getProtocol(command, data);
     }
 
-    send(dstContact, command, data, cb){
-
-        if ( dstContact.identity && dstContact.identity.equals(this._kademliaNode.contact.identity) )
-            return cb(new Error("Can't contact myself"));
+    _sendNow(dstContact, command, data, cb){
 
         const protocol = this._sendGetProtocol(dstContact, command, data);
         if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
@@ -99,6 +96,15 @@ module.exports = class KademliaRules {
             });
 
         })
+
+    }
+
+    send(dstContact, command, data, cb){
+
+        if ( dstContact.identity && dstContact.identity.equals(this._kademliaNode.contact.identity) )
+            return cb(new Error("Can't contact myself"));
+
+        this._sendNow(dstContact, command, data, cb);
 
     }
 

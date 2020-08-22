@@ -85,14 +85,14 @@ module.exports = function (options) {
 
             this._kademliaNode.rules.receiveSerialized( req, 0, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, data, {returnNotAllowed: true}, (err, info) =>{
 
-                if (err) return cb(err);
-
                 try{
+
+                    if (err) return cb(null, []);
 
                     const contact = info[0];
                     this._welcomeIfNewNode(req, contact);
 
-                    if (this._alreadyConnected[contact.identityHex]) return cb(new Error('Already connected'));
+                    if (this._alreadyConnected[contact.identityHex]) return cb(null, []);
 
                     const [offer, otherPeerMaxChunkSize ] = info[2];
 
@@ -110,12 +110,12 @@ module.exports = function (options) {
                     webRTC.processData(offer);
                     webRTC.useInitiatorOffer(offer, (err, answer)=>{
 
-                        if (err) return err;
+                        if (err) return cb(null, []);
 
                         const data = [ answer, chunkMaxSize ];
                         this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true} , (err, data) =>{
 
-                            if (err) return cb(err);
+                            if (err) return cb(null, []);
                             cb(null, data );
 
                         });
@@ -149,7 +149,7 @@ module.exports = function (options) {
             this.send(contact, 'RNDZ_WRTC_CON', [ identity, bencode.encode(offer) ], cb)
         }
 
-        send(dstContact, command, data, cb){
+        _sendNow(dstContact, command, data, cb){
 
             //avoid using webrtc if reverse connection is possible
             if ( this._kademliaNode.contact.contactType !== ContactType.CONTACT_TYPE_ENABLED &&
@@ -164,7 +164,7 @@ module.exports = function (options) {
                     'rendezvous:webRTC:'+dstContact.identityHex,
                     '',
                     ()=> cb(new Error('Timeout')),
-                    (out) => super.send(dstContact, command, data, cb),
+                    (out) => super._sendNow(dstContact, command, data, cb),
                     2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
                 );
 
@@ -226,7 +226,7 @@ module.exports = function (options) {
 
             }
 
-            super.send(dstContact, command, data, cb);
+            super._sendNow(dstContact, command, data, cb);
         }
 
 

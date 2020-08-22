@@ -66,7 +66,7 @@ module.exports = function(options) {
             this.send(contact, 'RNDZ_REV_CON', [ identity],  cb);
         }
 
-        send(dstContact, command, data, cb){
+        _sendNow(dstContact, command, data, cb){
 
             if ( this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED &&
                 !this._alreadyConnected[dstContact.identityHex] &&
@@ -80,7 +80,7 @@ module.exports = function(options) {
                     'rendezvous:reverseConnection:'+dstContact.identityHex,
                     undefined,
                     () => cb(new Error('Timeout')),
-                    () => super.send(dstContact, command, data, cb),
+                    () => super._sendNow(dstContact, command, data, cb),
                     2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
                 );
 
@@ -94,7 +94,7 @@ module.exports = function(options) {
 
             }
 
-            super.send(dstContact, command, data, cb);
+            super._sendNow(dstContact, command, data, cb);
         }
 
 

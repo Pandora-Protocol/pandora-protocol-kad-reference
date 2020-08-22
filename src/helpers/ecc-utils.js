@@ -43,7 +43,7 @@ module.exports =  {
             const out = eccrypto.verify( publicKey, msg, sig);
             if (out === true) return true;
         }catch(err){
-
+            console.error("error verifying signature", err);
         }
 
         return false;
