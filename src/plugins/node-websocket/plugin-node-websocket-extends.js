@@ -153,7 +153,14 @@ module.exports = function (WebSocketExtend) {
         }
 
         _setTimeoutWebSocket () {
-            this._kademliaRules.pending.pendingAdd( 'ws:'+this.id, '',() => this.close(), ()=>{}, this._getTimeoutWebSocketTime(),  );
+            this._kademliaRules.pending.pendingAdd( 'ws:'+this.id, '',() => {
+                try{
+                    this.close();
+                }catch(err){
+
+                }
+                this.onclose();
+            }, ()=>{}, this._getTimeoutWebSocketTime(),  );
         }
 
         _updateTimeoutWebSocket () {

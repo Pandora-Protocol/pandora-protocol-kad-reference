@@ -71,7 +71,7 @@ module.exports = function (options) {
                 const finalIdentityHex = finalIdentity.toString('hex');
 
                 const ws = this._webSocketActiveConnectionsByContactsMap[ finalIdentityHex ];
-                if (!ws) return cb(new Error('Node is not connected'));
+                if (!ws) return cb(null, 0);
 
                 this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate, cb );
 
@@ -103,15 +103,15 @@ module.exports = function (options) {
                     const [offer, otherPeerMaxChunkSize ] = info[2];
 
                     const webRTC = new WebRTCConnectionRemote();
+                    const chunkMaxSize = webRTC.getMaxChunkSize();
+                    webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
+
                     webRTC.init(this, contact);
 
                     webRTC._rtcPeerConnection.onicecandidate = e => {
                         if (e.candidate)
                             this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{ })
                     }
-
-                    const chunkMaxSize = webRTC.getMaxChunkSize();
-                    webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
 
                     webRTC.processData(offer);
                     webRTC.useInitiatorOffer(offer, (err, answer)=>{
@@ -147,7 +147,7 @@ module.exports = function (options) {
                 const identityHex = identity.toString('hex');
 
                 const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-                if (!ws) return cb(new Error('Node is not connected'));
+                if (!ws) return cb(null, 0);
 
                 this.sendRequestWebRTConnection(ws.contact, offer, cb );
 
@@ -184,7 +184,6 @@ module.exports = function (options) {
                 else {
 
                     const webRTC = new WebRTCConnectionInitiator();
-                    webRTC.init(this, dstContact);
 
                     webRTC._rtcPeerConnection.onicecandidate = e => {
                         if (e.candidate)
@@ -213,6 +212,7 @@ module.exports = function (options) {
                                         const [answer, otherPeerMaxChunkSize ] =  bencode.decode(info);
 
                                         webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
+                                        webRTC.init(this, dstContact);
 
                                         webRTC.processData(answer);
                                         webRTC.userRemoteAnswer(answer, (err, out)=>{

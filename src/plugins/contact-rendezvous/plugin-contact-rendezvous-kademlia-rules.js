@@ -58,25 +58,25 @@ module.exports = function(options){
             clearAsyncInterval( this._asyncIntervalSetRendezvous );
         }
 
-        _rendezvousJoin(req, srcContact, data, cb){
+        _rendezvousJoin(ws, srcContact, data, cb){
 
-            if ( !req.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
-            if ( req.rendezvoused ) return cb(new Error(''))
+            if ( !ws.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
+            if ( ws.rendezvoused ) return cb(new Error(''))
 
-            if (srcContact) this._welcomeIfNewNode(req, srcContact);
+            if (srcContact) this._welcomeIfNewNode(ws, srcContact);
 
             if (this._rendezvousedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RENDEZVOUS.RENDEZVOUS_JOINED_MAX)
                 return cb( new Error('FULL') );
 
             this._rendezvousedJoined++;
-            req.rendezvoused = true;
+            ws.rendezvoused = true;
 
-            req.addEventListener("close", function(event) {
+            ws.addEventListener("close", function(event) {
                 this._rendezvousedJoined--;
-                delete req.rendezvoused;
+                delete ws.rendezvoused;
             });
 
-            req._updateTimeoutWebSocket();
+            ws._updateTimeoutWebSocket();
 
             cb(null, [1] );
 

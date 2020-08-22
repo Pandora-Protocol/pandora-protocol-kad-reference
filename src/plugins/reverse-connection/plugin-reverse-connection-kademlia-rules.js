@@ -52,8 +52,7 @@ module.exports = function(options) {
 
                 const identityHex = identity.toString('hex');
                 const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-                if (!ws)
-                    return cb(new Error('Node is not connected'));
+                if (!ws) return cb(null, 0);
 
                 this.sendRequestReverseConnect(ws.contact, srcContact, cb );
 
@@ -88,7 +87,7 @@ module.exports = function(options) {
                 if (requestExistsAlready) return;
                 else return this.sendRendezvousReverseConnection( dstContact.rendezvousContact, dstContact.identity, (err, out) => {
 
-                    if (err) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+dstContact.identityHex, timeout => timeout() );
+                    if (err || !out) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+dstContact.identityHex, timeout => timeout() );
                     //already solved... if successful
 
                 }  );
