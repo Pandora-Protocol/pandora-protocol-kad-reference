@@ -23,6 +23,11 @@ module.exports = class KademliaRulesPending {
         clearAsyncInterval(this._asyncIntervalPending);
     }
 
+    pendingDelete(key){
+        delete this.list[key];
+        delete this._counts[key];
+    }
+
     pendingAdd(key, key2, timeout, resolve, time ){
 
         if (!this.list[key]) {
@@ -111,9 +116,9 @@ module.exports = class KademliaRulesPending {
 
         const now = new Date().getTime();
 
-        for (const key in this.pending) {
+        for (const key in this.list) {
 
-            const pending = this.pending[key];
+            const pending = this.list[key];
             for (const key2 in pending){
 
                 if (now >= pending[key2].timestamp + (pending[key2].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
@@ -131,7 +136,7 @@ module.exports = class KademliaRulesPending {
             }
 
             if ( this._counts[key] === 0 ) {
-                delete this.pending[key];
+                delete this.list[key];
                 delete this._counts[key];
             }
 

@@ -36,10 +36,6 @@ module.exports = class HTTPRequest {
             port: dstContact.port,
             protocol: protocol,
             method: 'POST',
-            headers: {
-                'x-kad-id': id
-            },
-            encoding: 'binary',
         };
 
         //optional path
@@ -50,7 +46,7 @@ module.exports = class HTTPRequest {
         const request = this._createRequest( reqopts, (response) =>{
 
             response.on('error', (err) => {
-                delete this._kademliaRules.pending.list['http:'+id]
+                this._kademliaRules.pending.pendingDelete('http:'+id)
                 callback(err)
             });
 
@@ -68,7 +64,7 @@ module.exports = class HTTPRequest {
                 const bufferAnswer = Buffer.concat(data);
 
                 if (this._kademliaRules.pending.list['http:'+id]) {
-                    delete this._kademliaRules.pending.list['http:'+id];
+                    this._kademliaRules.pending.pendingDelete('http:'+id);
                     callback(null, bufferAnswer);
                 }
 
@@ -79,10 +75,9 @@ module.exports = class HTTPRequest {
         request.on('error', (err) => {
 
             err.dispose = id;
-            request.emit('error', err);
 
-            if (this._kademliaNode.rules.pending.list['http:'+id]) {
-                delete this._kademliaNode.rules.pending.list['http:'+id];
+            if (this._kademliaRules.pending.list['http:'+id]) {
+                this._kademliaRules.pending.pendingDelete('http:'+id);
                 callback(err)
             }
 

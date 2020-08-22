@@ -52,7 +52,7 @@ module.exports = function (options) {
                     .then( answer => {} )
                     .catch(err => { });
 
-                cb(null, 1);
+                cb(null, [1] );
 
             }catch(err){
                 cb(new Error('Invalid contact'));
@@ -66,18 +66,12 @@ module.exports = function (options) {
 
         _rendezvousIceCandidateWebRTCConnection(req, srcContact, [finalIdentity, candidate], cb){
 
-            try{
+            const finalIdentityHex = finalIdentity.toString('hex');
 
-                const finalIdentityHex = finalIdentity.toString('hex');
+            const ws = this._webSocketActiveConnectionsByContactsMap[ finalIdentityHex ];
+            if (!ws) return cb(null, [] );
 
-                const ws = this._webSocketActiveConnectionsByContactsMap[ finalIdentityHex ];
-                if (!ws) return cb(null, 0);
-
-                this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate, cb );
-
-            }catch(err){
-                cb(new Error('Invalid contact'));
-            }
+            this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate, cb );
 
         }
 
@@ -129,7 +123,7 @@ module.exports = function (options) {
                     })
 
                 }catch(err){
-                    cb(err);
+                    cb(null, []);
                 }
 
             });
@@ -142,18 +136,12 @@ module.exports = function (options) {
 
         _rendezvousWebRTCConnection(req, srcContact, [identity, offer], cb){
 
-            try{
+            const identityHex = identity.toString('hex');
 
-                const identityHex = identity.toString('hex');
+            const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
+            if (!ws) return cb(null, [] );
 
-                const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-                if (!ws) return cb(null, 0);
-
-                this.sendRequestWebRTConnection(ws.contact, offer, cb );
-
-            }catch(err){
-                cb(new Error('Invalid contact'));
-            }
+            this.sendRequestWebRTConnection(ws.contact, offer, cb );
 
         }
 
@@ -174,7 +162,7 @@ module.exports = function (options) {
 
                 this.pending.pendingAdd(
                     'rendezvous:webRTC:'+dstContact.identityHex,
-                    undefined,
+                    '',
                     ()=> cb(new Error('Timeout')),
                     (out) => super.send(dstContact, command, data, cb),
                     2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
@@ -192,7 +180,7 @@ module.exports = function (options) {
 
                     return webRTC.createInitiatorOffer((err, offer) => {
 
-                        if (err)return cb(err)
+                        if (err) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + dstContact.identityHex, timeout => timeout() );
 
                         try{
                             const chunkMaxSize = webRTC.getMaxChunkSize();
@@ -205,7 +193,7 @@ module.exports = function (options) {
 
                                 this.sendRendezvousWebRTCConnection(dstContact.rendezvousContact, dstContact.identity, data, (err, info ) => {
 
-                                    if (err || !info) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + dstContact.identityHex, timeout => timeout() );
+                                    if (err || !info || !info.length) return this.pending.pendingTimeoutAll('rendezvous:webRTC:' + dstContact.identityHex, timeout => timeout() );
 
                                     this._kademliaNode.rules._receivedProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true}, (err, info) =>{
 

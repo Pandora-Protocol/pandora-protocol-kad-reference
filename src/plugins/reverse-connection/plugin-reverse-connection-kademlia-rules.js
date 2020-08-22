@@ -17,7 +17,7 @@ module.exports = function(options) {
         _reverseConnect(req, srcContact, data, cb){
 
             this.pending.pendingResolveAll('rendezvous:reverseConnection:' + srcContact.identityHex,  resolve => resolve(null, true ));
-            cb(null, 1);
+            cb(null, [1] );
 
         }
 
@@ -37,7 +37,7 @@ module.exports = function(options) {
                 this.sendReverseConnect( contact, cb );
 
             }catch(err){
-                cb(new Error('Invalid Contact'));
+                cb(null, []);
             }
 
         }
@@ -52,12 +52,12 @@ module.exports = function(options) {
 
                 const identityHex = identity.toString('hex');
                 const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-                if (!ws) return cb(null, 0);
+                if (!ws) return cb(null, []);
 
                 this.sendRequestReverseConnect(ws.contact, srcContact, cb );
 
             }catch(err){
-                cb(new Error('Invalid contact'));
+                cb(null, []);
             }
 
         }
@@ -87,7 +87,7 @@ module.exports = function(options) {
                 if (requestExistsAlready) return;
                 else return this.sendRendezvousReverseConnection( dstContact.rendezvousContact, dstContact.identity, (err, out) => {
 
-                    if (err || !out) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+dstContact.identityHex, timeout => timeout() );
+                    if (err || !out || !out.length) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+dstContact.identityHex, timeout => timeout() );
                     //already solved... if successful
 
                 }  );

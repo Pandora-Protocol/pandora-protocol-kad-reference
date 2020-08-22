@@ -97,7 +97,14 @@ module.exports = class WebRTCConnection {
     }
 
     _setTimeoutWebRTC(){
-        this._kademliaRules.pending.pendingAdd( 'webrtc:'+this.id, '',() => this.close(), ()=>{}, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_WEBRTC_DISCONNECT_INACTIVITY,  );
+        this._kademliaRules.pending.pendingAdd( 'webrtc:'+this.id, '',() => {
+            try {
+                this.close()
+            }catch(err){
+
+            }
+            this.ondisconnect();
+        }, ()=>{}, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_WEBRTC_DISCONNECT_INACTIVITY,  );
     }
 
 

@@ -54,7 +54,7 @@ module.exports = function (options) {
             const id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
             return {
                 id,
-                out: [ this._kademliaNode.contact, command, data ],
+                out: [ id, this._kademliaNode.contact,  command, data ],
             }
         }
 

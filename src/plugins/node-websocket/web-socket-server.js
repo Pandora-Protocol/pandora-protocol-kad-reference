@@ -28,6 +28,7 @@ module.exports = class WebSocketServer extends WebSocket.Server {
             if (err) return ws.close();
 
             try{
+
                 ws._kadInitialized = true;
 
                 this._kademliaNode.rules.pluginNodeWebsocketExtends.initializeWebSocket( this._kademliaNode.rules,  out[0], ws, (err, ws)=>{
@@ -38,7 +39,6 @@ module.exports = class WebSocketServer extends WebSocket.Server {
             }catch(err){
                 return ws.close();
             }
-
 
         } );
 

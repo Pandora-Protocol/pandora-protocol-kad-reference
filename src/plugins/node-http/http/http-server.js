@@ -96,19 +96,10 @@ module.exports = class HTTPServer extends EventEmitter {
 
         req.on('error', err => this.emit('error', err));
 
-        let id;
-        try {
-            id = Number.parseInt(req.headers['x-kad-id']);
-            if (!id) throw "invalid id";
-        }catch(err){
-            res.statusCode = 400;
-            return res.end();
-        }
-
-        res.setHeader('x-kad-id', req.headers['x-kad-id']);
-        res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', '*');
-        res.setHeader('Access-Control-Allow-Headers', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Max-Age', 2592000, ); // 30 days
         res.setHeader('Access-Control-Allow-Credentials', 'true');
 
         if (req.method !== 'POST' && req.method !== 'OPTIONS')
@@ -124,18 +115,10 @@ module.exports = class HTTPServer extends EventEmitter {
 
             const buffer = Buffer.concat(data);
 
-            this._kademliaNode.rules.pending.pendingAdd('http:'+id, '',() => {
-                res.statusCode = 504;
-                res.end('Gateway Timeout');
-            }, (statusCode, buffer) => {
-                res.statusCode = statusCode;
+            this._kademliaNode.rules.receiveSerialized( res, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, {}, (err, buffer)=>{
+
+                res.statusCode = 200;
                 res.end(buffer);
-            }, );
-
-            this._kademliaNode.rules.receiveSerialized( res, id, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, {}, (err, buffer)=>{
-
-                if (this._kademliaNode.rules.pending.list['http:'+id])
-                    this._kademliaNode.rules.pending.pendingResolveAll('http:'+id, (resolve) => resolve(200, buffer) );
 
             });
 
