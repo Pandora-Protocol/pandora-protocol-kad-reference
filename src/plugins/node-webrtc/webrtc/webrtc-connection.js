@@ -4,11 +4,11 @@ const BufferReader = require('../../../helpers/buffer-reader')
 const ContactAddressProtocolType = require('../../contact-type/contact-address-protocol-type')
 const bencode = require('bencode');
 
-module.exports = class WebRTCConnection extends WebRTC.RTCPeerConnection{
+module.exports = class WebRTCConnection {
 
     constructor(config = { iceServers: KAD_OPTIONS.PLUGINS.NODE_WEBRTC.ICE_SERVERS }) {
 
-        super(...arguments);
+        this._rtcPeerConnection = new WebRTC.RTCPeerConnection({config});
 
         this._readyState = 'close';
 

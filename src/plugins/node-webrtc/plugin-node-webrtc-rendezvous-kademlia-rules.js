@@ -48,7 +48,7 @@ module.exports = function (options) {
                 candidate = bencode.decode(candidate);
                 webRTC.processData(candidate);
 
-                webRTC.addIceCandidate(candidate)
+                webRTC._rtcPeerConnection.addIceCandidate(candidate)
                     .then( answer => {} )
                     .catch(err => { });
 
@@ -105,7 +105,7 @@ module.exports = function (options) {
                     const webRTC = new WebRTCConnectionRemote();
                     webRTC.init(this, contact);
 
-                    webRTC.onicecandidate = e => {
+                    webRTC._rtcPeerConnection.onicecandidate = e => {
                         if (e.candidate)
                             this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{ })
                     }
@@ -186,7 +186,7 @@ module.exports = function (options) {
                     const webRTC = new WebRTCConnectionInitiator();
                     webRTC.init(this, dstContact);
 
-                    webRTC.onicecandidate = e => {
+                    webRTC._rtcPeerConnection.onicecandidate = e => {
                         if (e.candidate)
                             this.sendRendezvousIceCandidateWebRTConnection(dstContact.rendezvousContact, dstContact.identity, e.candidate, (err, out) =>{})
                     }

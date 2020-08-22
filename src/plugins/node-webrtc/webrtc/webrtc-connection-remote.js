@@ -11,7 +11,7 @@ module.exports = class WebRTCConnectionRemote extends WebRTConnection{
         super(...arguments);
 
 
-        this.ondatachannel = (event) => {
+        this._rtcPeerConnection.ondatachannel = (event) => {
             this._channel = event.channel;
             this._channel.onmessage = e => this._onChannelMessageCallback(e, this._channel);
             this._channel.onopen = e => this._onChannelStateChange(e, this._channel);
@@ -25,9 +25,9 @@ module.exports = class WebRTCConnectionRemote extends WebRTConnection{
 
         try{
 
-            await this.setRemoteDescription(offer);
-            const answer = await this.createAnswer();
-            await this.setLocalDescription(answer);
+            await this._rtcPeerConnection.setRemoteDescription(offer);
+            const answer = await this._rtcPeerConnection.createAnswer();
+            await this._rtcPeerConnection.setLocalDescription(answer);
 
             cb(null, answer);
 

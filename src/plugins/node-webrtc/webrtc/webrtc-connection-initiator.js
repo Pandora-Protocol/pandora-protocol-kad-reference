@@ -10,7 +10,7 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
 
         super(...arguments);
 
-        this._channel = this.createDataChannel('data', {
+        this._channel = this._rtcPeerConnection.createDataChannel('data', {
             ordered: false, // do not guarantee order
             maxPacketLifeTime: 3000, // in milliseconds
         });
@@ -24,8 +24,8 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
 
         try{
 
-            const description = await this.createOffer(  );
-            await this.setLocalDescription(description);
+            const description = await this._rtcPeerConnection.createOffer(  );
+            await this._rtcPeerConnection.setLocalDescription(description);
 
             cb(null, description);
 
@@ -38,7 +38,7 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
     async userRemoteAnswer(answer, cb){
 
         try{
-            await this.setRemoteDescription(answer);
+            await this._rtcPeerConnection.setRemoteDescription(answer);
             cb(null, true);
         }catch(err){
             cb(err);

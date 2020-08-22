@@ -46,7 +46,8 @@ module.exports = function (options) {
 
             ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, info)=>{
 
-                if (err) return cb(err);
+                if (err)
+                    return cb(err);
 
                 info = bencode.decode(info);
                 if (!info) return cb(new Error("Error decoding the encrypted info"));
@@ -67,7 +68,8 @@ module.exports = function (options) {
 
             ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, info ) => {
 
-                if (err) return cb(err);
+                if (err)
+                    return cb(err);
 
                 info = bencode.decode(info);
                 if (!info) return cb(new Error("Error decoding the encrypted info"));

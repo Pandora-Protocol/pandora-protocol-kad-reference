@@ -33,8 +33,7 @@ module.exports =  {
     sign(privateKey, msg){
 
         const out = eccrypto.sign(privateKey, msg);
-        if (out.length !== 64) throw "invalid args";
-        return out;
+        return out.length !== 64 ? undefined : out;
 
     },
 
