@@ -43,7 +43,7 @@ module.exports = class WebRTCConnection {
 
         this.ondisconnect = ()=>{
 
-            this.pending.pendingTimeoutAll('webrtc:'+this.id, timeout => timeout() );
+            this._kademliaRules.pending.pendingTimeoutAll('webrtc:'+this.id, timeout => timeout() );
 
             if (this._kademliaRules._alreadyConnected[contact.identityHex] === this)
                 delete this._kademliaRules._alreadyConnected[contact.identityHex];
@@ -207,6 +207,11 @@ module.exports = class WebRTCConnection {
             if (Buffer.isBuffer(data[key]) )
                 data[key] = data[key].toString();
 
+        return data;
+    }
+
+    processDataOut(data){
+        if (data.toJSON) return data.toJSON();
         return data;
     }
 

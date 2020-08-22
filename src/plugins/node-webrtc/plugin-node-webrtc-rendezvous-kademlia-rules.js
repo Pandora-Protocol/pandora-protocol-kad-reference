@@ -104,7 +104,7 @@ module.exports = function (options) {
 
                     webRTC._rtcPeerConnection.onicecandidate = e => {
                         if (e.candidate)
-                            this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, e.candidate, (err, out) =>{ })
+                            this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{ })
                     }
 
                     webRTC.processData(offer);
@@ -112,7 +112,7 @@ module.exports = function (options) {
 
                         if (err) return cb(null, []);
 
-                        const data = [ answer, chunkMaxSize ];
+                        const data = [ webRTC.processDataOut(answer), chunkMaxSize ];
                         this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true} , (err, data) =>{
 
                             if (err) return cb(null, []);
@@ -175,7 +175,7 @@ module.exports = function (options) {
 
                     webRTC._rtcPeerConnection.onicecandidate = e => {
                         if (e.candidate)
-                            this.sendRendezvousIceCandidateWebRTConnection(dstContact.rendezvousContact, dstContact.identity, e.candidate, (err, out) =>{})
+                            this.sendRendezvousIceCandidateWebRTConnection(dstContact.rendezvousContact, dstContact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{})
                     }
 
                     return webRTC.createInitiatorOffer((err, offer) => {
@@ -184,7 +184,7 @@ module.exports = function (options) {
 
                         try{
                             const chunkMaxSize = webRTC.getMaxChunkSize();
-                            const data = [ this._kademliaNode.contact, '', [ offer, chunkMaxSize] ];
+                            const data = [ this._kademliaNode.contact, '', [ webRTC.processDataOut(offer), chunkMaxSize] ];
 
                             //encrypt it
                             this._sendProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true}, (err, data) =>{
