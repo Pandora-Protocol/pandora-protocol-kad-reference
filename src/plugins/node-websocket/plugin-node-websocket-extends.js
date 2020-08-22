@@ -179,10 +179,7 @@ module.exports = function (WebSocketExtend) {
                 this._queue.push( {id, buffer, cb} );
             else {
 
-                this._kademliaRules.pending.pendingAdd('ws:'+this.id, id, ()=>{
-                    cb(new Error('Timeout'));
-                    this.close();
-                }, cb);
+                this._kademliaRules.pending.pendingAdd('ws:'+this.id, id, ()=> cb(new Error('Timeout')), cb);
                 this.send( buffer )
 
             }
@@ -191,10 +188,6 @@ module.exports = function (WebSocketExtend) {
 
 
     }
-
-
-
-
 
 }
 
