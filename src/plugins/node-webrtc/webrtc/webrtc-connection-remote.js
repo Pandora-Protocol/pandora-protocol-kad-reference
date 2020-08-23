@@ -14,8 +14,8 @@ module.exports = class WebRTCConnectionRemote extends WebRTConnection{
         this._rtcPeerConnection.ondatachannel = (event) => {
             this._channel = event.channel;
             this._channel.onmessage = e => this._onChannelMessageCallback(e, this._channel);
-            this._channel.onopen = e => this._onChannelStateChange(e, this._channel);
-            this._channel.onclose = e => this._onChannelStateChange(e, this._channel);
+            this._channel.onopen = e => this._onChannelStateChange.call(this, e, this._channel);
+            this._channel.onclose = e => this._onChannelStateChange.call(this, e, this._channel);
         };
 
     }

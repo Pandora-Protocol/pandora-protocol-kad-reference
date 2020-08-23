@@ -12,10 +12,6 @@ module.exports = class WebRTCConnection {
 
         this._readyState = 'close';
 
-        this.onconnect = undefined;
-        this.ondisconnect = undefined;
-        this.onmessage = undefined;
-
         this._chunks = {};
 
         this.chunkSize = 0;
@@ -36,57 +32,66 @@ module.exports = class WebRTCConnection {
         this._kademliaRules._webRTCActiveConnections.push(this)
 
         this._updateTimeoutWebRTC();
+    }
 
-        this.onconnect = () => {
-            console.log("webrtc connected");
-            this._kademliaRules.pending.pendingResolveAll('rendezvous:webRTC:' + contact.identityHex, resolve => resolve(null, true ) );
-        }
+    onconnect(){
+        console.log("webrtc connected");
+        this._kademliaRules.pending.pendingResolveAll('rendezvous:webRTC:' + this.contact.identityHex, resolve => resolve(null, true ) );
+    }
 
-        this.ondisconnect = ()=>{
+    ondisconnect = ()=>{
 
-            this._kademliaRules.pending.pendingTimeoutAll('webrtc:'+this.id, timeout => timeout() );
+        this._kademliaRules.pending.pendingTimeoutAll('webrtc:'+this.id, timeout => timeout() );
 
-            if (this._kademliaRules._alreadyConnected[contact.identityHex] === this)
-                delete this._kademliaRules._alreadyConnected[contact.identityHex];
+        if (this._kademliaRules._alreadyConnected[this.contact.identityHex] === this)
+            delete this._kademliaRules._alreadyConnected[this.contact.identityHex];
 
-            if (this._kademliaRules._webRTCActiveConnectionsByContactsMap[contact.identityHex] === this) {
-                delete this._kademliaRules._webRTCActiveConnectionsByContactsMap[contact.identityHex];
+        if (this._kademliaRules._webRTCActiveConnectionsByContactsMap[this.contact.identityHex] === this) {
+            delete this._kademliaRules._webRTCActiveConnectionsByContactsMap[this.contact.identityHex];
 
-                for (let i = this._kademliaRules._webRTCActiveConnections.length-1; i >= 0; i--)
-                    if (this._kademliaRules._webRTCActiveConnections[i] === this){
-                        this._kademliaRules._webRTCActiveConnections.splice(i, 1);
-                        break;
-                    }
-
-            }
-
-        }
-
-
-        this.onmessage = (id, data) => {
-
-            this._updateTimeoutWebRTC();
-
-            const decoded = bencode.decode(data);
-            const status = decoded[0];
-
-            if ( status === 1 ){ //received an answer
-
-                if (this._kademliaRules.pending.list['webrtc:'+this.id] && this._kademliaRules.pending.list['webrtc:'+this.id][id])
-                    this._kademliaRules.pending.pendingResolve('webrtc:'+this.id, id, (resolve) => resolve( null, decoded[1] ));
-
-            } else {
-
-                this._kademliaRules.receiveSerialized( this, id, this.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, decoded[1], {}, (err, buffer )=>{
-
-                    if (err) return;
-                    this.sendData(id, buffer, () => {});
-
-                });
-
-            }
+            for (let i = this._kademliaRules._webRTCActiveConnections.length-1; i >= 0; i--)
+                if (this._kademliaRules._webRTCActiveConnections[i] === this){
+                    this._kademliaRules._webRTCActiveConnections.splice(i, 1);
+                    break;
+                }
 
         }
+
+    }
+
+    onmessage (id, data) {
+
+        this._updateTimeoutWebRTC();
+
+        const decoded = bencode.decode(data);
+        const status = decoded[0];
+
+        if ( status === 1 ){ //received an answer
+
+            if (this._kademliaRules.pending.list['webrtc:'+this.id] && this._kademliaRules.pending.list['webrtc:'+this.id][id])
+                this._kademliaRules.pending.pendingResolve('webrtc:'+this.id, id, (resolve) => resolve( null, decoded[1] ));
+
+        } else {
+
+            this._kademliaRules.receiveSerialized( this, id, this.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, decoded[1], {}, (err, buffer )=>{
+
+                if (err) return;
+                this.sendData(id, buffer, () => {});
+
+            });
+
+        }
+
+    }
+
+    close(){
+        try{
+            this._rtcPeerConnection.close()
+        }catch(err){
+
+        }
+        this._rtcPeerConnection = null;
+        this.ondisconnect();
     }
 
     _updateTimeoutWebRTC(){
@@ -98,14 +103,7 @@ module.exports = class WebRTCConnection {
     }
 
     _setTimeoutWebRTC(){
-        this._kademliaRules.pending.pendingAdd( 'webrtc:'+this.id, '',() => {
-            try {
-                this.close()
-            }catch(err){
-
-            }
-            this.ondisconnect();
-        }, ()=>{}, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_WEBRTC_DISCONNECT_INACTIVITY,  );
+        this._kademliaRules.pending.pendingAdd( 'webrtc:'+this.id, '',this.close.bind(this), ()=>{}, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_WEBRTC_DISCONNECT_INACTIVITY,  );
     }
 
 
@@ -169,8 +167,8 @@ module.exports = class WebRTCConnection {
 
     _onChannelStateChange(event, channel){
         this._readyState = channel.readyState;
-        if (channel.readyState === 'open' && this.onconnect) this.onconnect(this);
-        if (channel.readyState === 'close' && this.ondisconnect) this.ondisconnect(this);
+        if (channel.readyState === 'open' ) this.onconnect();
+        if (channel.readyState === 'close') this.ondisconnect();
     }
 
     sendData(id, data, cb) {

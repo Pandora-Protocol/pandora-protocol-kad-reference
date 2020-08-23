@@ -162,7 +162,7 @@ module.exports = function (options) {
 
                 this.pending.pendingAdd(
                     'rendezvous:webRTC:'+dstContact.identityHex,
-                    '',
+                    undefined, //newly
                     ()=> cb(new Error('Timeout')),
                     (out) => super._sendNow(dstContact, command, data, cb),
                     KAD_OPTIONS.T_RESPONSE_TIMEOUT
