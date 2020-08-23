@@ -85,6 +85,10 @@ async.eachLimit( array, 1, (index, next ) => {
                 console.log("ping out", err, out);
             } )
 
+            nodes[5].rules.sendPing( nodes[4].contact,(err, out)=>{
+                console.log("ping out", err, out);
+            } )
+
         })
 
     });
