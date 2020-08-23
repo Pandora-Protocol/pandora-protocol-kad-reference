@@ -44,7 +44,7 @@ const processTimeout = (id) => {
 
             map[id].processing = false;
 
-            map[id].timeout = NextTick( () => processTimeout( id ), time || map[id].time );
+            map[id].timeout = NextTick( () => processTimeout( id ), time !== undefined ? time : map[id].time );
 
         })
 

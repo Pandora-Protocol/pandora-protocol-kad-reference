@@ -6,10 +6,12 @@ const Utils = require('./../helpers/utils')
 module.exports = class RoutingTableRefresher {
 
     constructor(kademliaNode, routingTable) {
+        
         this._kademliaNode = kademliaNode;
         this._routingTable = routingTable;
 
         this._publishedByMe = {};
+        this._replicateIterator = undefined
 
     }
 
@@ -28,7 +30,7 @@ module.exports = class RoutingTableRefresher {
         )
 
         this._intervalReplicate = setAsyncInterval(
-            next => this._replicate(undefined, next),
+            this._replicate.bind(this),
             KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
         )
 
@@ -54,6 +56,7 @@ module.exports = class RoutingTableRefresher {
      * @param {number} startIndex
      */
     refresh(startIndex = 0, cb) {
+
         const now = new Date().getTime();
 
         /**
@@ -65,13 +68,15 @@ module.exports = class RoutingTableRefresher {
          * @type {Set<any>}
          */
 
-        let results = new Set(), consecutiveUnimprovedLookups = 0;
+        const results = new Set();
+        let consecutiveUnimprovedLookups = 0;
+
         async.each(  this._routingTable.buckets, (bucket, next) => {
 
             if ( bucket.bucketIndex < startIndex) return next();
 
             if (consecutiveUnimprovedLookups >= KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES)
-                return next('Done');
+                return next('Done'); //it will end
 
 
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
@@ -87,7 +92,7 @@ module.exports = class RoutingTableRefresher {
 
                         let discoveredNewContacts = false;
 
-                        for (let contact of contacts)
+                        for (const contact of contacts)
                             if (!results.has(contact.identityHex)) {
                                 discoveredNewContacts = true;
                                 consecutiveUnimprovedLookups = 0;
@@ -110,13 +115,14 @@ module.exports = class RoutingTableRefresher {
     }
 
 
-    _replicate(iterator, next){
+    _replicate( next){
 
         const now = new Date().getTime();
-        if ( !iterator  )
-            iterator = this._kademliaNode._store.iterator();
 
-        let itValue = iterator.next();
+        if ( !this._replicateIterator  )
+            this._replicateIterator = this._kademliaNode._store.iterator();
+
+        let itValue = this._replicateIterator.next();
         while (itValue.value && !itValue.done){
 
             const key = itValue.value[0];
@@ -129,14 +135,15 @@ module.exports = class RoutingTableRefresher {
             const shouldReplicate = !isPublisher && replicateDue;
 
             if (shouldReplicate || shouldRepublish) 
-                return this._kademliaNode.crawler.iterativeStoreValue(key, value, (err, out) => {
-                    NextTick(this._replicate.bind(this, iterator, next), 1);
-                });
+                return this._kademliaNode.crawler.iterativeStoreValue(key, value, (err, out) => next(1) );
 
+            itValue = this._replicateIterator.next();
         }
 
-        if (!itValue.value || !itValue.done)
-            next();
+        if (!itValue.value || !itValue.done) {
+            delete this._replicateIterator;
+            next(1);
+        }
 
 
     }
