@@ -43,9 +43,7 @@ module.exports = function (options) {
             if (!webRTC)
                 cb(new Error('WebRTC Not connected'));
 
-            this.pending.pendingAdd('webrtc:'+webRTC.id, id, () => cb(new Error('Timeout')), cb );
-
-            webRTC.sendData( id, buffer )
+            webRTC.sendData( id, buffer, cb )
         }
 
         _webrtcReceiveSerialize (id, srcContact, out ) {

@@ -80,7 +80,7 @@ module.exports = class WebRTCConnection {
                 this._kademliaRules.receiveSerialized( this, id, this.contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, decoded[1], {}, (err, buffer )=>{
 
                     if (err) return;
-                    this.sendData(id, buffer);
+                    this.sendData(id, buffer, () => {});
 
                 });
 
@@ -119,17 +119,17 @@ module.exports = class WebRTCConnection {
 
     _onChannelMessageCallback(event, channel){
 
-        const chunkSize = (this.chunkSize - 7*3 );
+        const chunkSize = (this.chunkSize - 8*3 );
 
         const data = BufferReader.create( Buffer.from(event.data) );
 
         const id = MarshalUtils.unmarshalNumber(data);
         const chunks = MarshalUtils.unmarshalNumber(data);
+
+        if ( chunks * chunkSize > KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.MAX_TRANSFER_PAYLOAD_SIZE ) throw "EXCEED PAYLOAD";
+
         const index = MarshalUtils.unmarshalNumber(data);
         const chunk = data.readRemaining(data)
-
-        if ( chunk * chunkSize > KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.MAX_TRANSFER_PAYLOAD_SIZE )
-            throw "MAX PAYLOAD";
 
         if (index >= chunks || index < 0) throw "index exceeds chunks";
         if (index < chunks-1 && chunk.length !== chunkSize ) throw "chunk has invalid length"
@@ -142,7 +142,7 @@ module.exports = class WebRTCConnection {
                 list: {},
             }
 
-            this._kademliaRules.pending.pendingAdd( 'webrtc:'+this.id+':pending', id,() => {
+            this._kademliaRules.pending.pendingAdd( 'webrtc:pending:'+this.id, id,() => {
                 delete this._chunks[id];
             }, ()=>{
                 delete this._chunks[id];
@@ -161,7 +161,7 @@ module.exports = class WebRTCConnection {
 
             const buffer = Buffer.concat(array);
 
-            this._kademliaRules.pending.pendingResolve('webrtc:'+this.id+':pending', id, (resolve) => resolve( ) );
+            this._kademliaRules.pending.pendingResolve('webrtc:pending:'+this.id, id, (resolve) => resolve( ) );
             if (this.onmessage) this.onmessage(id, buffer);
         }
 
@@ -173,31 +173,38 @@ module.exports = class WebRTCConnection {
         if (channel.readyState === 'close' && this.ondisconnect) this.ondisconnect(this);
     }
 
-    sendData(id, data) {
+    sendData(id, data, cb) {
 
-        const chunkSize = (this.chunkSize - 7*3 );
+        try{
 
-        const length = data.length;
-        const chunks = Math.ceil( length / chunkSize );
+            const chunkSize = (this.chunkSize - 8*3 );
+            const length = data.length;
+            const chunks = Math.ceil( length / chunkSize );
 
-        const prefix = Buffer.concat([
-            MarshalUtils.marshalNumber(id),
-            MarshalUtils.marshalNumber(chunks),
-        ]);
+            const prefix = Buffer.concat([
+                MarshalUtils.marshalNumber(id),
+                MarshalUtils.marshalNumber(chunks),
+            ]);
 
-        let i = 0, index = 0;
-        while (i < length){
+            let i = 0, index = 0;
+            while (i < length){
 
-            const chunk = data.slice(i, i += this.chunkSize );
+                const chunk = data.slice(i, i += this.chunkSize );
 
-            const buffer = Buffer.concat([
-                prefix,
-                MarshalUtils.marshalNumber(index),
-                chunk,
-            ])
+                const buffer = Buffer.concat([
+                    prefix,
+                    MarshalUtils.marshalNumber(index),
+                    chunk,
+                ])
 
-            this._channel.send(buffer);
-            index+= 1;
+                this._channel.send(buffer);
+                index+= 1;
+            }
+
+            this._kademliaRules.pending.pendingAdd('webrtc:'+this.id, id, () => cb(new Error('Timeout')), cb );
+
+        }catch(err){
+            cb(err);
         }
 
     }

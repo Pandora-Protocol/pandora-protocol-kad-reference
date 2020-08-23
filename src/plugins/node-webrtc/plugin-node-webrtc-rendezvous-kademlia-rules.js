@@ -165,7 +165,7 @@ module.exports = function (options) {
                     '',
                     ()=> cb(new Error('Timeout')),
                     (out) => super._sendNow(dstContact, command, data, cb),
-                    2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
+                    KAD_OPTIONS.T_RESPONSE_TIMEOUT
                 );
 
                 if (requestExistsAlready) return;
