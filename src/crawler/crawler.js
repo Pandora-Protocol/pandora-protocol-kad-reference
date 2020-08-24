@@ -60,26 +60,42 @@ module.exports = class Crawler {
         const  err = Validation.checkIdentity(key);
         if (err) return cb(err);
 
-        this._iterativeFind('', 'FIND_NODE', 'STORE', key, cb);
+        this._iterativeFind('', 'FIND_NODE', 'STORE', key, false, cb);
 
     }
 
-    iterativeFindValue(table, key, cb){
+    iterativeFindValue(table, key, finishWhenValue = true, cb){
 
         const err1 = Validation.checkIdentity(key);
         const err2 = Validation.checkTable(table);
         if (err1 || err2) return cb(err1||err2);
 
-        this._kademliaNode._store.get(table.toString('hex'), key.toString('hex'), (err, out)=>{
+        if (finishWhenValue){
 
-            if (out) return cb(null, {  result: out, contact: this._kademliaNode.contact });
-            this._iterativeFind( table,'FIND_VALUE', 'STORE', key, cb);
+            this._kademliaNode._store.get(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
-        });
+                if (out) return cb(null, { result: out, contact: this._kademliaNode.contact } );
+                this._iterativeFind( table,'FIND_VALUE', 'STORE', key, finishWhenValue, cb);
+
+            });
+
+        } else
+            this._iterativeFind( table,'FIND_VALUE', 'STORE', key, finishWhenValue, cb);
 
     }
 
-    _iterativeFind( table, method, methodStore, key, cb){
+    _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs ){
+
+        const fct = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString('ascii')];
+
+        for (const value of result)
+            if (!finalOutputs[value])
+                if ( fct(contact, [key, value] ))
+                    finalOutputs[value] = {value, contact};
+
+    }
+
+    _iterativeFind( table, method, methodStore, key, finishWhenValue, cb){
 
         const data = ( method === 'FIND_NODE' ) ? [key] : [table, key];
 
@@ -88,7 +104,8 @@ module.exports = class Crawler {
         const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, KAD_OPTIONS.ALPHA_CONCURRENCY ) );
         let closest = shortlist.closest;
 
-        let finished = false;
+        let finished, finishedSilent = false;
+        const finalOutputs = {};
 
         function dispatchFindNode(contact, next){
 
@@ -100,47 +117,58 @@ module.exports = class Crawler {
                 if ( err )
                     return next();
 
-                // mark this node as active to include it in any return values
-                shortlist.responded(contact);
+                try{
 
-                if (!result || (Array.isArray(result) && !result.length)) {
-                    return next();
-                } else
-                //If the result is a contact/node list, just keep track of it
-                if ( result[0] === 0 ){
-                    const added = shortlist.add( result[1] );
+                    // mark this node as active to include it in any return values
+                    shortlist.responded(contact);
 
-                    //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
-                    async.eachLimit(added, KAD_OPTIONS.ALPHA_CONCURRENCY,
-                        ( contact, next ) => this._updateContactFound(contact, () => next() ),
-                        () => {}
-                    );
+                    if (!result || (Array.isArray(result) && !result.length)) {
 
-                    return next();
-                } else if ( result[0] === 1 && method !== 'FIND_NODE' ){
+                    } else
+                    //If the result is a contact/node list, just keep track of it
+                    if ( result[0] === 0 ){
+                        const added = shortlist.add( result[1] );
 
-                    //If we did get an item back, get the closest node we contacted
-                    //who is missing the value and store a copy with them
-                    const closestMissingValue = shortlist.active[0];
-
-                    if (closestMissingValue) {
-
-                        const elements = Array.isArray(result[1]) ? result[1] : [ result[1] ];
-                        async.eachLimit(elements, KAD_OPTIONS.ALPHA_CONCURRENCY,
-                            (key, next) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
-                            ()=> {}
+                        //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.
+                        async.eachLimit(added, KAD_OPTIONS.ALPHA_CONCURRENCY,
+                            ( contact, next ) => this._updateContactFound(contact, () => next() ),
+                            () => {}
                         );
 
+                    } else if ( result[0] === 1 && method !== 'FIND_NODE' ){
+
+                        //If we did get an item back, get the closest node we contacted
+                        //who is missing the value and store a copy with them
+                        const closestMissingValue = shortlist.active[0];
+
+                        if (closestMissingValue) {
+
+                            const elements = Array.isArray(result[1]) ? result[1] : [ result[1] ];
+                            async.eachLimit(elements, KAD_OPTIONS.ALPHA_CONCURRENCY,
+                                (key, next) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
+                                ()=> {}
+                            );
+
+                        }
+
+                        //  we found a value, so stop searching
+                        if (!finished) {
+
+                            finishedSilent = true;
+
+                            //let's validate the data
+                            if (finishWhenValue)
+                                finished = true;
+
+                            this._iterativeFindMerge(table, key, result[1], contact, finishWhenValue, method, finalOutputs );
+
+                        }
+
                     }
 
-                    //  we found a value, so stop searching
-                    if (!finished) {
-                        finished = true;
-                        cb(null, {result: result[1], contact});
-                    }
-                    next( );
-                }else
+                }finally{
                     next();
+                }
 
             })
         }
@@ -155,7 +183,9 @@ module.exports = class Crawler {
             async.each( selection, (contact, next) => dispatchFindNode.call(this, contact, next),
                 (err, results)=>{
 
-                    if (finished) return;
+                    if ( finishedSilent )
+                        return cb(null, finishWhenValue ? finalOutputs[0] : finalOutputs);
+
                     if (err) return;
 
                     // If we have reached at least K active nodes, or haven't found a

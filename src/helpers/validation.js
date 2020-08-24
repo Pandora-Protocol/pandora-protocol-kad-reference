@@ -43,7 +43,11 @@ module.exports.checkStoreKey = (key) => {
 }
 
 module.exports.checkStoreData = (data) => {
-    if ( !Buffer.isBuffer(data) ) return new Error( "data is invalid" );
+    if ( !Buffer.isBuffer(data) || !data.length ) return new Error( "data is invalid" );
+}
+
+module.exports.checkStoreDataString = (data) => {
+    if ( typeof data !== "string" || !data.length ) return new Error( "data is invalid" );
 }
 
 module.exports.checkStoreScore = ( data ) => {

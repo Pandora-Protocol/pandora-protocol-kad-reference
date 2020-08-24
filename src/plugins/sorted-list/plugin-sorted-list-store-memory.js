@@ -35,7 +35,7 @@ module.exports = function (options){
 
             const err1 = Validation.checkStoreTable(table);
             const err2 = Validation.checkStoreKey(key);
-            const err3 = Validation.checkStoreData(value);
+            const err3 = Validation.checkStoreDataString(value);
             const err4 = Validation.checkStoreScore(score);
             if (err1 || err2 || err3||err4) return cb(err1||err2||err3||err4);
 

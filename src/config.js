@@ -38,7 +38,7 @@ module.exports = {
 
         CONTACT_RENDEZVOUS:{
             RENDEZVOUS_JOINED_MAX: 500,
-            T_WEBSOCKET_DISCONNECT_RENDEZVOUS: 30*60*1000,
+            T_WEBSOCKET_DISCONNECT_RENDEZVOUS: 30*60*1000, //30 mins
         },
 
         NODE_WEBSOCKET:{
@@ -48,7 +48,7 @@ module.exports = {
 
         NODE_WEBRTC: {
 
-            T_WEBRTC_DISCONNECT_INACTIVITY: 3*60*1000,
+            T_WEBRTC_DISCONNECT_INACTIVITY: 3*60*1000, //3 mins
 
             ICE_SERVERS: [ {
                 url: 'stun:stun1.l.google.com:19302'
@@ -74,6 +74,7 @@ module.exports = {
             T_CONTACT_TIMESTAMP_MAX_DRIFT: 60,
             T_CONTACT_TIMESTAMP_DIFF_UPDATE: 15,
         },
+
         CONTACT_SYBIL_PROTECT: {
 
             SYBIL_PUBLIC_KEYS: [

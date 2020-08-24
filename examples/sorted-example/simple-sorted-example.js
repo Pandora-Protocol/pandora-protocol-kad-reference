@@ -52,7 +52,7 @@ async.eachLimit( array, 1, (index, next ) => {
     }, (err, out)=> {
 
         let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
-        nodes[4].crawler.iterativeFindSortedList('', query, (err, out)=>{
+        nodes[4].crawler.iterativeFindSortedList('', query, false, (err, out)=>{
             console.log("iterativeFindSortedList", out);
             if (out) console.error('ERROR. Answer should have been undefined')
         })
@@ -67,8 +67,8 @@ async.eachLimit( array, 1, (index, next ) => {
                 nodes[4].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), query2, 'query2_8', 8, (err, out)=> {
                     console.log("iterativeStoreSortedListValue", out);
 
-                    nodes[5].crawler.iterativeFindSortedList( Buffer.alloc(0), query2, (err, out)=>{
-                        console.log("iterativeFindSortedList", out.result);
+                    nodes[5].crawler.iterativeFindSortedList( Buffer.alloc(0), query2, false, (err, out)=>{
+                        console.log("iterativeFindSortedList", out);
                     })
 
                 });

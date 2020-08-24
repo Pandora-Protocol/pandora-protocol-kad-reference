@@ -14,7 +14,7 @@ module.exports = function (options) {
             this._commands.STORE_SORTED_LIST_VALUE = this._storeSortedListValue.bind(this);
 
             this._allowedStoreSortedListTables = {
-                '': (srcContact, data, cb ) => cb(null, true),
+                '': (srcContact, data, ) => { return true },
             };
 
         }
@@ -26,13 +26,9 @@ module.exports = function (options) {
             const fct = this._allowedStoreSortedListTables[table.toString('ascii')];
             if (!fct) return cb(new Error('Table is not allowed'));
 
-            fct( srcContact, [table, key, value], (err, out) =>{
-
-                if (err) return cb(err);
-                if (out) this._store.putSortedList(table.toString('hex'), key.toString('hex'), value, score, cb);
-                else cb(null, 0 );
-
-            });
+            if (fct( srcContact, [table, key, value, score]) )
+                this._store.putSortedList(table.toString('hex'), key.toString('hex'), value.toString('ascii'), score, cb);
+            else cb(null, 0 );
 
         }
 
