@@ -14,19 +14,25 @@ module.exports = function (options) {
             this._commands.STORE_SORTED_LIST_VALUE = this._storeSortedListValue.bind(this);
 
             this._allowedStoreSortedListTables = {
-                '': true,
+                '': (srcContact, data, cb ) => cb(null, true),
             };
 
         }
 
         _storeSortedListValue(req, srcContact, [table, key, value, score], cb){
 
-            if (!this._allowedStoreSortedListTables[table.toString('ascii')])
-                return cb(new Error('Table is not allowed'));
-
             if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
-            this._store.putSortedList(table.toString('hex'), key.toString('hex'), value.toString('ascii'), score, cb);
+            const fct = this._allowedStoreSortedListTables[table.toString('ascii')];
+            if (!fct) return cb(new Error('Table is not allowed'));
+
+            fct( srcContact, [table, key, value], (err, out) =>{
+
+                if (err) return cb(err);
+                if (out) this._store.putSortedList(table.toString('hex'), key.toString('hex'), value, score, cb);
+                else cb(null, 0 );
+
+            });
 
         }
 

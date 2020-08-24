@@ -78,10 +78,10 @@ module.exports = function(options) {
 
                 this.pending.pendingAdd(
                     'rendezvous:reverseConnection:'+dstContact.identityHex,
-                    undefined,
+                    undefined, //newly
                     () => cb(new Error('Timeout')),
                     () => super._sendNow(dstContact, command, data, cb),
-                    2 * KAD_OPTIONS.T_RESPONSE_TIMEOUT
+                    KAD_OPTIONS.T_RESPONSE_TIMEOUT
                 );
 
                 if (requestExistsAlready) return;

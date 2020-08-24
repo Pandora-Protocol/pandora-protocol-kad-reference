@@ -39,9 +39,10 @@ module.exports = class WebRTCConnection {
         this._kademliaRules.pending.pendingResolveAll('rendezvous:webRTC:' + this.contact.identityHex, resolve => resolve(null, true ) );
     }
 
-    ondisconnect = ()=>{
+    ondisconnect() {
 
         this._kademliaRules.pending.pendingTimeoutAll('webrtc:'+this.id, timeout => timeout() );
+        this._kademliaRules.pending.pendingTimeoutAll('rendezvous:webRTC:' + this.contact.identityHex, timeout => timeout() );
 
         if (this._kademliaRules._alreadyConnected[this.contact.identityHex] === this)
             delete this._kademliaRules._alreadyConnected[this.contact.identityHex];

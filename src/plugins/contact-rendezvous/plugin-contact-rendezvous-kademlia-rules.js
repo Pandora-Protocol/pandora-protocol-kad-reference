@@ -23,7 +23,7 @@ module.exports = function(options){
         _updateContact(req, srcContact, [contact], cb){
             this._welcomeIfNewNode(req, srcContact);
 
-            if (contact && req.isWebSocket){
+            if (contact){
                 try{
                     contact = this._kademliaNode.createContact(contact);
                     this._welcomeIfNewNode(req, contact);
