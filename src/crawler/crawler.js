@@ -91,11 +91,10 @@ module.exports = class Crawler {
 
         const fct = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')];
 
-        for (const value of result)
-            if ( fct(contact, [key, value]) ) {
-                finalOutputs.result = value;
-                finalOutputs.contact = contact;
-            }
+        if ( fct(contact, [key, result ]) ) {
+            finalOutputs.result = result;
+            finalOutputs.contact = contact;
+        }
 
     }
 
@@ -189,7 +188,7 @@ module.exports = class Crawler {
                 (err, results)=>{
 
                     if ( finishedSilent )
-                        return cb(null, {result: finishWhenValue ? finalOutputs[0] : finalOutputs } );
+                        return cb(null, {result: finalOutputs } );
 
                     if (err) return cb(err);
 
