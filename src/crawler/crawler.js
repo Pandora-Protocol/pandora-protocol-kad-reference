@@ -75,9 +75,8 @@ module.exports = class Crawler {
             this._kademliaNode._store.get(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
                 if (out){
-                    const obj = { };
-                    obj[out] = { value: out, contact: this._kademliaNode.contact }
-                    return cb(null, obj );
+                    const obj = {  value: out, contact: this._kademliaNode.contact };
+                    return cb(null, obj ? {result: obj} : undefined );
                 }
                 this._iterativeFind( table,'FIND_VALUE', 'STORE', key, finishWhenValue, cb);
 
@@ -88,14 +87,15 @@ module.exports = class Crawler {
 
     }
 
-    _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs ){
+    _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs){
 
-        const fct = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString('ascii')];
+        const fct = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')];
 
         for (const value of result)
-            if (!finalOutputs[value])
-                if ( fct(contact, [key, value] ))
-                    finalOutputs[value] = {value, contact};
+            if ( fct(contact, [key, value]) ) {
+                finalOutputs.result = value;
+                finalOutputs.contact = contact;
+            }
 
     }
 
@@ -164,7 +164,8 @@ module.exports = class Crawler {
                             if (finishWhenValue)
                                 finished = true;
 
-                            this._iterativeFindMerge(table, key, result[1], contact, finishWhenValue, method, finalOutputs );
+                            this._iterativeFindMerge(table, key, result[1], contact, finishWhenValue, method, finalOutputs);
+
 
                         }
 
@@ -188,7 +189,7 @@ module.exports = class Crawler {
                 (err, results)=>{
 
                     if ( finishedSilent )
-                        return cb(null, finishWhenValue ? finalOutputs[0] : finalOutputs );
+                        return cb(null, {result: finishWhenValue ? finalOutputs[0] : finalOutputs } );
 
                     if (err) return cb(err);
 
@@ -196,7 +197,7 @@ module.exports = class Crawler {
                     // closer node, even on our finishing trip, return to the caller
                     // the K closest active nodes.
                     if (shortlist.active.length >= KAD_OPTIONS.BUCKET_COUNT_K || (closest === shortlist.closest && !continueLookup) )
-                        return cb(null, shortlist.active.slice(0, KAD_OPTIONS.BUCKET_COUNT_K));
+                        return cb(null, shortlist.active.slice(0, KAD_OPTIONS.BUCKET_COUNT_K) );
 
                     // NB: we haven't discovered a closer node, call k uncalled nodes and
                     // NB: finish up

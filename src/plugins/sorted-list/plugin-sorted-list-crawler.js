@@ -18,7 +18,7 @@ module.exports = function (options) {
                         const obj = { };
                         for (let value of out)
                             obj[value] = {score: value[1], contact:this._kademliaNode.contact};
-                        return obj;
+                        return cb(null, obj ? {result: obj} : undefined );
                     }
                     this._iterativeFind(table, 'FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', key, finishWhenValue, cb);
 
