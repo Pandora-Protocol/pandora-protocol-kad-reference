@@ -19,42 +19,42 @@ module.exports = function (options) {
 
         }
 
-        _storeSortedListValue(req, srcContact, [table, key, value, score], cb){
+        _storeSortedListValue(req, srcContact, [table, treeKey, key, value, score], cb){
 
             if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
             const fct = this._allowedStoreSortedListTables[table.toString('ascii')];
             if (!fct) return cb(new Error('Table is not allowed'));
 
-            if (fct( srcContact, [table, key, value, score]) )
-                this._store.putSortedList(table.toString('hex'), key.toString('hex'), value.toString('ascii'), score, cb);
+            if (fct( srcContact, [table, treeKey, key, value, score]) )
+                this._store.putSortedList(table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, cb);
             else cb(null, 0 );
 
         }
 
-        sendStoreSortedListValue(contact, [table, key, value, score], cb){
+        sendStoreSortedListValue(contact, [table, treeKey, key, value, score], cb){
 
             if (!this._allowedStoreSortedListTables[table.toString('ascii')])
                 return cb(new Error('Table is not allowed'));
 
-            this.send(contact,'STORE_SORTED_LIST_VALUE', [table, key, value, score], cb)
+            this.send(contact,'STORE_SORTED_LIST_VALUE', [table, treeKey, key, value, score], cb)
 
         }
 
 
         /**
          * Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
-         * @param key
+         * @param treeKey
          * @param cb
          */
-        _findSortedList(req, srcContact, [table, key], cb){
+        _findSortedList(req, srcContact, [table, treeKey], cb){
 
             if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
-            this._store.getSortedList(table.toString('hex'), key.toString('hex'), (err, out) => {
+            this._store.getSortedList(table.toString('hex'), treeKey.toString('hex'), (err, out) => {
                 //found the data
                 if (out) cb(null, [ 1, out ] )
-                else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(key) ] )
+                else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(treeKey) ] )
             })
 
         }

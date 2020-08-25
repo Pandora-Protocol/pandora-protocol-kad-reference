@@ -18,35 +18,39 @@ module.exports = function (options){
 
         }
 
-        getSortedList(table, key, cb){
+        getSortedList(table, treeKey, cb){
 
             const err1 = Validation.checkStoreTable(table);
-            const err2 = Validation.checkStoreKey(key);
+            const err2 = Validation.checkStoreKey(treeKey);
             if (err1 || err2) return cb(err1||err2);
 
-            const tree = this._memorySortedList.get(table + ':' + key);
-            if (tree)
-                cb( null, tree.toSortedArray('getValueKeyArray') );
+            const tree = this._memorySortedList.get(table + ':' + treeKey);
+            if (tree) {
+                cb(null, tree.toSortedArray('getValueKeyArray'));
+            }
             else
                 cb( null, undefined );
         }
 
-        putSortedList(table, key, value, score, cb){
+        putSortedList(table, treeKey, key, value, score, cb){
 
             const err1 = Validation.checkStoreTable(table);
-            const err2 = Validation.checkStoreKey(key);
-            const err3 = Validation.checkStoreDataString(value);
-            const err4 = Validation.checkStoreScore(score);
-            if (err1 || err2 || err3||err4) return cb(err1||err2||err3||err4);
+            const err2 = Validation.checkStoreKey(treeKey);
+            const err3 = Validation.checkStoreKey(key);
+            const err4 = Validation.checkStoreData(value);
+            const err5 = Validation.checkStoreScore(score);
+            if (err1 || err2 || err3 || err4 || err5) return cb(err1||err2||err3||err4||err5);
 
-            let tree = this._memorySortedList.get(table + ':' + key);
+            let tree = this._memorySortedList.get(table + ':' + treeKey);
             if (!tree) {
                 tree = new RedBlackTree();
-                this._memorySortedList.set(table + ':' + key, tree );
+                this._memorySortedList.set(table + ':' + treeKey, tree );
             }
 
-            const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' +key + ':' + value );
+            const foundNode = this._memorySortedListKeyNodesMap.get(table +':'+ treeKey + ':' + key  );
             if (foundNode) {
+
+                if (foundNode.value !== value) foundNode.value = value;
 
                 if (foundNode.key === score)
                     return cb(null, 1);
@@ -58,49 +62,46 @@ module.exports = function (options){
 
             }
 
-            const newNode = tree.insert( score, value );
-            this._memorySortedListKeyNodesMap.set(table + ':' +key+':'+value, newNode );
+            const newNode = tree.insert( score, key, value );
+            this._memorySortedListKeyNodesMap.set(table + ':' +treeKey+':'+ key, newNode );
 
-            this._putExpirationSortedList( table, key, { node: newNode, value, time: new Date().getTime() + KAD_OPTIONS.T_STORE_KEY_EXPIRY }, ()=>{
+            this._putExpirationSortedList( table, treeKey + ':' + key, { node: newNode, treeKey, key,  time: new Date().getTime() + KAD_OPTIONS.T_STORE_KEY_EXPIRY }, ()=>{
                 cb(null, 1);
             });
 
         }
 
-        delSortedList(table, key, value, cb){
+        delSortedList(table, treeKey, key, cb){
 
             const err1 = Validation.checkStoreTable(table);
-            const err2 = Validation.checkStoreKey(key);
-            const err3 = Validation.checkStoreData(value);
+            const err2 = Validation.checkStoreKey(treeKey);
+            const err3 = Validation.checkStoreKey(key);
             if (err1 || err2 || err3) return cb(err1||err2||err3);
 
-            const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + key + ':' + value );
+            const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + treeKey + ':' + key );
             if (!foundNode) return cb(null, 0);
 
-            const tree = this._memorySortedList.get(table + ':' + key);
+            const tree = this._memorySortedList.get(table + ':' + treeKey);
             tree.removeNode(foundNode);
 
             if ( tree.isEmpty )
-                this._memorySortedList.delete( table + ':' + key );
+                this._memorySortedList.delete( table + ':' + treeKey );
 
-            this._memorySortedListKeyNodesMap.delete(table + ':' + key+':'+value);
-            this._delExpirationSortedList(table + ':' + key+':'+value, ()=>{
+            this._memorySortedListKeyNodesMap.delete(table + ':' + treeKey + ':' + key);
+            this._delExpirationSortedList(table + ':' + treeKey+':'+key, ()=>{
                 cb(null, 1)
             });
         }
 
 
-        //table, key already verified
-        _getExpirationSortedList(table, key, cb){
-            cb( null, this._memoryExpirationSortedList.get(table + ':' + key+':exp') );
-        }
 
         //table, key already verified
-        _putExpirationSortedList(table, key, { node, value, time }, cb){
+        _putExpirationSortedList(table, id, { node, treeKey, key, time }, cb){
 
-            this._memoryExpirationSortedList.set( table + ':' + key +':exp', {
+            this._memoryExpirationSortedList.set( table + ':' + id +':exp', {
                 node,
-                value,
+                treeKey,
+                key,
                 time,
             });
 
@@ -108,10 +109,10 @@ module.exports = function (options){
         }
 
         //table, key already verified
-        _delExpirationSortedList(table, key, cb){
+        _delExpirationSortedList(table, treeKey, cb){
 
-            if (this._memoryExpirationSortedList.get(table + ':' +key)) {
-                this._memoryExpirationSortedList.delete(table + ':' + key + ':exp');
+            if (this._memoryExpirationSortedList.get(table + ':' +treeKey)) {
+                this._memoryExpirationSortedList.delete(table + ':' + treeKey + ':exp');
                 cb(null, 1)
             } else
                 cb(null, 0);
@@ -154,13 +155,12 @@ module.exports = function (options){
             const itValue =  this._expireOldKeysSortedListIterator.next();
             if (itValue.value && !itValue.done){
 
-                const {node, value, time} = it.value[1];
+                const {node,  time, key, treeKey} = it.value[1];
                 if (time < new Date().getTime() ){
 
                     const str = itValue.value[0].splice(0, itValue[0].length-4 );
                     const table = str.slice(0, str.indexOf(':') ) ;
-                    const key = str.slice(str.indexOf(':')+1 );
-                    this.delSortedList(table, key, value, next )
+                    this.delSortedList(table, treeKey, key, next )
                 }
 
             } else {

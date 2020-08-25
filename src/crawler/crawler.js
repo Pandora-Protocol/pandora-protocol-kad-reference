@@ -74,7 +74,11 @@ module.exports = class Crawler {
 
             this._kademliaNode._store.get(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
-                if (out) return cb(null, { result: out, contact: this._kademliaNode.contact } );
+                if (out){
+                    const obj = { };
+                    obj[out] = { value: out, contact: this._kademliaNode.contact }
+                    return cb(null, obj );
+                }
                 this._iterativeFind( table,'FIND_VALUE', 'STORE', key, finishWhenValue, cb);
 
             });
@@ -184,9 +188,9 @@ module.exports = class Crawler {
                 (err, results)=>{
 
                     if ( finishedSilent )
-                        return cb(null, finishWhenValue ? finalOutputs[0] : finalOutputs);
+                        return cb(null, finishWhenValue ? finalOutputs[0] : finalOutputs );
 
-                    if (err) return;
+                    if (err) return cb(err);
 
                     // If we have reached at least K active nodes, or haven't found a
                     // closer node, even on our finishing trip, return to the caller

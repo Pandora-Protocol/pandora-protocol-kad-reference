@@ -14,7 +14,12 @@ module.exports = function (options) {
 
                 this._kademliaNode._store.getSortedList(table.toString('hex'), key.toString('hex'), (err, out)=>{
 
-                    if (out) return cb(null, {  result: out, contact: this._kademliaNode.contact });
+                    if (out){
+                        const obj = { };
+                        for (let value of out)
+                            obj[value] = {score: value[1], contact:this._kademliaNode.contact};
+                        return obj;
+                    }
                     this._iterativeFind(table, 'FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', key, finishWhenValue, cb);
 
                 });
@@ -25,8 +30,8 @@ module.exports = function (options) {
 
         }
 
-        iterativeStoreSortedListValue(table, key, value, score, cb){
-            return this._iterativeStoreValue( [table, key, value, score], 'sendStoreSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), key.toString('hex'), value, score, next ), cb)
+        iterativeStoreSortedListValue(table, treeKey, key, value, score, cb){
+            return this._iterativeStoreValue( [table, treeKey, key, value, score], 'sendStoreSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, next ), cb)
         }
 
         _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs ){
@@ -38,8 +43,8 @@ module.exports = function (options) {
                 for (const value of result)
                     if ( !finalOutputs[value[0]] || finalOutputs[value[0]] < value[1] ) {
 
-                        if (fct(contact, [table, key, value[0], value[1], ]))
-                            finalOutputs[value[0]] = {score: value[1], contact};
+                        if (fct(contact, [table, key, value[0], value[1], value[2] ]))
+                            finalOutputs[value[0]] = {value: value[1], score: value[2], contact};
 
                     }
 
