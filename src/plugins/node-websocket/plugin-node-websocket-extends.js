@@ -2,6 +2,7 @@ const blobToBuffer = require('blob-to-buffer')
 const ContactType = require('../contact-type/contact-type')
 const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 const bencode = require('bencode');
+const ContactConnectedStatus = require('../../contact/contact-connected-status')
 
 module.exports = function (WebSocketExtend) {
 
@@ -35,6 +36,7 @@ module.exports = function (WebSocketExtend) {
             ws.contact = contact;
             ws.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
             ws.isWebSocket = true;
+            ws.status = ContactConnectedStatus.CONTACT_CLOSED;
 
             ws.id = contact.identityHex;
             ws._queue = [];
@@ -66,6 +68,8 @@ module.exports = function (WebSocketExtend) {
 
         onopen() {
 
+            this.status = ContactConnectedStatus.CONTACT_OPEN;
+
             if (this._queue.length) {
                 const copy = [...this._queue];
                 this._queue = [];
@@ -76,6 +80,8 @@ module.exports = function (WebSocketExtend) {
         }
 
         onclose () {
+
+            this.status = ContactConnectedStatus.CONTACT_CLOSED;
 
             if (this._kademliaRules._webSocketActiveConnectionsByContactsMap[this.contact.identityHex] === this)
                 delete this._kademliaRules._webSocketActiveConnectionsByContactsMap[this.contact.identityHex];
@@ -107,8 +113,6 @@ module.exports = function (WebSocketExtend) {
 
             if (event.type !== "message") return;
 
-            this._updateTimeoutWebSocket();
-
             const message = event.data;
 
             if (typeof Blob !== 'undefined' && message instanceof Blob){
@@ -124,6 +128,8 @@ module.exports = function (WebSocketExtend) {
         };
 
         _processWebSocketMessage ( message) {
+
+            this._updateTimeoutWebSocket();
 
             const decoded = bencode.decode(message);
             const status = decoded[0];
@@ -154,7 +160,8 @@ module.exports = function (WebSocketExtend) {
         _setTimeoutWebSocket () {
             this._kademliaRules.pending.pendingAdd( 'ws:'+this.id, '',() => {
                 try{
-                    this.close();
+                    if (this.readyState !== 3 && this.readyState !== 2) //WebSocket.CLOSED
+                        this.close();
                 }catch(err){
 
                 }

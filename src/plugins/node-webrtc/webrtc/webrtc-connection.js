@@ -4,6 +4,7 @@ const BufferReader = require('../../../helpers/buffer-reader')
 const ContactAddressProtocolType = require('../../contact-type/contact-address-protocol-type')
 const bencode = require('bencode');
 const blobToBuffer = require('blob-to-buffer')
+const ContactConnectedStatus = require('../../../contact/contact-connected-status')
 
 module.exports = class WebRTCConnection {
 
@@ -26,6 +27,8 @@ module.exports = class WebRTCConnection {
         this.id = contact.identityHex;
         this.contact = contact;
         this.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;
+        this.status = ContactConnectedStatus.CONTACT_CLOSED;
+
         this.isWebRTC = true;
 
         this._kademliaRules._alreadyConnected[contact.identityHex] = this;
@@ -37,10 +40,16 @@ module.exports = class WebRTCConnection {
 
     onconnect(){
         console.log("webrtc connected")
+        this.status = ContactConnectedStatus.CONTACT_OPEN;
         this._kademliaRules.pending.pendingResolveAll('rendezvous:webRTC:' + this.contact.identityHex, resolve => resolve(null, true ) );
     }
 
     close(callTimeout){
+        this.ondisconnect(callTimeout);
+    }
+
+    ondisconnect(callTimeout = true) {
+
         try{
             if (this._rtcPeerConnection) {
                 this._rtcPeerConnection.close()
@@ -49,10 +58,8 @@ module.exports = class WebRTCConnection {
         }catch(err){
 
         }
-        this.ondisconnect(callTimeout);
-    }
 
-    ondisconnect(callTimeout = true) {
+        this.status = ContactConnectedStatus.CONTACT_CLOSED;
 
         if (this._kademliaRules._alreadyConnected[this.contact.identityHex] === this)
             delete this._kademliaRules._alreadyConnected[this.contact.identityHex];
@@ -121,6 +128,7 @@ module.exports = class WebRTCConnection {
 
     _onChannelMessageCallback(event, channel){
 
+        if (event.type !== "message") return;
         const message = event.data;
 
         if (typeof Blob !== 'undefined' && message instanceof Blob){
@@ -130,7 +138,7 @@ module.exports = class WebRTCConnection {
                 this._processWebRTCMessage( buffer);
             })
         }
-            this._processWebRTCMessage( Buffer.from(message) );
+        else this._processWebRTCMessage( Buffer.from(message) );
 
 
     }

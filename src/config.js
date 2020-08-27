@@ -6,7 +6,7 @@ module.exports = {
         VERSION_COMPATIBILITY: "0.1",
     },
 
-    ALPHA_CONCURRENCY: 4, //ALPHA - Degree of parallelism
+    ALPHA_CONCURRENCY: 10, //ALPHA - Degree of parallelism
 
     NODE_ID_LENGTH: 32, // Number of bytes for nodeId, 20 bytes for 160 bits
     NODE_ID_EMPTY: Buffer.alloc(32),
