@@ -34,7 +34,7 @@ module.exports = class KademliaRulesPending {
             this.list[key] = {};
             this._counts[key] = 0;
         }
-        if (key2 === undefined) key2 = Math.floor( Math.random() ).toString() + '_' + Math.floor( Math.random() ).toString();
+        if (key2 === undefined) key2 = Math.random().toString() + '_' +  Math.random().toString();
 
         this.list[key][key2] = {
             key,
@@ -123,14 +123,17 @@ module.exports = class KademliaRulesPending {
 
                 if (now >= pending[key2].timestamp + (pending[key2].time || KAD_OPTIONS.T_RESPONSE_TIMEOUT) ) {
 
+                    const prev = pending[key2];
+
+                    delete pending[key2];
+                    this._counts[key]--;
+
                     try {
-                        pending[key2].timeout( key, key2, pending[key2] );
+                        prev.timeout(  );
                     } catch (err) {
                         console.error("_timeoutPending raised an error", err);
                     }
 
-                    delete pending[key2];
-                    this._counts[key]--;
                 }
 
             }

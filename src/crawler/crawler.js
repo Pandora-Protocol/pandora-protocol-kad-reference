@@ -91,8 +91,8 @@ module.exports = class Crawler {
 
         const fct = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')];
 
-        if ( fct(contact, [key, result ]) ) {
-            finalOutputs.result = result;
+        if ( fct(contact, [table, key, result ]) ) {
+            finalOutputs.value = result;
             finalOutputs.contact = contact;
         }
 

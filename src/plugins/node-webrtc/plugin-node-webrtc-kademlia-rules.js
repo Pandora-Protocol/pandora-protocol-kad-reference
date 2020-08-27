@@ -43,7 +43,7 @@ module.exports = function (options) {
             if (!webRTC)
                 cb(new Error('WebRTC Not connected'));
 
-            webRTC.sendData( id, buffer, cb )
+            webRTC.sendData( id, buffer, true, cb )
         }
 
         _webrtcReceiveSerialize (id, srcContact, out ) {

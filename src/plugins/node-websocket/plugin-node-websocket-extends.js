@@ -36,8 +36,7 @@ module.exports = function (WebSocketExtend) {
             ws.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
             ws.isWebSocket = true;
 
-            ws.id = Math.floor( Math.random() * Number.MAX_SAFE_INTEGER );
-            ws.socketPending = {};
+            ws.id = contact.identityHex;
             ws._queue = [];
 
             ws._kademliaRules = kademliaRules;
@@ -165,7 +164,7 @@ module.exports = function (WebSocketExtend) {
 
         _updateTimeoutWebSocket () {
             const pending = this._kademliaRules.pending.list['ws:'+this.id];
-            if (pending) {
+            if (pending && pending['']) {
                 pending[''].timestamp = new Date().getTime();
                 pending[''].time = this._getTimeoutWebSocketTime();
             }
