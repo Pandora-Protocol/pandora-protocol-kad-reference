@@ -3,6 +3,7 @@ const MarshalUtils = require('../../../helpers/marshal-utils')
 const BufferReader = require('../../../helpers/buffer-reader')
 const ContactAddressProtocolType = require('../../contact-type/contact-address-protocol-type')
 const bencode = require('bencode');
+const blobToBuffer = require('blob-to-buffer')
 
 module.exports = class WebRTCConnection {
 
@@ -120,9 +121,25 @@ module.exports = class WebRTCConnection {
 
     _onChannelMessageCallback(event, channel){
 
-        const chunkSize = (this.chunkSize - 10*3 );
+        const message = event.data;
 
-        const data = BufferReader.create( Buffer.from(event.data) );
+        if (typeof Blob !== 'undefined' && message instanceof Blob){
+            blobToBuffer(message, (err, buffer)=>{
+                if (err) return err;
+
+                this._processWebRTCMessage( buffer);
+            })
+        }
+            this._processWebRTCMessage( Buffer.from(message) );
+
+
+    }
+
+    _processWebRTCMessage(data){
+
+        data = BufferReader.create( data );
+
+        const chunkSize = (this.chunkSize - 10*3 );
 
         const id = MarshalUtils.unmarshalNumber(data);
         const chunks = MarshalUtils.unmarshalNumber(data);
@@ -137,6 +154,7 @@ module.exports = class WebRTCConnection {
         if (index === chunks-1 && chunk.length > chunkSize) throw "last chunk has invalid length"
 
         if (!this._chunks[id]) {
+
             this._chunks[id] = {
                 count: 0,
                 chunks,
@@ -153,6 +171,7 @@ module.exports = class WebRTCConnection {
         } else throw "Chunk already received"
 
         if (this._chunks[id].count === this._chunks[id].chunks){
+
             const array = [];
             for (let i=0; i < this._chunks[id].chunks; i++ )
                 array.push(this._chunks[id].list[i])

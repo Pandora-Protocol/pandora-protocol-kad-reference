@@ -57,7 +57,7 @@ module.exports = function (WebSocketExtend) {
             ws.onopen = this.onopen.bind(ws);
             ws.onerror =  ws.onclose = this.onclose.bind(ws);
             ws.onmessage = this.onmessage.bind(ws);
-            ws.processWebSocketMessage = this.processWebSocketMessage.bind(ws);
+            ws._processWebSocketMessage = this._processWebSocketMessage.bind(ws);
             ws._getTimeoutWebSocketTime = this._getTimeoutWebSocketTime.bind(ws);
             ws._setTimeoutWebSocket = this._setTimeoutWebSocket.bind(ws);
             ws._updateTimeoutWebSocket = this._updateTimeoutWebSocket.bind(ws);
@@ -103,27 +103,27 @@ module.exports = function (WebSocketExtend) {
         }
 
 
-        onmessage (data) {
+        onmessage (event) {
 
-            if (data.type !== "message") return;
+            if (event.type !== "message") return;
 
             this._updateTimeoutWebSocket();
 
-            const message = data.data;
+            const message = event.data;
 
             if (typeof Blob !== 'undefined' && message instanceof Blob){
                 blobToBuffer(message, (err, buffer)=>{
                     if (err) return err;
 
-                    this.processWebSocketMessage( buffer);
+                    this._processWebSocketMessage( buffer);
                 })
             }else
-                this.processWebSocketMessage( message );
+                this._processWebSocketMessage( message );
 
 
         };
 
-        processWebSocketMessage  ( message) {
+        _processWebSocketMessage ( message) {
 
             const decoded = bencode.decode(message);
             const status = decoded[0];

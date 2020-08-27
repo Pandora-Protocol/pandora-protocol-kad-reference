@@ -32,11 +32,13 @@ module.exports = function (options){
 
             return new Promise((resolve, reject)=>{
 
-                if (!opts.publicKey) {
+                if (!opts.privateKey) {
                     const keyPair = ECCUtils.createPair();
-                    opts.publicKey = keyPair.publicKey;
                     opts.privateKey = keyPair.privateKey;
                 }
+
+                if (!opts.publicKey)
+                    opts.publicKey = ECCUtils.getPublicKey(opts.privateKey);
 
                 this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
 

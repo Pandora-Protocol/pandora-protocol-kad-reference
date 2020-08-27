@@ -6,11 +6,13 @@ module.exports = function (options){
 
         async createContactArgs ( opts ){
 
-            if (!opts.publicKey) {
+            if (!opts.privateKey) {
                 const keyPair = ECCUtils.createPair();
-                opts.publicKey = keyPair.publicKey;
                 opts.privateKey = keyPair.privateKey;
             }
+
+            if (!opts.publicKey)
+                opts.publicKey = ECCUtils.getPublicKey(opts.privateKey);
 
             const out = await super.createContactArgs( opts );
             return {

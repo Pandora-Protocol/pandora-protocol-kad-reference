@@ -65,8 +65,10 @@ module.exports = class Contact{
     toJSON(){
 
         const obj = {};
-        for (const key of this._keys)
+        for (const key of this._keys) {
             obj[key] = this[key];
+            if (Buffer.isBuffer(obj[key])) obj[key] = obj[key].toString('hex');
+        }
 
         return obj;
     }

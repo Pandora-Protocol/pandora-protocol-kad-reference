@@ -8,11 +8,14 @@ module.exports = function (options){
 
         async createContactArgs ( opts ){
 
-            if (!opts.publicKey) {
+            if (!opts.privateKey) {
                 const keyPair = ECCUtils.createPair();
-                opts.publicKey = keyPair.publicKey;
                 opts.privateKey = keyPair.privateKey;
             }
+
+            if (!opts.publicKey)
+                opts.publicKey = ECCUtils.getPublicKey(opts.privateKey);
+
 
             if (!opts.timestamp)
                 opts.timestamp = Math.floor(new Date().getTime() / 1000) - KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE;
