@@ -132,8 +132,6 @@ module.exports = class WebRTCConnection {
         const index = MarshalUtils.unmarshalNumber(data);
         const chunk = data.readRemaining(data)
 
-        console.log("received", id, chunks, index, chunk.length);
-
         if (index >= chunks || index < 0) throw "index exceeds chunks";
         if (index < chunks-1 && chunk.length !== chunkSize ) throw "chunk has invalid length"
         if (index === chunks-1 && chunk.length > chunkSize) throw "last chunk has invalid length"
@@ -145,11 +143,8 @@ module.exports = class WebRTCConnection {
                 list: {},
             }
 
-            this._kademliaRules.pending.pendingAdd( 'webrtc:pending:'+this.id, id,() => {
-                delete this._chunks[id];
-            }, ()=>{
-                delete this._chunks[id];
-            }, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_WEBRTC_DISCONNECT_INACTIVITY,  );
+            //to avoid memory leak
+            this._kademliaRules.pending.pendingAdd( 'webrtc:pending:'+this.id, id,() => delete this._chunks[id], ()=> delete this._chunks[id], KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_RESPONSE_TIMEOUT,  );
         }
 
         if (!this._chunks[id].list[index]){
