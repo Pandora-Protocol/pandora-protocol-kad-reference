@@ -1,5 +1,6 @@
 const WebRTC = require('./webrtc/isomorphic-webrtc')
 const ContactWebRTCType = require('./contact-webrtc-type')
+const ContactType = require('../contact-type/contact-type')
 
 module.exports = function(options) {
 
@@ -33,7 +34,7 @@ module.exports = function(options) {
                 ...out,
                 args: [
                     ...out.args,
-                    _isWebRTCSupported() ? ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED : ContactWebRTCType.CONTACT_WEBRTC_TYPE_DISABLED ,
+                    (_isWebRTCSupported() && out.contactType !== ContactType.CONTACT_TYPE_ENABLED) ? ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED : ContactWebRTCType.CONTACT_WEBRTC_TYPE_DISABLED ,
                 ]
             }
         }

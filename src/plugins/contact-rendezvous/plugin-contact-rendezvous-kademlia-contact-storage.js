@@ -13,6 +13,7 @@ module.exports = function (options){
 
             return {
                 ...out,
+                contactType: opts.contactType,
                 args: [
                     ...out.args,
                 ]

@@ -28,10 +28,15 @@ module.exports = function(options) {
 
             }
 
+            this._specialContactProtocolByCommands = {}
 
         }
 
         getProtocol(command, data){
+
+            if (this._specialContactProtocolByCommands[command])
+                return this._specialContactProtocolByCommands[command](command);
+
             return this.protocol;
         }
 

@@ -14,7 +14,6 @@ module.exports = function(options) {
             this._keys.push('contactType');
             this._allKeys.push('contactType');
 
-
         }
 
     }

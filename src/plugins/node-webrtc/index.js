@@ -1,4 +1,6 @@
 const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
+const ContactType = require('../contact-type/contact-type')
+
 const PluginNodeWebRTCKademliaRules = require('./plugin-node-webrtc-kademlia-rules')
 const PluginNodeWebRTCKademliaContact = require('./plugin-node-webrtc-kademlia-contact')
 const PluginNodeWebRTCKademliaContactStorage = require('./plugin-node-webrtc-kademlia-contact-storage')

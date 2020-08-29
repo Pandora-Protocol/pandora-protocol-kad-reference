@@ -20,14 +20,7 @@ module.exports = function(options) {
 
             this._allKeys.push('rendezvous');
 
-        }
-
-        getProtocol(command, data){
-
-            if (command === 'RNDZ_JOIN')
-                return this.convertProtocolToWebSocket();
-
-            return super.getProtocol(command, data);
+            this._specialContactProtocolByCommands['RNDZ_JOIN'] = this.convertProtocolToWebSocket.bind(this);
         }
 
     }

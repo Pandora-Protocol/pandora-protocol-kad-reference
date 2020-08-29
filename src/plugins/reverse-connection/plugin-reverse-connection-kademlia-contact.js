@@ -2,14 +2,12 @@ module.exports = function (options){
 
     return class MyContact extends options.Contact {
 
-        getProtocol(command, data){
+        constructor() {
 
-            if (command === 'REV_CON')
-                return this.convertProtocolToWebSocket();
+            super(...arguments);
 
-            return super.getProtocol(command, data);
+            this._specialContactProtocolByCommands['REV_CON'] = this.convertProtocolToWebSocket.bind(this);
         }
-
 
     }
 

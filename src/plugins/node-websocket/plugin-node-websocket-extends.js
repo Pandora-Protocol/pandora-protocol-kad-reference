@@ -32,24 +32,29 @@ module.exports = function (WebSocketExtend) {
                 kademliaRules._webSocketActiveConnectionsMap[address] = ws;
 
             }
+            ws._kademliaRules = kademliaRules;
 
             ws.contact = contact;
             ws.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET;
             ws.isWebSocket = true;
-            ws.status = ContactConnectedStatus.CONTACT_CLOSED;
+
+            this._extendWebSocket(ws);
+
+            if (ws.readyState === 1) { //OPEN
+                ws.status = ContactConnectedStatus.CONTACT_OPEN;
+                ws._updateTimeoutWebSocket();
+            }
+            else
+                ws.status = ContactConnectedStatus.CONTACT_CLOSED;
 
             ws.id = contact.identityHex;
             ws._queue = [];
 
-            ws._kademliaRules = kademliaRules;
 
             kademliaRules._webSocketActiveConnectionsByContactsMap[contact.identityHex] = ws;
             kademliaRules._alreadyConnected[contact.identityHex] = ws;
             kademliaRules._webSocketActiveConnections.push(ws);
 
-            this._extendWebSocket(ws);
-
-            ws._updateTimeoutWebSocket();
 
             cb(null, ws);
 
@@ -69,6 +74,10 @@ module.exports = function (WebSocketExtend) {
         onopen() {
 
             this.status = ContactConnectedStatus.CONTACT_OPEN;
+
+            this._updateTimeoutWebSocket();
+
+            this._kademliaRules.pending.pendingResolve('ws:'+this.id, 'creation', resolve => resolve(null) );
 
             if (this._queue.length) {
                 const copy = [...this._queue];

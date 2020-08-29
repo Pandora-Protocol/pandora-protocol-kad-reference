@@ -1,5 +1,5 @@
 const ContactWebRTCType = require('./contact-webrtc-type')
-
+const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 module.exports = function(options){
 
     return class MyContact extends options.Contact {
@@ -19,13 +19,12 @@ module.exports = function(options){
 
         getProtocol(command, data){
 
-            //because of the ice candidates, they go back and forth until agreement is reached.
-            if (command === 'RNDZ_WRTC_CON' )
-                return this.convertProtocolToWebSocket();
+            if (this.webrtcType === ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED)
+                return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;
 
-            return super.getProtocol(command, data);
+            return super.getProtocol(...arguments);
+
         }
-
 
     }
 

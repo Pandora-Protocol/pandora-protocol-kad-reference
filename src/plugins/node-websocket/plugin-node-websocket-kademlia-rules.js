@@ -75,6 +75,7 @@ module.exports = function (options){
                 ws._kadInitialized = true;
 
                 this.pluginNodeWebsocketExtends.initializeWebSocket(this, dstContact, ws, cb);
+                this.pending.pendingAdd('ws:'+this.id, 'creation', () => ws.onclose(), () => {}, KAD_OPTIONS.T_RESPONSE_TIMEOUT );
 
             } );
 
@@ -96,7 +97,7 @@ module.exports = function (options){
 
             //connected once already already
             if (this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex])
-                return this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex].sendWebSocketWaitAnswer(  id, buffer, cb);
+                return this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex].sendWebSocketWaitAnswer( id, buffer, cb);
 
             const address = dstContact.hostname +':'+ dstContact.port + dstContact.path;
             this._createWebSocket(address, dstContact, protocol,(err, ws) => {
