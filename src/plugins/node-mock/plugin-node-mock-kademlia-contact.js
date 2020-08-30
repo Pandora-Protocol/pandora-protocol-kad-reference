@@ -17,7 +17,7 @@ module.exports = function (options) {
 
         }
 
-        getProtocol(command, data){
+        getProtocol(command){
             return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK;
         }
 

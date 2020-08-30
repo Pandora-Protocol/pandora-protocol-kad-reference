@@ -17,7 +17,7 @@ module.exports = function(options){
 
         }
 
-        getProtocol(command, data){
+        getProtocol(command){
 
             if (this.webrtcType === ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED)
                 return ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;

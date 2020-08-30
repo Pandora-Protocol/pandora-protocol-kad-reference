@@ -28,6 +28,15 @@ module.exports = function (options) {
 
         }
 
+        establishConnection(dstContact, cb){
+
+            if (dstContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS && dstContact.webrtcType === ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED )
+                return this._createWebRTC(dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, cb );
+
+            return super.establishConnection(dstContact, cb);
+
+        }
+
         _createWebRTC( dstContact, protocol, cb ) {
 
             if ( dstContact.contactType !== ContactType.CONTACT_TYPE_RENDEZVOUS ||

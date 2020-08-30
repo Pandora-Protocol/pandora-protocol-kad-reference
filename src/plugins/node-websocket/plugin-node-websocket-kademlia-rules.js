@@ -2,6 +2,7 @@ const ContactAddressProtocolType = require('../contact-type/contact-address-prot
 const IsomorphicWebSocket = require('isomorphic-ws')
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
+const ContactType = require('../contact-type/contact-type')
 
 const WebSocketServer = typeof BROWSER === "undefined" ? require('./web-socket-server') : undefined;
 const PluginNodeWebsocketExtends = require('./plugin-node-websocket-extends')
@@ -38,6 +39,13 @@ module.exports = function (options){
 
         }
 
+        establishConnection(dstContact, cb){
+
+            if (dstContact.contactType === ContactType.CONTACT_TYPE_ENABLED)
+                return this._createWebSocket(dstContact, dstContact.convertProtocolToWebSocket(), cb );
+
+            return super.establishConnection(dstContact, cb);
+        }
 
         async start(opts){
 
@@ -60,7 +68,9 @@ module.exports = function (options){
             return super.stop(...arguments);
         }
 
-        _createWebSocket( address, dstContact, protocol, cb ) {
+        _createWebSocket(  dstContact, protocol, cb ) {
+
+            let address = dstContact.hostname +':'+ dstContact.port + dstContact.path;
 
             const data = [ this._kademliaNode.contact.toArray(), ''];
             this._sendProcess(dstContact, protocol, data, {forceEncryption: true}, (err, data) =>{
@@ -99,8 +109,7 @@ module.exports = function (options){
             if (this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex])
                 return this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex].sendWebSocketWaitAnswer( id, buffer, cb);
 
-            const address = dstContact.hostname +':'+ dstContact.port + dstContact.path;
-            this._createWebSocket(address, dstContact, protocol,(err, ws) => {
+            this._createWebSocket( dstContact, protocol,(err, ws) => {
                 if (err) return cb(err);
                 ws.sendWebSocketWaitAnswer( id, buffer, cb);
             });

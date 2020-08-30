@@ -69,7 +69,7 @@ module.exports = function(options) {
         _sendNow(dstContact, command, data, cb){
 
             if ( this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED &&
-                !this._alreadyConnected[dstContact.identityHex] &&
+                !this.alreadyConnected[dstContact.identityHex] &&
                 dstContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS &&
                 dstContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
 

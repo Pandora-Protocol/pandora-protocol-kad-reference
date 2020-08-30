@@ -14,7 +14,7 @@ module.exports = function (WebSocketExtend) {
 
                 const address = contact.hostname +':'+ contact.port + contact.path;
                 //connected twice
-                if (kademliaRules._webSocketActiveConnectionsMap[address] || kademliaRules._alreadyConnected[contact.identityHex]){
+                if (kademliaRules._webSocketActiveConnectionsMap[address] || kademliaRules.alreadyConnected[contact.identityHex]){
 
                     try{
 
@@ -52,7 +52,7 @@ module.exports = function (WebSocketExtend) {
 
 
             kademliaRules._webSocketActiveConnectionsByContactsMap[contact.identityHex] = ws;
-            kademliaRules._alreadyConnected[contact.identityHex] = ws;
+            kademliaRules.alreadyConnected[contact.identityHex] = ws;
             kademliaRules._webSocketActiveConnections.push(ws);
 
 
@@ -95,8 +95,8 @@ module.exports = function (WebSocketExtend) {
             if (this._kademliaRules._webSocketActiveConnectionsByContactsMap[this.contact.identityHex] === this)
                 delete this._kademliaRules._webSocketActiveConnectionsByContactsMap[this.contact.identityHex];
 
-            if (this._kademliaRules._alreadyConnected[this.contact.identityHex] === this)
-                delete this._kademliaRules._alreadyConnected[this.contact.identityHex];
+            if (this._kademliaRules.alreadyConnected[this.contact.identityHex] === this)
+                delete this._kademliaRules.alreadyConnected[this.contact.identityHex];
 
             for (let i = 0; i < this._kademliaRules._webSocketActiveConnections.length; i++)
                 if (this._kademliaRules._webSocketActiveConnections[i] === this) {
@@ -179,6 +179,7 @@ module.exports = function (WebSocketExtend) {
         }
 
         _updateTimeoutWebSocket () {
+
             const pending = this._kademliaRules.pending.list['ws:'+this.id];
             if (pending && pending['']) {
                 pending[''].timestamp = new Date().getTime();

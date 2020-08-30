@@ -34,8 +34,13 @@ module.exports = class KademliaRules {
         }
 
         this.pending = new KademliaRulesPending();
-        this._alreadyConnected = {};
 
+        this.alreadyConnected = {};
+
+    }
+
+    establishConnection(dstContact, cb){
+        cb(new Error("Can't establish connection to contact"));
     }
 
     async start(opts){
@@ -69,10 +74,10 @@ module.exports = class KademliaRules {
     _sendGetProtocol(dstContact, command, data){
 
         // the dstContact is already contacted via a websocket
-        if (this._alreadyConnected[dstContact.identityHex])
-            return this._alreadyConnected[dstContact.identityHex].contactProtocol;
+        if (this.alreadyConnected[dstContact.identityHex])
+            return this.alreadyConnected[dstContact.identityHex].contactProtocol;
 
-        return KAD_OPTIONS.TEST_PROTOCOL || dstContact.getProtocol(command, data);
+        return KAD_OPTIONS.TEST_PROTOCOL || dstContact.getProtocol(command);
     }
 
     _sendNow(dstContact, command, data, cb){

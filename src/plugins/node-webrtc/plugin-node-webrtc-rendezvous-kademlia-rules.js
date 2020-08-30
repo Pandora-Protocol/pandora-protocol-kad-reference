@@ -90,7 +90,7 @@ module.exports = function (options) {
                 const contact = info[0];
                 this._welcomeIfNewNode(req, contact);
 
-                if (this._alreadyConnected[contact.identityHex]) return cb(null, []);
+                if (this.alreadyConnected[contact.identityHex]) return cb(null, []);
 
                 const webRTC = new WebRTCConnectionRemote(this);
                 webRTC.initializeWebRTC(contact);

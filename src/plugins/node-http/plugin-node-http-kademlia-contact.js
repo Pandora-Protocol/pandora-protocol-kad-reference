@@ -32,7 +32,7 @@ module.exports = function(options) {
 
         }
 
-        getProtocol(command, data){
+        getProtocol(command){
 
             if (this._specialContactProtocolByCommands[command])
                 return this._specialContactProtocolByCommands[command](command);

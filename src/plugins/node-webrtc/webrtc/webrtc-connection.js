@@ -33,7 +33,7 @@ module.exports = class WebRTCConnection {
         this.isWebRTC = true;
         this._queue = [];
 
-        this._kademliaRules._alreadyConnected[contact.identityHex] = this;
+        this._kademliaRules.alreadyConnected[contact.identityHex] = this;
         this._kademliaRules._webRTCActiveConnectionsByContactsMap[contact.identityHex] = this;
         this._kademliaRules._webRTCActiveConnections.push(this)
 
@@ -75,8 +75,8 @@ module.exports = class WebRTCConnection {
 
         this.status = ContactConnectedStatus.CONTACT_CLOSED;
 
-        if (this._kademliaRules._alreadyConnected[this.contact.identityHex] === this)
-            delete this._kademliaRules._alreadyConnected[this.contact.identityHex];
+        if (this._kademliaRules.alreadyConnected[this.contact.identityHex] === this)
+            delete this._kademliaRules.alreadyConnected[this.contact.identityHex];
 
         if (this._kademliaRules._webRTCActiveConnectionsByContactsMap[this.contact.identityHex] === this) {
             delete this._kademliaRules._webRTCActiveConnectionsByContactsMap[this.contact.identityHex];

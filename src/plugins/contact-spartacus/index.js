@@ -35,9 +35,9 @@ module.exports = {
             const oldContact = this.routingTable.map[ newContact.identityHex ];
             oldContact.contact = newContact;
 
-            if (this.rules._alreadyConnected)
-                if (this.rules._alreadyConnected[oldContact.identityHex])
-                    this.rules._alreadyConnected[oldContact.identityHex].contact = newContact;
+            if (this.rules.alreadyConnected)
+                if (this.rules.alreadyConnected[oldContact.identityHex])
+                    this.rules.alreadyConnected[oldContact.identityHex].contact = newContact;
 
 
         }
