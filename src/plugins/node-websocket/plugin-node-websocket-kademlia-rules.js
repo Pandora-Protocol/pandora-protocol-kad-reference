@@ -85,7 +85,7 @@ module.exports = function (options){
                 ws._kadInitialized = true;
 
                 this.pluginNodeWebsocketExtends.initializeWebSocket(this, dstContact, ws, cb);
-                this.pending.pendingAdd('ws:'+this.id, 'creation', () => ws.onclose(), () => {}, KAD_OPTIONS.T_RESPONSE_TIMEOUT );
+                this.pending.pendingAdd('ws:'+ws.id, 'creation', () => ws.closeNow(), () => {}, KAD_OPTIONS.T_RESPONSE_TIMEOUT );
 
             } );
 

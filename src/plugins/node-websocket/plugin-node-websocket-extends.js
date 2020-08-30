@@ -61,6 +61,7 @@ module.exports = function (WebSocketExtend) {
         }
 
         _extendWebSocket(ws){
+            ws.closeNow = this.closeNow.bind(ws);
             ws.onopen = this.onopen.bind(ws);
             ws.onerror =  ws.onclose = this.onclose.bind(ws);
             ws.onmessage = this.onmessage.bind(ws);
@@ -69,6 +70,16 @@ module.exports = function (WebSocketExtend) {
             ws._setTimeoutWebSocket = this._setTimeoutWebSocket.bind(ws);
             ws._updateTimeoutWebSocket = this._updateTimeoutWebSocket.bind(ws);
             ws.sendWebSocketWaitAnswer = this.sendWebSocketWaitAnswer.bind(ws);
+        }
+
+        closeNow(){
+            try{
+                if (this.readyState !== 3 && this.readyState !== 2) //WebSocket.CLOSED
+                    this.close();
+            }catch(err){
+
+            }
+            this.onclose();
         }
 
         onopen() {
@@ -167,15 +178,7 @@ module.exports = function (WebSocketExtend) {
         }
 
         _setTimeoutWebSocket () {
-            this._kademliaRules.pending.pendingAdd( 'ws:'+this.id, '',() => {
-                try{
-                    if (this.readyState !== 3 && this.readyState !== 2) //WebSocket.CLOSED
-                        this.close();
-                }catch(err){
-
-                }
-                this.onclose();
-            }, ()=>{}, this._getTimeoutWebSocketTime(),  );
+            this._kademliaRules.pending.pendingAdd( 'ws:'+this.id, '',() => this.closeNow(), ()=>{}, this._getTimeoutWebSocketTime(),  );
         }
 
         _updateTimeoutWebSocket () {
