@@ -27,8 +27,6 @@ module.exports = function(options) {
 
         _requestReverseConnect(req, srcContact, [contact], cb ){
 
-            if (srcContact) this._welcomeIfNewNode(req, srcContact);
-
             try{
 
                 contact = this._kademliaNode.createContact( contact );

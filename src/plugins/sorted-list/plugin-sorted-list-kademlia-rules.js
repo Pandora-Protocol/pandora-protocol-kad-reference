@@ -21,8 +21,6 @@ module.exports = function (options) {
 
         _storeSortedListValue(req, srcContact, [table, treeKey, key, value, score], cb){
 
-            if (srcContact) this._welcomeIfNewNode(req, srcContact);
-
             const fct = this._allowedStoreSortedListTables[table.toString('ascii')];
             if (!fct) return cb(new Error('Table is not allowed'));
 
@@ -48,8 +46,6 @@ module.exports = function (options) {
          * @param cb
          */
         _findSortedList(req, srcContact, [table, treeKey], cb){
-
-            if (srcContact) this._welcomeIfNewNode(req, srcContact);
 
             this._store.getSortedList(table.toString('hex'), treeKey.toString('hex'), (err, out) => {
                 //found the data

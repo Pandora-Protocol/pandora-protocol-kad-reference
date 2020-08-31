@@ -21,7 +21,6 @@ module.exports = function(options){
         }
 
         _updateContact(req, srcContact, [contact], cb){
-            this._welcomeIfNewNode(req, srcContact);
 
             if (contact){
                 try{
@@ -62,8 +61,6 @@ module.exports = function(options){
 
             if ( !ws.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
             if ( ws.rendezvoused ) return cb(new Error(''))
-
-            if (srcContact) this._welcomeIfNewNode(ws, srcContact);
 
             if (this._rendezvousedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RENDEZVOUS.RENDEZVOUS_JOINED_MAX)
                 return cb( new Error('FULL') );
