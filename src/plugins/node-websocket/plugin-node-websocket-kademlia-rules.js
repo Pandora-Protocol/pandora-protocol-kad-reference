@@ -39,12 +39,12 @@ module.exports = function (options){
 
         }
 
-        establishConnection(dstContact, cb){
+        _establishConnection(dstContact, cb){
 
             if (dstContact.contactType === ContactType.CONTACT_TYPE_ENABLED)
                 return this._createWebSocket(dstContact, dstContact.convertProtocolToWebSocket(), cb );
 
-            return super.establishConnection(dstContact, cb);
+            return super._establishConnection(dstContact, cb);
         }
 
         async start(opts){

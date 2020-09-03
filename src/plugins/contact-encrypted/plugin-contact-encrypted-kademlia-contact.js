@@ -1,5 +1,4 @@
 const ECCUtils = require('../../helpers/ecc-utils')
-const CryptoUtils = require('../../helpers/crypto-utils')
 
 module.exports = function(options) {
 

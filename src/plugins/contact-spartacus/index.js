@@ -33,12 +33,10 @@ module.exports = {
         kademliaNode.updateContact = function(newContact){
 
             const oldContact = this.routingTable.map[ newContact.identityHex ];
-            oldContact.contact = newContact;
+            if (oldContact) oldContact.contact = newContact;
 
-            if (this.rules.alreadyConnected)
-                if (this.rules.alreadyConnected[oldContact.identityHex])
-                    this.rules.alreadyConnected[oldContact.identityHex].contact = newContact;
-
+            if (this.rules.alreadyConnected && this.rules.alreadyConnected[newContact.identityHex])
+                this.rules.alreadyConnected[newContact.identityHex].contact = newContact;
 
         }
 

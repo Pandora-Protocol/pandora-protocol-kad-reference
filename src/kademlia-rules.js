@@ -39,8 +39,15 @@ module.exports = class KademliaRules {
 
     }
 
-    establishConnection(dstContact, cb){
+    _establishConnection(dstContact, cb){
         cb(new Error("Can't establish connection to contact"));
+    }
+
+    establishConnection(dstContact, cb){
+
+        if (this.alreadyConnected[dstContact.identityHex])
+            return cb(null, this.alreadyConnected[dstContact.identityHex]);
+
     }
 
     async start(opts){
@@ -254,19 +261,23 @@ module.exports = class KademliaRules {
      *  @param contact: A new node that just joined (or that we just found out about).
      *  Process:
      */
-    _welcomeIfNewNode(req, contact, cb = ()=>{} ){
+    _welcomeIfNewNode(req, contact){
+
+        if (!contact.isContactAcceptableForKademliaRouting( ))
+            return false;
 
         if (this._kademliaNode.routingTable.map[ contact.identityHex ] || contact.identity.equals( this._kademliaNode.contact.identity ))
-            return cb(null, "already");
+            return false;  //already
 
         this._kademliaNode.routingTable.addContact(contact);
 
         if (this._replicatedStoreToNewNodesAlready[contact.identityHex])
-            return cb(null, "skipped");
+            return false; //skipped
 
         this._replicatedStoreToNewNodesAlready[contact.identityHex] = new Date().getTime();
-        this._replicateStoreToNewNode(contact, undefined, cb )
+        this._replicateStoreToNewNode(contact, undefined, ()=>{} )
 
+        return true;
     }
 
     /**

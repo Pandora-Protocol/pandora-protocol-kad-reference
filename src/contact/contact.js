@@ -87,4 +87,8 @@ module.exports = class Contact{
 
     }
 
+    isContactAcceptableForKademliaRouting(){
+        return true;
+    }
+
 }

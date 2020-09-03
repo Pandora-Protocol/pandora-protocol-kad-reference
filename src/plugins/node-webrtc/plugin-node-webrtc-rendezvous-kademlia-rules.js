@@ -36,8 +36,6 @@ module.exports = function (options) {
 
         _requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
 
-            //return;
-
             sourceIdentity = sourceIdentity.toString('hex');
 
             const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentity ];
@@ -80,8 +78,6 @@ module.exports = function (options) {
         }
 
         _requestWebRTCConnection(req, srcContact, data, cb){
-
-            data = bencode.decode(data);
 
             this._kademliaNode.rules.receiveSerialized( req, 0, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, data, {returnNotAllowed: true}, (err, info) =>{
 
@@ -147,7 +143,7 @@ module.exports = function (options) {
         }
 
         sendRendezvousWebRTCConnection(contact, identity, offer, cb){
-            this.send(contact, 'RNDZ_WRTC_CON', [ identity, bencode.encode(offer) ], cb)
+            this.send(contact, 'RNDZ_WRTC_CON', [ identity, offer ], cb)
         }
 
     }

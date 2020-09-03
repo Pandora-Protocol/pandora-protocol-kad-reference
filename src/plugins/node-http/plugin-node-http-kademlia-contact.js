@@ -40,6 +40,10 @@ module.exports = function(options) {
             return this.protocol;
         }
 
+        isContactAcceptableForKademliaRouting(){
+            return this.contactType === ContactType.CONTACT_TYPE_ENABLED;
+        }
+
     }
 
 }

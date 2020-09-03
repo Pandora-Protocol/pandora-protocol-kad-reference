@@ -6,23 +6,26 @@ module.exports = function (options){
             super(...arguments);
         }
 
-        _welcomeIfNewNode(req, contact, cb = ()=>{} ){
+        _welcomeIfNewNode(req, contact ){
 
-            const oldContact = this._kademliaNode.routingTable.map[ contact.identityHex ];
-            if (oldContact ){
+            const found = this._kademliaNode.routingTable.map[ contact.identityHex ] || this._kademliaNode.rules.alreadyConnected[ contact.identityHex ];
+
+            if (found) {
+
+                const oldContact = found.contact;
 
                 //at least 15 seconds
-                if ( oldContact.contact.isContactNewer( contact ) ) {
+                if ( oldContact.isContactNewer( contact ) ) {
 
                     this._kademliaNode.updateContact(contact);
-                    return cb(null, "timestamp updated");
+                    return true;
 
                 } else
-                    return cb(new Error('Already have'));
+                    return false;
 
             }
 
-            return super._welcomeIfNewNode(req, contact, cb);
+            return super._welcomeIfNewNode(req, contact);
 
         }
 
