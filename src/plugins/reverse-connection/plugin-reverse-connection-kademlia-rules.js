@@ -29,9 +29,7 @@ module.exports = function(options) {
 
             try{
 
-                contact = this._kademliaNode.createContact( contact );
-                if (contact) this._welcomeIfNewNode(req, contact);
-
+                this._kademliaNode.createContact( contact );
                 this.sendReverseConnect( contact, cb );
 
             }catch(err){

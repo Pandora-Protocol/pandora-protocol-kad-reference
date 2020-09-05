@@ -25,7 +25,6 @@ module.exports = function(options){
             if (contact){
                 try{
                     contact = this._kademliaNode.createContact(contact);
-                    this._welcomeIfNewNode(req, contact);
                 }catch(err){
 
                 }
@@ -162,7 +161,7 @@ module.exports = function(options){
 
                     this._kademliaNode.contact.contactUpdated();
 
-                    this._kademliaNode.crawler.contactRefresher.updateContact((err, out)=>{
+                    this._kademliaNode.crawler.contactRefresher.refreshContact((err, out)=>{
                         cb(null, contact);
                     })
 

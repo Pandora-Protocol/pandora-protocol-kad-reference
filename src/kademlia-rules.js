@@ -48,6 +48,8 @@ module.exports = class KademliaRules {
         if (this.alreadyConnected[dstContact.identityHex])
             return cb(null, this.alreadyConnected[dstContact.identityHex]);
 
+        this._establishConnection(dstContact, cb);
+
     }
 
     async start(opts){
@@ -165,12 +167,9 @@ module.exports = class KademliaRules {
     receive(req, id, srcContact, command, data, cb){
 
         try{
-            if (this._commands[command]) {
-                
-                this._welcomeIfNewNode(req, srcContact);
+            if (this._commands[command])
                 return this._commands[command].call(this, req, srcContact, data, cb);
-                
-            }
+
         }catch(err){
             cb(err);
         }
@@ -261,12 +260,12 @@ module.exports = class KademliaRules {
      *  @param contact: A new node that just joined (or that we just found out about).
      *  Process:
      */
-    _welcomeIfNewNode(req, contact){
+    _welcomeIfNewNode( contact ){
 
-        if (!contact.isContactAcceptableForKademliaRouting( ))
+        if (!contact.isContactAcceptableForKademliaRouting( ) || !this._kademliaNode.contact )
             return false;
 
-        if (this._kademliaNode.routingTable.map[ contact.identityHex ] || contact.identity.equals( this._kademliaNode.contact.identity ))
+        if (this._kademliaNode.routingTable.map[ contact.identityHex ] || contact.identity.equals( this._kademliaNode.contact.identity ) )
             return false;  //already
 
         this._kademliaNode.routingTable.addContact(contact);

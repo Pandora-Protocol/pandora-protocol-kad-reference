@@ -3,6 +3,11 @@ const KBucket = require('./kbucket')
 const async = require('async')
 const RoutingTableRefresher = require('./routing-table-refresher')
 
+/**
+ * Stores only the contacts that respect the properties of the Kademlia Network
+ * @type {RoutingTable}
+ */
+
 module.exports = class RoutingTable {
 
     constructor(kademliaNode) {
@@ -23,6 +28,7 @@ module.exports = class RoutingTable {
     }
 
     async start(opts, cb){
+
         if (this._started || this._starting) throw "Already started";
 
         this._starting = true;

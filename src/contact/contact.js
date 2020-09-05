@@ -58,6 +58,19 @@ module.exports = class Contact{
         return arr;
     }
 
+    fromContact(otherContact){
+
+        for (const key of this._allKeys)
+            delete this[this._allKeys[key]];
+
+        this._keys = otherContact._keys;
+        this._allKeys = otherContact._allKeys;
+
+        for (const key of otherContact._keys)
+            this[key] = otherContact[key];
+
+    }
+
     toArrayBuffer(){
         return bencode.encode(this.toArray());
     }

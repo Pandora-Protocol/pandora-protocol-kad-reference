@@ -7,7 +7,7 @@ module.exports = class ContactRefresher {
         this._updateId = 0;
     }
 
-    updateContact(cb){
+    refreshContact(cb){
 
         this._updateId = new Date().getTime();
         const updateId = this._updateId;

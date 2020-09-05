@@ -130,6 +130,7 @@ module.exports = class Crawler {
                     } else
                     //If the result is a contact/node list, just keep track of it
                     if ( result[0] === 0 ){
+
                         const added = shortlist.add( result[1] );
 
                         //If it wasn't in the shortlist, we haven't added to the routing table, so do that now.

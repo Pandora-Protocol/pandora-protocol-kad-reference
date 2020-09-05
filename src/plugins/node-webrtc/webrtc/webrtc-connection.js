@@ -23,9 +23,8 @@ module.exports = class WebRTCConnection {
 
     initializeWebRTC(  contact ){
 
-
-        this.id = contact.identityHex;
         this.contact = contact;
+        this.id = contact.identityHex;
         this.contactProtocol  = ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC;
 
         this.status = ContactConnectedStatus.CONTACT_CLOSED;
@@ -37,7 +36,7 @@ module.exports = class WebRTCConnection {
         this._kademliaRules._webRTCActiveConnectionsByContactsMap[contact.identityHex] = this;
         this._kademliaRules._webRTCActiveConnections.push(this)
 
-        this._kademliaRules.pending.pendingAdd('webRTC:' + this.contact.identityHex, 'creation', timeout => this.close(), resolve => {}, 2*KAD_OPTIONS.T_RESPONSE_TIMEOUT );
+        this._kademliaRules.pending.pendingAdd('webrtc:' + this.contact.identityHex, 'creation', timeout => this.close(), resolve => {}, 2*KAD_OPTIONS.T_RESPONSE_TIMEOUT );
 
     }
 
@@ -46,7 +45,7 @@ module.exports = class WebRTCConnection {
         console.log("webrtc connected")
 
         this.status = ContactConnectedStatus.CONTACT_OPEN;
-        this._kademliaRules.pending.pendingResolve('webRTC:' + this.contact.identityHex, 'creation', resolve => resolve( ) );
+        this._kademliaRules.pending.pendingResolve('webrtc:' + this.contact.identityHex, 'creation', resolve => resolve( ) );
 
         if (this._queue.length) {
             const copy = [...this._queue];
@@ -89,7 +88,7 @@ module.exports = class WebRTCConnection {
 
         }
 
-        this._kademliaRules.pending.pendingTimeoutAll('webrtc:' + this.id, timeout => timeout());
+        this._kademliaRules.pending.pendingTimeoutAll('webrtc:' + this.id, timeout => timeout() );
 
         if (this._queue.length) {
             for (const data of this._queue)

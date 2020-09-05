@@ -26,6 +26,10 @@ module.exports = class KademliaRulesPending {
     pendingDelete(key){
         delete this.list[key];
         delete this._counts[key];
+        if (this._counts[key] === 0){
+            delete this.list[key];
+            delete this._counts[key];
+        }
     }
 
     pendingAdd(key, key2, timeout, resolve, time ){
@@ -34,6 +38,7 @@ module.exports = class KademliaRulesPending {
             this.list[key] = {};
             this._counts[key] = 0;
         }
+
         if (key2 === undefined) key2 = Math.random().toString() + '_' +  Math.random().toString();
 
         this.list[key][key2] = {
@@ -75,15 +80,19 @@ module.exports = class KademliaRulesPending {
             cb(this.list[key][key2].resolve, key, key2);
         }catch(err){
             console.error('pendingResolve', err);
+        }finally{
+
+            delete this.list[key][key2];
+            this._counts[key]--;
+
+            if (this._counts[key] === 0){
+                delete this.list[key];
+                delete this._counts[key];
+            }
+
+
         }
 
-        delete this.list[key][key2];
-        this._counts[key]--;
-
-        if (this._counts[key] === 0){
-            delete this.list[key];
-            delete this._counts[key];
-        }
 
         return true;
     }

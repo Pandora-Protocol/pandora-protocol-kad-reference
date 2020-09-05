@@ -1,4 +1,5 @@
 const PluginContactSpartacusKademliaContact = require('./plugin-contact-spartacus-kademlia-contact')
+const PluginContactSpartacusKademliaContactsMap = require('./plugin-contact-spartacus-kademlia-contacts-map')
 const PluginContactSpartacusKademliaRules = require('./plugin-contact-spartacus-kademlia-rules')
 const PluginContactSpartacusKademliaContactStorage = require('./plugin-contact-spartacus-kademlia-contact-storage')
 
@@ -15,11 +16,12 @@ module.exports = {
         options.Contact = PluginContactSpartacusKademliaContact(options);
         options.Rules = PluginContactSpartacusKademliaRules(options);
         options.ContactStorage = PluginContactSpartacusKademliaContactStorage(options);
+        options.ContactsMap = PluginContactSpartacusKademliaContactsMap(options);
 
         const _createContact = kademliaNode.createContact.bind(kademliaNode);
-        kademliaNode.createContact = function () {
+        kademliaNode.createContact = function (arr, update = true) {
 
-            const contact = _createContact(...arguments);
+            const contact = _createContact(arr, false);
 
             //validate signature
             if (!contact.verifyContact() )
@@ -27,17 +29,7 @@ module.exports = {
 
             contact.identity = contact.computeContactIdentity()
 
-            return contact;
-        }
-
-        kademliaNode.updateContact = function(newContact){
-
-            const oldContact = this.routingTable.map[ newContact.identityHex ];
-            if (oldContact) oldContact.contact = newContact;
-
-            if (this.rules.alreadyConnected && this.rules.alreadyConnected[newContact.identityHex])
-                this.rules.alreadyConnected[newContact.identityHex].contact = newContact;
-
+            return update ? this.contactsMap.updateContact(contact) : contact;
         }
 
         return {

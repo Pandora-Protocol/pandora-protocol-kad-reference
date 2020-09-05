@@ -84,7 +84,7 @@ module.exports = function (options) {
                 if (err) return cb(null, []);
 
                 const contact = info[0];
-                this._welcomeIfNewNode(req, contact);
+                this._welcomeIfNewNode( contact );
 
                 if (this.alreadyConnected[contact.identityHex]) return cb(null, []);
 

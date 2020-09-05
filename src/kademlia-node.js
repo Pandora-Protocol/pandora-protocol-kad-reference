@@ -8,6 +8,7 @@ const MemoryStore = require('./store/store-memory')
 const Storage = require('./storage/storage')
 const ContactStorage = require('./contact/contact-storage')
 const KademliaNodePlugins = require('./plugins/kademlia-node-plugins')
+const ContactsMap = require('./contact/contacts-map')
 
 module.exports = class KademliaNode extends EventEmitter {
 
@@ -23,6 +24,7 @@ module.exports = class KademliaNode extends EventEmitter {
             RoutingTable,
             Rules: KademliaRules,
             Crawler,
+            ContactsMap,
             ...options,
         }
 
@@ -41,6 +43,7 @@ module.exports = class KademliaNode extends EventEmitter {
         this.routingTable = new options.RoutingTable(this);
         this.rules = new options.Rules ( this, this._store );
         this.crawler = new options.Crawler(this);
+        this.contactsMap = new options.ContactsMap(this);
 
         this._started = false;
         this._starting = false;
@@ -94,6 +97,7 @@ module.exports = class KademliaNode extends EventEmitter {
      */
     join(contact, first = false, cb = ()=>{} ) {
 
+        contact = this.contactsMap.updateContact(contact);
         this.routingTable.addContact(contact);
 
         this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{
@@ -156,9 +160,10 @@ module.exports = class KademliaNode extends EventEmitter {
 
     }
 
-    createContact(arr){
+    createContact(arr, update = true){
         //used for bencode
-        return new this.Contact( ...[ this, ...arr] );
+        const contact = new this.Contact( ...[ this, ...arr] );
+        return update ? this.contactsMap.updateContact(contact) : contact;
     }
 
 }
