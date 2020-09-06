@@ -17,12 +17,10 @@ module.exports = class WebSocketConnectionSocket extends PluginNodeWebsocketConn
         connection.onerror =  connection.onclose = this.onclose.bind(this);
         connection.onmessage = this.onmessage.bind(this);
 
-        if (connection.readyState === 1) { //OPEN
-            this.status = ContactConnectedStatus.CONTACT_OPEN;
-            this._updateTimeout();
-        }
+        if (connection.readyState === 1)  //OPEN
+            this.onopen();
         else
-            this.status = ContactConnectedStatus.CONTACT_CLOSED;
+            this.status = ContactConnectedStatus.CONTACT_OPENING;
 
         kademliaRules._webSocketActiveConnectionsMap[connection.address] = this;
 
@@ -34,6 +32,7 @@ module.exports = class WebSocketConnectionSocket extends PluginNodeWebsocketConn
         }catch(err){
 
         }
+        this.onclose();
     }
 
     onclose(){

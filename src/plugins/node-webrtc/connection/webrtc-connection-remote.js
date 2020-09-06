@@ -23,18 +23,19 @@ module.exports = class WebRTCConnectionRemote extends WebRTConnection{
 
     async useInitiatorOffer(offer, cb){
 
+        let answer;
+
         try{
 
             await this._rtcPeerConnection.setRemoteDescription(offer);
-            const answer = await this._rtcPeerConnection.createAnswer();
+            answer = await this._rtcPeerConnection.createAnswer();
             await this._rtcPeerConnection.setLocalDescription(answer);
-
-            cb(null, answer);
 
         }catch(err){
             return cb(err);
         }
 
+        cb(null, answer);
     }
 
 

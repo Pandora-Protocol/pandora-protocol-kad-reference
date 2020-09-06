@@ -81,13 +81,16 @@ module.exports = function (options){
 
                 const ws = new IsomorphicWebSocket(address, data.toString('hex') );
 
+                let connection;
+
                 try{
-                    const connection = this.pluginNodeWebsocketExtends.initializeWebSocket(this, dstContact, ws);
+                    connection = this.pluginNodeWebsocketExtends.initializeWebSocket(this, dstContact, ws);
                     this.pending.pendingAdd( connection._pendingPrefix, 'creation', () => connection.closeNow(), () => {}, KAD_OPTIONS.T_RESPONSE_TIMEOUT );
-                    cb(null, connection);
                 }catch(err){
-                    cb(err);
+                    return cb(err);
                 }
+
+                cb(null, connection);
 
             } );
 

@@ -24,24 +24,21 @@ module.exports = function(options){
 
         _updateContact(req, srcContact, [contact], cb){
 
-            if (contact){
+            if (contact)
                 try{
                     contact = this._kademliaNode.createContact(contact);
                 }catch(err){
-
+                    return cb(null, [0]);
                 }
-            }
 
             cb(null, [1]);
         }
 
         sendUpdateContact(contact, cb){
 
-            const data = [];
-            if ( this.alreadyConnected[contact.identityHex]  )
-                data.push(this._kademliaNode.contact);
-
+            const data = this.alreadyConnected[contact.identityHex] ? [this._kademliaNode.contact] : [];
             this.send(contact, 'UPD_CONTACT', data, cb)
+
         }
 
         async start(opts){
@@ -58,23 +55,23 @@ module.exports = function(options){
             clearAsyncInterval( this._asyncIntervalSetRendezvous );
         }
 
-        _rendezvousJoin(ws, srcContact, data, cb){
+        _rendezvousJoin(req, srcContact, data, cb){
 
-            if ( !ws.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
-            if ( ws.rendezvoused ) return cb(new Error(''))
+            if ( !req.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
+            if ( req.rendezvoused ) return cb(new Error('Req is not rendezvoused by me'))
 
             if (this._rendezvousedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RENDEZVOUS.RENDEZVOUS_JOINED_MAX)
-                return cb( new Error('FULL') );
+                return cb( null, [0]);
 
             this._rendezvousedJoined++;
-            ws.rendezvoused = true;
+            req.rendezvoused = true;
 
-            ws.on("close", function(event) {
+            req.on("closed", function(event) {
                 this._rendezvousedJoined--;
                 delete ws.rendezvoused;
             });
 
-            ws._updateTimeout();
+            req._updateTimeout();
 
             cb(null, [1] );
 
@@ -107,7 +104,7 @@ module.exports = function(options){
 
             this._kademliaNode.rules.sendRendezvousJoin(contact, (err, out)=> {
 
-                if (out) return cb(null, contact );
+                if (out && out[0] && out[0] === 1) return cb(null, contact );
                 else NextTick( this._selectRendezvous.bind(this, array, cb) );
 
             });

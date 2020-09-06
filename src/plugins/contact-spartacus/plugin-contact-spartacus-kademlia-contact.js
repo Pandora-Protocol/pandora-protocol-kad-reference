@@ -67,7 +67,7 @@ module.exports = function(options) {
         isContactNewer(newContact){
 
             //at least 15 seconds
-            return newContact.timestamp - this.timestamp  >= KAD_OPTIONS.PLUGINS.CONTACT_SPARTACUS.T_CONTACT_TIMESTAMP_DIFF_UPDATE;
+            return newContact.timestamp > this.timestamp;
 
         }
 

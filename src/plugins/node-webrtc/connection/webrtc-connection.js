@@ -36,9 +36,7 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
         this.chunkSize = Math.min(otherPeerMaxChunkSize, myMaxChunkSize)
     }
 
-    onclose(callTimeout = true) {
-
-        super.onclose(...arguments)
+    close(){
 
         try{
             if (this._rtcPeerConnection) {
@@ -48,6 +46,12 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
         }catch(err){
 
         }
+        this.onclose();
+    }
+
+    onclose(callTimeout = true) {
+
+        super.onclose(...arguments)
 
         if (this._kademliaRules._webRTCActiveConnectionsByContactsMap[this.contact.identityHex] === this) {
             delete this._kademliaRules._webRTCActiveConnectionsByContactsMap[this.contact.identityHex];

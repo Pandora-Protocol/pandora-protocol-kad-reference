@@ -50,11 +50,11 @@ module.exports = function (options) {
                     .then( answer => {} )
                     .catch(err => { });
 
-                cb(null, [1] );
-
             }catch(err){
                 return cb(null, []);
             }
+
+            cb(null, [1] );
 
         }
 
@@ -67,7 +67,7 @@ module.exports = function (options) {
             const finalIdentityHex = finalIdentity.toString('hex');
 
             const ws = this._webSocketActiveConnectionsByContactsMap[ finalIdentityHex ];
-            if (!ws) return cb(null, [] );
+            if (!ws || !ws.isWebSocket) return cb(null, [] );
 
             this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate, cb );
 
@@ -104,7 +104,7 @@ module.exports = function (options) {
                 webRTC.useInitiatorOffer(offer, (err, answer)=>{
 
                     if (err){
-                        webRTC.close();
+                        webRTC.closeNow();
                         return cb(null, []);
                     }
 
@@ -112,7 +112,7 @@ module.exports = function (options) {
                     this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true} , (err, data) =>{
 
                         if (err){
-                            webRTC.close();
+                            webRTC.closeNow();
                             return cb(null, []);
                         }
 
@@ -135,7 +135,7 @@ module.exports = function (options) {
             const identityHex = identity.toString('hex');
 
             const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-            if (!ws) return cb(null, [] );
+            if (!ws || !ws.isWebSocket) return cb(null, [] );
 
             this.sendRequestWebRTConnection(ws.contact, offer, cb );
 

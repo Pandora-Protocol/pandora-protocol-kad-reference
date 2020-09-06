@@ -22,16 +22,18 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
 
     async createInitiatorOffer(cb){
 
+        let description;
+
         try{
 
-            const description = await this._rtcPeerConnection.createOffer(  );
+            description = await this._rtcPeerConnection.createOffer(  );
             await this._rtcPeerConnection.setLocalDescription(description);
 
-            cb(null, description);
-
         }catch(err){
-            cb(err);
+            return cb(err);
         }
+
+        cb(null, description);
 
     }
 
@@ -39,10 +41,11 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
 
         try{
             await this._rtcPeerConnection.setRemoteDescription(answer);
-            cb(null, true);
         }catch(err){
-            cb(err);
+            return cb(err);
         }
+
+        cb(null, true);
 
     }
 

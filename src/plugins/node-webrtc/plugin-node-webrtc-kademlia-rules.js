@@ -47,10 +47,10 @@ module.exports = function (options) {
 
             const webRTC = new WebRTCConnectionInitiator(this, null, dstContact);
 
-             webRTC.createInitiatorOffer((err, offer) => {
+            webRTC.createInitiatorOffer((err, offer) => {
 
                 if (err) {
-                    webRTC.close();
+                    webRTC.closeNow();
                     return cb(err);
                 }
 
@@ -63,21 +63,21 @@ module.exports = function (options) {
                 this._sendProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true}, (err, data) =>{
 
                     if (err){
-                        webRTC.close();
+                        webRTC.closeNow();
                         return cb(err);
                     }
 
                     this.sendRendezvousWebRTCConnection(dstContact.rendezvousContact, dstContact.identity, data, (err, info ) => {
 
                         if (err || !info || !info.length){
-                            webRTC.close();
+                            webRTC.closeNow();
                             return cb(new Error('Rendezvous error'));
                         }
 
                         this._kademliaNode.rules._receivedProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true}, (err, info) =>{
 
                             if (err){
-                                webRTC.close();
+                                webRTC.closeNow();
                                 return cb(new Error('Answer Decoding error'));
                             }
 
@@ -95,7 +95,7 @@ module.exports = function (options) {
                                 webRTC.userRemoteAnswer(answer, (err, out)=>{
 
                                     if (err){
-                                        webRTC.close();
+                                        webRTC.closeNow();
                                         return cb(err);
                                     }
 
@@ -104,7 +104,7 @@ module.exports = function (options) {
                                 });
 
                             }catch(err){
-                                webRTC.close();
+                                webRTC.closeNow();
                                 return cb(err);
                             }
 

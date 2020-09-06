@@ -42,17 +42,18 @@ module.exports = function (options){
 
                 this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
 
-                    if (err) return cb(err);
+                    if (err) return reject(err);
 
                     opts.nonce = sybilSignature.signature;
                     opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
 
+                    let out;
                     try{
-                        const out = await super.createContactArgs( opts );
-                        resolve(out);
+                        out = await super.createContactArgs( opts );
                     }catch(err){
-                        reject(err);
+                        return reject(err);
                     }
+                    resolve(out);
 
                 } );
 

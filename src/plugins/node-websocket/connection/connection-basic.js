@@ -15,7 +15,7 @@ module.exports = class ConnectionBasic extends EventEmitter {
         this.contact = contact;
         this.contactProtocol  = contactProtocol;
         this.id = contact.identityHex;
-        this.status = ContactConnectedStatus.CONTACT_CLOSED;
+        this.status = ContactConnectedStatus.CONTACT_OPENING;
 
         this._queue = [];
 
@@ -25,12 +25,14 @@ module.exports = class ConnectionBasic extends EventEmitter {
 
     closeNow(){
 
-        if (this.status === ContactConnectedStatus.CONTACT_OPEN)
+        if (this.status !== ContactConnectedStatus.CONTACT_CLOSED)
             this.close();
 
     }
 
     onopen() {
+
+        if (this.status === ContactConnectedStatus.CONTACT_OPEN) return;
 
         this.status = ContactConnectedStatus.CONTACT_OPEN;
 
@@ -51,6 +53,8 @@ module.exports = class ConnectionBasic extends EventEmitter {
 
     onclose () {
 
+        if (this.status === ContactConnectedStatus.CONTACT_CLOSED) return;
+
         this.status = ContactConnectedStatus.CONTACT_CLOSED;
 
         if (this._kademliaRules.alreadyConnected[this.contact.identityHex] === this)
@@ -59,9 +63,12 @@ module.exports = class ConnectionBasic extends EventEmitter {
         this._kademliaRules.pending.pendingTimeoutAll(this._pendingPrefix, timeout => timeout() );
 
         if (this._queue.length) {
-            for (const data of this._queue)
-                data.cb(new Error('Disconnected or Error'))
+
+            const queue = this._queue;
             this._queue = [];
+
+            for (const data of queue)
+                data.cb(new Error('Disconnected or Error'))
         }
 
         this.emit("closed", this );
@@ -116,12 +123,12 @@ module.exports = class ConnectionBasic extends EventEmitter {
 
     }
 
-    _getTimeoutWebSocketTime () {
+    _getTimeoutConnectionTime () {
         return KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
     }
 
-    _setTimeoutWebSocket () {
-        this._kademliaRules.pending.pendingAdd( this._pendingPrefix, '',() => this.closeNow(), ()=>{}, this._getTimeoutWebSocketTime(),  );
+    _setTimeoutConnection () {
+        this._kademliaRules.pending.pendingAdd( this._pendingPrefix, '',() => this.closeNow(), ()=>{}, this._getTimeoutConnectionTime(),  );
     }
 
     _updateTimeout () {
@@ -129,10 +136,10 @@ module.exports = class ConnectionBasic extends EventEmitter {
         const pending = this._kademliaRules.pending.list[ this._pendingPrefix ];
         if (pending && pending['']) {
             pending[''].timestamp = new Date().getTime();
-            pending[''].time = this._getTimeoutWebSocketTime();
+            pending[''].time = this._getTimeoutConnectionTime();
         }
         else
-            this._setTimeoutWebSocket();
+            this._setTimeoutConnection();
     }
 
     sendConnectionWaitAnswer ( id, buffer, cb)  {
