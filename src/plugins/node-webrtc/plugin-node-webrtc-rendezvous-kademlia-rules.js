@@ -2,7 +2,7 @@
 const ContactAddressProtocolType = require('../contact-type/contact-address-protocol-type')
 const bencode = require('bencode');
 
-const WebRTCConnectionRemote = require('./webrtc/webrtc-connection-remote')
+const WebRTCConnectionRemote = require('./connection/webrtc-connection-remote')
 
 module.exports = function (options) {
 
@@ -88,8 +88,7 @@ module.exports = function (options) {
 
                 if (this.alreadyConnected[contact.identityHex]) return cb(null, []);
 
-                const webRTC = new WebRTCConnectionRemote(this);
-                webRTC.initializeWebRTC(contact);
+                const webRTC = new WebRTCConnectionRemote(this, null, contact);
 
                 const [offer, otherPeerMaxChunkSize ] = info[2];
 

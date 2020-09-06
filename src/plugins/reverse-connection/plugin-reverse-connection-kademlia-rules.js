@@ -29,7 +29,7 @@ module.exports = function(options) {
 
             try{
 
-                this._kademliaNode.createContact( contact );
+                contact = this._kademliaNode.createContact( contact );
                 this.sendReverseConnect( contact, cb );
 
             }catch(err){
@@ -47,10 +47,10 @@ module.exports = function(options) {
             try{
 
                 const identityHex = identity.toString('hex');
-                const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-                if (!ws) return cb(null, []);
+                const connection = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
+                if (!connection) return cb(null, []);
 
-                this.sendRequestReverseConnect(ws.contact, srcContact, cb );
+                this.sendRequestReverseConnect( connection.contact, srcContact, cb );
 
             }catch(err){
                 cb(null, []);
@@ -59,7 +59,7 @@ module.exports = function(options) {
         }
 
         sendRendezvousReverseConnection(contact, identity, cb){
-            this.send(contact, 'RNDZ_REV_CON', [ identity],  cb);
+            this.send(contact, 'RNDZ_REV_CON', [ identity ],  cb);
         }
 
         _sendNow(dstContact, command, data, cb){

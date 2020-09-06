@@ -3,7 +3,7 @@ const ContactAddressProtocolType = require('../contact-type/contact-address-prot
 const BufferHelper = require('../../helpers/buffer-utils')
 const ContactWebRTCType = require('./contact-webrtc-type')
 const ContactType = require('../contact-type/contact-type')
-const WebRTCConnectionInitiator = require('./webrtc/webrtc-connection-initiator')
+const WebRTCConnectionInitiator = require('./connection/webrtc-connection-initiator')
 
 module.exports = function (options) {
 
@@ -45,8 +45,7 @@ module.exports = function (options) {
                 return cb(new Error('Invalid contact for webRTC'));
             }
 
-            const webRTC = new WebRTCConnectionInitiator(this);
-            webRTC.initializeWebRTC( dstContact);
+            const webRTC = new WebRTCConnectionInitiator(this, null, dstContact);
 
              webRTC.createInitiatorOffer((err, offer) => {
 
@@ -134,11 +133,11 @@ module.exports = function (options) {
 
             //connected once already already
             const webRTC = this._webRTCActiveConnectionsByContactsMap[dstContact.identityHex];
-            if (webRTC) return webRTC.sendWebRTCWaitAnswer(id, buffer, cb);
+            if (webRTC) return webRTC.sendConnectionWaitAnswer(id, buffer, cb);
 
             this._createWebRTC( dstContact, protocol,(err, webRTC)=>{
                 if (err) return cb(err);
-                webRTC.sendWebRTCWaitAnswer( id, buffer, cb);
+                webRTC.sendConnectionWaitAnswer( id, buffer, cb);
             })
 
         }

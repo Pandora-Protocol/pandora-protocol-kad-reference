@@ -12,7 +12,6 @@ module.exports = function(options) {
             if (this.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS) {
 
                 this.rendezvous = arguments[this._argumentIndex++];
-                this.rendezvousContact = this._kademliaNode.createContact( bencode.decode(this.rendezvous) );
 
                 this._keys.push('rendezvous');
 
@@ -21,6 +20,15 @@ module.exports = function(options) {
             this._allKeys.push('rendezvous');
 
             this._specialContactProtocolByCommands['RNDZ_JOIN'] = this.convertProtocolToWebSocket.bind(this);
+        }
+
+        set rendezvous(rendezvous){
+            this._rendezvous = rendezvous;
+            this.rendezvousContact = this._kademliaNode.createContact( bencode.decode(this._rendezvous) );
+        }
+
+        get rendezvous(){
+            return this._rendezvous;
         }
 
     }

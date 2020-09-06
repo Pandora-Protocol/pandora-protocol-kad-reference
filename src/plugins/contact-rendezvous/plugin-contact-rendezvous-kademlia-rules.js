@@ -1,7 +1,9 @@
 const ContactType = require('../contact-type/contact-type')
 const NextTick = require('../../helpers/next-tick')
 const {setAsyncInterval, clearAsyncInterval} = require('../../helpers/async-interval')
-const PluginContactRendezvousWebSocketExtends = require("./plugin-contact-rendezvous-websocket-extends")
+
+const PluginContactRendezvousConnectionSocket = require('./connection/plugin-contact-rendezvous-connection-socket')
+
 module.exports = function(options){
 
     return class Rules extends options.Rules{
@@ -16,7 +18,7 @@ module.exports = function(options){
             this._commands['RNDZ_JOIN'] = this._rendezvousJoin.bind(this);
             this._commands['UPD_CONTACT'] = this._updateContact.bind(this);
 
-            this.PluginNodeWebsocketExtends = PluginContactRendezvousWebSocketExtends(this.PluginNodeWebsocketExtends);
+            this.pluginNodeWebsocketExtends.PluginNodeWebsocketConnectionSocketClass = PluginContactRendezvousConnectionSocket;
 
         }
 
@@ -67,12 +69,12 @@ module.exports = function(options){
             this._rendezvousedJoined++;
             ws.rendezvoused = true;
 
-            ws.addEventListener("close", function(event) {
+            ws.on("close", function(event) {
                 this._rendezvousedJoined--;
                 delete ws.rendezvoused;
             });
 
-            ws._updateTimeoutWebSocket();
+            ws._updateTimeout();
 
             cb(null, [1] );
 

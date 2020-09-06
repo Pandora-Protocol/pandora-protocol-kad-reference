@@ -15,7 +15,7 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
             maxPacketLifeTime: 3000, // in milliseconds
         });
 
-        this._channel.onmessage = e => this._onChannelMessageCallback(e, this._channel);
+        this._channel.onmessage = e => this.onmessage(e, this._channel);
         this._channel.onopen = e => this._onChannelStateChange(e, this._channel);
         this._channel.onclose = e => this._onChannelStateChange(e, this._channel);
     }
