@@ -15,6 +15,7 @@ module.exports = function(options){
             this._keys.push('webrtcType');
             this._allKeys.push('webrtcType');
 
+            this._specialContactProtocolByCommands['RNDZ_WRTC_CON'] = this.convertProtocolToWebSocket.bind(this);
         }
 
         getProtocol(command){

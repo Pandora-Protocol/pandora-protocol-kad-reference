@@ -68,7 +68,7 @@ module.exports = function(options){
 
             req.on("closed", function(event) {
                 this._rendezvousedJoined--;
-                delete ws.rendezvoused;
+                delete req.rendezvoused;
             });
 
             req._updateTimeout();
