@@ -19,15 +19,40 @@ module.exports =  {
     },
 
     encrypt(publicKey, message, cb){
+
+        let done;
         eccrypto.encrypt(publicKey, message)
-            .then( out => cb(null, out) )
-            .catch( cb )
+            .then( out => {
+                if (!done) {
+                    done = true;
+                    cb(null, out)
+                }
+            } )
+            .catch( err => {
+                if (!done) {
+                    done = true;
+                    cb(err)
+                }
+            } )
     },
 
     decrypt(privateKey, message, cb){
+
+        let done;
+
         eccrypto.decrypt( privateKey, message, )
-            .then( out => cb(null, out) )
-            .catch( cb )
+            .then( out => {
+                if (!done) {
+                    done = true;
+                    cb(null, out)
+                }
+            } )
+            .catch( err => {
+                if (!done) {
+                    done = true;
+                    cb(err)
+                }
+            } )
     },
 
     sign(privateKey, msg){

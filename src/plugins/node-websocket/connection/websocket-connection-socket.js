@@ -8,6 +8,9 @@ module.exports = class WebSocketConnectionSocket extends PluginNodeWebsocketConn
 
         super(kademliaRules, connection, contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, 'ws');
 
+        const address = contact.hostname +':'+ contact.port + contact.path;
+        this.address = address;
+
         this.isWebSocket = true;
         kademliaRules._webSocketActiveConnectionsByContactsMap[contact.identityHex] = this;
         kademliaRules.alreadyConnected[contact.identityHex] = this;
@@ -22,7 +25,7 @@ module.exports = class WebSocketConnectionSocket extends PluginNodeWebsocketConn
         else
             this.status = ContactConnectedStatus.CONTACT_OPENING;
 
-        kademliaRules._webSocketActiveConnectionsMap[connection.address] = this;
+        kademliaRules._webSocketActiveConnectionsMap[this.address] = this;
 
     }
 

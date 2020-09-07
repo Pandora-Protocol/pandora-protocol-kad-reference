@@ -97,7 +97,7 @@ module.exports = function (options) {
 
                 webRTC._rtcPeerConnection.onicecandidate = e => {
                     if (e.candidate)
-                        this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{ })
+                        this.sendRendezvousIceCandidateWebRTConnection( srcContact, contact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{ })
                 }
 
                 webRTC.processData(offer);

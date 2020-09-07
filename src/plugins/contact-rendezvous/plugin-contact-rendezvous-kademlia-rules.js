@@ -18,7 +18,7 @@ module.exports = function(options){
             this._commands['RNDZ_JOIN'] = this._rendezvousJoin.bind(this);
             this._commands['UPD_CONTACT'] = this._updateContact.bind(this);
 
-            this.pluginNodeWebsocketExtends.PluginNodeWebsocketConnectionSocketClass = PluginContactRendezvousConnectionSocket;
+            this.PluginNodeWebsocketConnectionSocketClass = PluginContactRendezvousConnectionSocket;
 
         }
 
@@ -126,7 +126,7 @@ module.exports = function(options){
                 return cb(null, ws )
             }
 
-            this._createWebSocket(address, contact, protocol,(err, ws) => {
+            this._createWebSocket( contact, protocol,(err, ws) => {
 
                 if (err) return cb(err);
                 ws.socketConnectedAsRendezvousSocket();
