@@ -2,8 +2,8 @@ module.exports = {
 
     VERSION:{
         APP: "research",
-        VERSION: "0.1",
-        VERSION_COMPATIBILITY: "0.1",
+        VERSION: "0.1010",
+        VERSION_COMPATIBILITY: "0.101",
     },
 
     ALPHA_CONCURRENCY: 10, //ALPHA - Degree of parallelism
@@ -25,7 +25,7 @@ module.exports = {
     T_BUCKETS_REPUBLISH: 86400000, //Interval for republishing data
 
     T_STORE_KEY_EXPIRY: 86405000, // Interval for expiring local data entries
-    T_STORE_GARBAGE_COLLECTOR: 5*60*3600,
+    T_STORE_GARBAGE_COLLECTOR: 60*60*1000,
     T_STORE_GARBAGE_COLLECTOR_SLEEP: 25, //25 ms for iterator
 
     T_RESPONSE_TIMEOUT: 5000, //Time to wait for RPC response
@@ -50,22 +50,40 @@ module.exports = {
 
             T_WEBRTC_DISCONNECT_INACTIVITY: 3*60*1000, //3 mins
 
-            ICE_SERVERS: [ {
-                url: 'stun:stun1.l.google.com:19302'
-            }, {
-                url: 'turn:numb.viagenie.ca',
-                credential: 'muazkh',
-                username: 'webrtc@live.com'
-            },
-            {urls: "turn:192.155.84.88", "username": "easyRTC", "credential": "easyRTC@pass"},
-            {urls: "turn:192.155.84.88?transport=tcp", "username": "easyRTC", "credential": "easyRTC@pass"},
-            {urls: "turn:192.155.86.24:443", "credential": "easyRTC@pass", "username": "easyRTC"},
-            {urls: "turn:192.155.86.24:443?transport=tcp", "credential": "easyRTC@pass", "username": "easyRTC"},
-            {
-                urls: "turn:numb.viagenie.ca",
-                username: "pasaseh@ether123.net",
-                credential: "12345678"
-            }
+            ICE_SERVERS: [
+
+                {urls:"stun:stun.l.google.com:19302"},
+                {urls:"stun:global.stun.twilio.com:3478?transport=udp"},
+                {
+                    urls: 'turn:relay.backups.cz',
+                    credential: 'webrtc',
+                    username: 'webrtc'
+                },
+                {
+                    urls: 'turn:relay.backups.cz?transport=tcp',
+                    credential: 'webrtc',
+                    username: 'webrtc'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'muazkh',
+                    username: 'webrtc@live.com'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'remember',
+                    username: 'aaronfrost@gmail.com'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'beaver',
+                    username: 'webrtc.websitebeaver@gmail.com'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'webrtcdemo',
+                    username: 'louis@mozilla.com'
+                },
             ]
 
         },

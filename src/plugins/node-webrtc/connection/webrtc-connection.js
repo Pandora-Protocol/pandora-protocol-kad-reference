@@ -15,16 +15,20 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
         this._readyState = 'close';
 
         this.isWebRTC = true;
-        this._connection = this._rtcPeerConnection = new WebRTC.RTCPeerConnection({config});
+        this._connection = this._rtcPeerConnection = new WebRTC.RTCPeerConnection(config);
 
         this._chunks = {};
+
+        this._iceCandidates = [];
+        this._iceCandidatesReady = false;
+
         this.chunkSize = 0;
 
         this._kademliaRules.alreadyConnected[contact.identityHex] = this;
         this._kademliaRules._webRTCActiveConnectionsByContactsMap[contact.identityHex] = this;
         this._kademliaRules._webRTCActiveConnections.push(this)
 
-        this._kademliaRules.pending.pendingAdd( this._pendingPrefix, 'creation', timeout => this.closeNow(), resolve => {}, 2*KAD_OPTIONS.T_RESPONSE_TIMEOUT );
+        this._kademliaRules.pending.pendingAdd( this._pendingPrefix, 'creation', timeout => this.closeNow(), resolve => {}, 12 * KAD_OPTIONS.T_RESPONSE_TIMEOUT );
 
     }
 
@@ -200,6 +204,40 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
         }
 
         return 16*1024;
+    }
+
+    addIceCandidate(candidate){
+
+        this._iceCandidates.push(candidate);
+
+        if (this._iceCandidatesReady)
+            this._useAllCandidates();
+    }
+
+    _useAllCandidates(){
+
+        const list = this._iceCandidates;
+        this._iceCandidates = [];
+
+        for (const item of list) {
+
+            try{
+                const candidate = new WebRTC.RTCIceCandidate(item);
+
+                this._rtcPeerConnection.addIceCandidate(candidate)
+                    .then(answer => {
+                        console.log("addIceCandidate success", answer)
+                    })
+                    .catch(err => {
+                        console.log("addIceCandidate raised an error", err)
+                    });
+            }catch(err){
+                console.error( "new WebRTC.RTCIceCandidate raised an error", err  )
+            }
+
+        }
+
+
     }
 
 }

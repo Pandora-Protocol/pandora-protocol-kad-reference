@@ -1,4 +1,5 @@
 const WebRTConnection = require('./webrtc-connection')
+const WebRTC = require('../webrtc/isomorphic-webrtc')
 
 /**
  * Based on https://github.com/webrtc/samples/blob/gh-pages/src/content/datachannel/basic/js/main.js
@@ -18,29 +19,33 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
         this._channel.onmessage = e => this.onmessage(e, this._channel);
         this._channel.onopen = e => this._onChannelStateChange(e, this._channel);
         this._channel.onclose = e => this._onChannelStateChange(e, this._channel);
+        this._channel.onerror = e => this._onChannelStateChange(e, this._channel);
     }
 
     async createInitiatorOffer(cb){
 
-        let description;
-
         try{
 
-            description = await this._rtcPeerConnection.createOffer(  );
-            await this._rtcPeerConnection.setLocalDescription(description);
+            const offer = await this._rtcPeerConnection.createOffer(  );
+            await this._rtcPeerConnection.setLocalDescription(offer);
 
         }catch(err){
             return cb(err);
         }
 
-        cb(null, description);
+        cb(null, this._rtcPeerConnection.localDescription );
 
     }
 
     async userRemoteAnswer(answer, cb){
 
         try{
+
+            answer = new WebRTC.RTCSessionDescription(answer);
+
             await this._rtcPeerConnection.setRemoteDescription(answer);
+            this._iceCandidatesReady = true;
+            this._useAllCandidates();
         }catch(err){
             return cb(err);
         }

@@ -36,9 +36,9 @@ module.exports = function (options) {
 
         _requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
 
-            sourceIdentity = sourceIdentity.toString('hex');
+            const sourceIdentityHex = sourceIdentity.toString('hex');
 
-            const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentity ];
+            const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentityHex ];
             if (!webRTC) return cb(null, []);
 
             try{
@@ -46,11 +46,10 @@ module.exports = function (options) {
                 candidate = bencode.decode(candidate);
                 webRTC.processData(candidate);
 
-                webRTC._rtcPeerConnection.addIceCandidate(candidate)
-                    .then( answer => {} )
-                    .catch(err => { });
+                webRTC.addIceCandidate(candidate);
 
             }catch(err){
+                console.log("_requestIceCandidateWebRTCConnection", err)
                 return cb(null, []);
             }
 
@@ -96,6 +95,7 @@ module.exports = function (options) {
                 webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
 
                 webRTC._rtcPeerConnection.onicecandidate = e => {
+                    console.log("onicecandidate", e)
                     if (e.candidate)
                         this.sendRendezvousIceCandidateWebRTConnection( srcContact, contact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{ })
                 }

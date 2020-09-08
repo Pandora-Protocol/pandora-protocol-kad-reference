@@ -47,75 +47,80 @@ module.exports = function (options) {
 
             const webRTC = new WebRTCConnectionInitiator(this, null, dstContact);
 
-            webRTC.createInitiatorOffer((err, offer) => {
+            webRTC._rtcPeerConnection.onicecandidate = e => {
+                console.log("onicecandidate", e)
+                if (e.candidate)
+                    this.sendRendezvousIceCandidateWebRTConnection(dstContact.rendezvousContact, dstContact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{})
+            }
 
-                if (err) {
-                    webRTC.closeNow();
-                    return cb(err);
-                }
+            webRTC._rtcPeerConnection.onnegotiationneeded = () => {
 
-                let chunkMaxSize, data;
+                webRTC.createInitiatorOffer((err, offer) => {
 
-                chunkMaxSize = webRTC.getMaxChunkSize();
-                data = [ this._kademliaNode.contact, '', [ webRTC.processDataOut(offer), chunkMaxSize] ];
-
-                //encrypt it
-                this._sendProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true}, (err, data) =>{
-
-                    if (err){
+                    if (err) {
                         webRTC.closeNow();
                         return cb(err);
                     }
 
-                    this.sendRendezvousWebRTCConnection(dstContact.rendezvousContact, dstContact.identity, data, (err, info ) => {
+                    let chunkMaxSize, data;
 
-                        if (err || !info || !info.length){
+                    chunkMaxSize = webRTC.getMaxChunkSize();
+                    data = [ this._kademliaNode.contact, '', [ webRTC.processDataOut(offer), chunkMaxSize] ];
+
+                    //encrypt it
+                    this._sendProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true}, (err, data) =>{
+
+                        if (err){
                             webRTC.closeNow();
-                            return cb(new Error('Rendezvous error'));
+                            return cb(err);
                         }
 
-                        this._kademliaNode.rules._receivedProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true}, (err, info) =>{
+                        this.sendRendezvousWebRTCConnection(dstContact.rendezvousContact, dstContact.identity, data, (err, info ) => {
 
-                            if (err){
+                            if (err || !info || !info.length){
                                 webRTC.closeNow();
-                                return cb(new Error('Answer Decoding error'));
+                                return cb(new Error('Rendezvous error'));
                             }
 
-                            try{
+                            this._kademliaNode.rules._receivedProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true}, (err, info) =>{
 
-                                webRTC._rtcPeerConnection.onicecandidate = e => {
-                                    if (e.candidate)
-                                        this.sendRendezvousIceCandidateWebRTConnection(dstContact.rendezvousContact, dstContact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{})
+                                if (err){
+                                    webRTC.closeNow();
+                                    return cb(new Error('Answer Decoding error'));
                                 }
 
-                                const [answer, otherPeerMaxChunkSize ] =  bencode.decode(info);
-                                webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
-                                webRTC.processData(answer);
+                                try{
 
-                                webRTC.userRemoteAnswer(answer, (err, out)=>{
+                                    const [answer, otherPeerMaxChunkSize ] =  bencode.decode(info);
+                                    webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
+                                    webRTC.processData(answer);
 
-                                    if (err){
-                                        webRTC.closeNow();
-                                        return cb(err);
-                                    }
+                                    webRTC.userRemoteAnswer(answer, (err, out)=>{
 
-                                    cb(null, webRTC);
+                                        if (err){
+                                            webRTC.closeNow();
+                                            return cb(err);
+                                        }
 
-                                });
+                                        cb(null, webRTC);
 
-                            }catch(err){
-                                webRTC.closeNow();
-                                return cb(err);
-                            }
+                                    });
 
+                                }catch(err){
+                                    webRTC.closeNow();
+                                    return cb(err);
+                                }
+
+
+                            });
 
                         });
 
                     });
 
-                });
+                })
 
-            })
+            }
 
         }
 
