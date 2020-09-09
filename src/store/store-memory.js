@@ -26,7 +26,7 @@ module.exports = class StoreMemory extends Store{
         cb( null, this._memory.get(table + ':'+ key) );
     }
 
-    put(table = '', key, value, cb){
+    put(table = '', key, value, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, cb){
 
         const err1 = Validation.checkStoreTable(table);
         const err2 = Validation.checkStoreKey(key);
@@ -34,7 +34,7 @@ module.exports = class StoreMemory extends Store{
         if (err1 || err2 || err3) return cb(err1||err2||err3);
 
         this._memory.set( table + ':' + key, value );
-        this._putExpiration(table, key, new Date().getTime() + KAD_OPTIONS.T_STORE_KEY_EXPIRY, ()=>{
+        this._putExpiration(table, key, new Date().getTime() + expiry, ()=>{
             cb( null, 1 );
         });
 

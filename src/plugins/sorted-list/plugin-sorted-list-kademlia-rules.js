@@ -14,19 +14,23 @@ module.exports = function (options) {
             this._commands.STORE_SORTED_LIST_VALUE = this._storeSortedListValue.bind(this);
 
             this._allowedStoreSortedListTables = {
-                '': (srcContact, data, ) => { return true },
+                '':{
+                    validation:  (srcContact, data, ) => true,
+                    expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
+                },
             };
 
         }
 
         _storeSortedListValue(req, srcContact, [table, treeKey, key, value, score], cb){
 
-            const fct = this._allowedStoreSortedListTables[table.toString('ascii')];
-            if (!fct) return cb(new Error('Table is not allowed'));
+            const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString('ascii')];
+            if (!allowedSortedListTable) return cb(new Error('Table is not allowed'));
 
-            if (fct( srcContact, [table, treeKey, key, value, score]) )
-                this._store.putSortedList(table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, cb);
-            else cb(null, 0 );
+            if ( allowedSortedListTable.validation( srcContact, [table, treeKey, key, value, score] ) )
+                this._store.putSortedList(table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, cb);
+            else
+                cb(null, 0 );
 
         }
 

@@ -18,6 +18,7 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
         this._connection = this._rtcPeerConnection = new WebRTC.RTCPeerConnection(config);
 
         this._chunks = {};
+        this.stats = {};
 
         this._iceCandidates = [];
         this._iceCandidatesReady = false;
@@ -38,6 +39,67 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
         if (otherPeerMaxChunkSize < 16*1024) throw "invalid value otherPeerMaxChunkSize";
 
         this.chunkSize = Math.min(otherPeerMaxChunkSize, myMaxChunkSize)
+    }
+
+    _findSelected( stats ) {
+        return [...stats.values()].find(s => s.type === "candidate-pair" && s.selected);
+    }
+
+    onopen() {
+        if (this.status === ContactConnectedStatus.CONTACT_OPEN) return;
+
+        super.onopen(...arguments)
+    }
+
+    getConnectionDetails(cb){
+
+        const connectionDetails = {};
+
+        if (window.chrome){
+
+            const reqFields = [   'googLocalAddress',
+                'googLocalCandidateType',
+                'googRemoteAddress',
+                'googRemoteCandidateType'
+            ];
+
+            this._rtcPeerConnection.getStats( (stats)=>{
+
+                const filtered = stats.result().filter(function(e){return e.id.indexOf('Conn-audio')===0 && e.stat('googActiveConnection')==='true'})[0];
+                if (!filtered) return cb(new Error('Something is wrong'));
+
+                reqFields.forEach(function(e){
+                    connectionDetails[e.replace('goog', '')] = filtered.stat(e)
+                });
+
+                console.log("connectionDetails", connectionDetails);
+                cb(null, connectionDetails);
+
+            });
+
+        } else {
+
+            this._rtcPeerConnection.getStats(null).then( (stats)=>{
+
+                const selectedCandidatePair = stats[Object.keys(stats).filter(function(key){return stats[key].selected})[0]]
+
+                if (!selectedCandidatePair) return cb(new Error('Something is wrong'));
+
+                const remoteICE = stats[selectedCandidatePair.remoteCandidateId];
+                const localICE = stats[selectedCandidatePair.localCandidateId];
+
+                connectionDetails.LocalAddress = [localICE.ipAddress, localICE.portNumber].join(':');
+                connectionDetails.RemoteAddress = [remoteICE.ipAddress, remoteICE.portNumber].join(':');
+                connectionDetails.LocalCandidateType = localICE.candidateType;
+                connectionDetails.RemoteCandidateType = remoteICE.candidateType;
+
+                console.log("connectionDetails", connectionDetails);
+                cb(null, connectionDetails);
+
+            });
+
+        }
+
     }
 
     close(){

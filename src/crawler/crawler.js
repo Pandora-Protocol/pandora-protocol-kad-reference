@@ -89,9 +89,9 @@ module.exports = class Crawler {
 
     _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs){
 
-        const fct = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')];
+        const validation = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')].validation;
 
-        if ( fct(contact, [table, key, result ]) ) {
+        if ( validation(contact, [table, key, result ]) ) {
             finalOutputs.value = result;
             finalOutputs.contact = contact;
         }
@@ -243,7 +243,11 @@ module.exports = class Crawler {
     }
 
     iterativeStoreValue(table, key, value, cb){
-        return this._iterativeStoreValue(  [table, key, value], 'sendStore', (data, next) => this._kademliaNode._store.put( table.toString('hex'), key.toString('hex'), value, next ), cb)
+
+        const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')];
+        if (!allowedTable) return cb(new Error('Table is not allowed'));
+
+        return this._iterativeStoreValue(  [table, key, value], 'sendStore', (data, next) => this._kademliaNode._store.put( table.toString('hex'), key.toString('hex'), value, allowedTable.expiry, next ), cb)
     }
 
     _updateContactFound(contact, cb){

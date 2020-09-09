@@ -48,7 +48,6 @@ module.exports = class ConnectionBasic extends EventEmitter {
         }
 
         this.emit("opened", this );
-
     }
 
     onclose () {

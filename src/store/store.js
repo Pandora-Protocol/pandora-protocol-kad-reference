@@ -39,7 +39,7 @@ module.exports = class Store{
         throw "interface";
     }
 
-    put(table = '', key, value, cb){
+    put(table = '', key, value, expiry, cb){
         throw "interface";
     }
 

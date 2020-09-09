@@ -26,7 +26,10 @@ module.exports = class KademliaRules {
         }
 
         this._allowedStoreTables = {
-            '': (srcContact, data ) => {return true },
+            '': {
+                validation:  (srcContact, data, ) => true,
+                expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
+            }
         };
 
         this._protocolSpecifics = {
@@ -199,11 +202,11 @@ module.exports = class KademliaRules {
      */
     _storeCommand(req, srcContact, [table, key, value], cb) {
 
-        const fct = this._allowedStoreTables[table.toString('ascii')];
-        if (!fct) return cb(new Error('Table is not allowed'));
+        const allowedTable = this._allowedStoreTables[table.toString('ascii')];
+        if (!allowedTable) return cb(new Error('Table is not allowed'));
 
-        if ( fct( srcContact, [table, key, value] ) )
-            this._store.put(table.toString('hex'), key.toString('hex'), value, cb);
+        if ( allowedTable.validation( srcContact, [table, key, value] ) )
+            this._store.put(table.toString('hex'), key.toString('hex'), value, allowedTable.expiry, cb);
         else cb(null, 0 );
 
     }

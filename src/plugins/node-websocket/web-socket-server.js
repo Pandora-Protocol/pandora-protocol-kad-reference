@@ -25,10 +25,10 @@ module.exports = class WebSocketServer extends WebSocket.Server {
 
         this._kademliaNode.rules.receiveSerialized( ws, 0, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, Buffer.from( ws.protocol, "hex"), {forceEncryption: true, returnNotAllowed: true}, (err, out) =>{
 
-            if (err) return ws.closeNow();
+            if (err) return ws.close();
 
             if (!this._kademliaNode.rules._checkWebSocket(out[0]))
-                ws.closeNow();
+                ws.close();
             else
                 new this._kademliaNode.rules.PluginNodeWebsocketConnectionSocketClass(this._kademliaNode.rules, ws, out[0], );
 

@@ -32,7 +32,7 @@ module.exports = function (options){
                 cb( null, undefined );
         }
 
-        putSortedList(table, treeKey, key, value, score, cb){
+        putSortedList(table, treeKey, key, value, score, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, cb){
 
             const err1 = Validation.checkStoreTable(table);
             const err2 = Validation.checkStoreKey(treeKey);
@@ -47,25 +47,29 @@ module.exports = function (options){
                 this._memorySortedList.set(table + ':' + treeKey, tree );
             }
 
-            const foundNode = this._memorySortedListKeyNodesMap.get(table +':'+ treeKey + ':' + key  );
-            if (foundNode) {
+            let node = this._memorySortedListKeyNodesMap.get(table +':'+ treeKey + ':' + key  ),
+                save = true;
 
-                if (foundNode.value !== value) foundNode.value = value;
+            if (node) {
 
-                if (foundNode.key === score)
-                    return cb(null, 1);
+                if (node.value !== value) node.value = value;
+
+                if (node.key === score)
+                    save = true;
                 else {
                     //TODO optimization to avoid removing and inserting
                     //TODO thus saving O(logN)
-                    tree.removeNode(foundNode);
+                    tree.removeNode(node);
                 }
 
             }
 
-            const newNode = tree.insert( score, key, value );
-            this._memorySortedListKeyNodesMap.set(table + ':' +treeKey+':'+ key, newNode );
+            if (save) {
+                node = tree.insert(score, key, value);
+                this._memorySortedListKeyNodesMap.set(table + ':' + treeKey + ':' + key, node);
+            }
 
-            this._putExpirationSortedList( table, treeKey + ':' + key, { node: newNode, treeKey, key,  time: new Date().getTime() + KAD_OPTIONS.T_STORE_KEY_EXPIRY }, ()=>{
+            this._putExpirationSortedList( table, treeKey + ':' + key, { node, treeKey, key,  time: new Date().getTime() + expiry }, ()=>{
                 cb(null, 1);
             });
 

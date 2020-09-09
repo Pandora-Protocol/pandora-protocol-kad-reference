@@ -2,7 +2,7 @@ module.exports = {
 
     VERSION:{
         APP: "research",
-        VERSION: "0.1010",
+        VERSION: "0.1014",
         VERSION_COMPATIBILITY: "0.101",
     },
 
@@ -24,7 +24,7 @@ module.exports = {
 
     T_BUCKETS_REPUBLISH: 86400000, //Interval for republishing data
 
-    T_STORE_KEY_EXPIRY: 86405000, // Interval for expiring local data entries
+    T_STORE_KEY_EXPIRY: 60*60*1000, // Interval for expiring local data entries
     T_STORE_GARBAGE_COLLECTOR: 60*60*1000,
     T_STORE_GARBAGE_COLLECTOR_SLEEP: 25, //25 ms for iterator
 
@@ -54,36 +54,7 @@ module.exports = {
 
                 {urls:"stun:stun.l.google.com:19302"},
                 {urls:"stun:global.stun.twilio.com:3478?transport=udp"},
-                {
-                    urls: 'turn:relay.backups.cz',
-                    credential: 'webrtc',
-                    username: 'webrtc'
-                },
-                {
-                    urls: 'turn:relay.backups.cz?transport=tcp',
-                    credential: 'webrtc',
-                    username: 'webrtc'
-                },
-                {
-                    urls: 'turn:numb.viagenie.ca',
-                    credential: 'muazkh',
-                    username: 'webrtc@live.com'
-                },
-                {
-                    urls: 'turn:numb.viagenie.ca',
-                    credential: 'remember',
-                    username: 'aaronfrost@gmail.com'
-                },
-                {
-                    urls: 'turn:numb.viagenie.ca',
-                    credential: 'beaver',
-                    username: 'webrtc.websitebeaver@gmail.com'
-                },
-                {
-                    urls: 'turn:numb.viagenie.ca',
-                    credential: 'webrtcdemo',
-                    username: 'louis@mozilla.com'
-                },
+
             ]
 
         },

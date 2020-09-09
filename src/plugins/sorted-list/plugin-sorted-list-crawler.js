@@ -31,19 +31,23 @@ module.exports = function (options) {
         }
 
         iterativeStoreSortedListValue(table, treeKey, key, value, score, cb){
-            return this._iterativeStoreValue( [table, treeKey, key, value, score], 'sendStoreSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, next ), cb)
+
+            const allowedSortedListTable = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString('ascii')];
+            if (!allowedSortedListTable) return cb(new Error('Table is not allowed'));
+
+            return this._iterativeStoreValue( [table, treeKey, key, value, score], 'sendStoreSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, next ), cb)
         }
 
         _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs ){
 
             if (method === 'FIND_SORTED_LIST'){
 
-                const fct = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString('ascii')];
+                const allowedSortedListTable = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString('ascii')];
 
                 for (const value of result)
                     if ( !finalOutputs[value[0]] || finalOutputs[value[0]] < value[1] ) {
 
-                        if (fct(contact, [table, key, value[0], value[1], value[2] ]))
+                        if (allowedSortedListTable.validation(contact, [table, key, value[0], value[1], value[2] ]))
                             finalOutputs[value[0]] = {value: value[1], score: value[2], contact};
 
                     }
