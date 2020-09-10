@@ -139,7 +139,7 @@ module.exports = function (options){
             delete this._expireOldKeysSortedListIterator;
             this._asyncIntervalExpireOldKeysSortedList = setAsyncInterval(
                 next => this._expireOldKeysSortedList(next),
-                KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR + Utils.preventConvoy(5 * 1000)
+                KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR - Utils.preventConvoy(5 * 1000)
             );
 
         }

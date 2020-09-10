@@ -15,7 +15,7 @@ module.exports = class Store{
         delete this._expireOldKeysIterator;
         this._asyncIntervalExpireOldKeys = setAsyncInterval(
             next => this._expireOldKeys(next),
-            KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR + Utils.preventConvoy(5 * 1000)
+            KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR - Utils.preventConvoy(5 * 1000)
         );
 
         this._started = true;

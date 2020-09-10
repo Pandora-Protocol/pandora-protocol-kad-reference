@@ -34,9 +34,7 @@ module.exports = class StoreMemory extends Store{
         if (err1 || err2 || err3) return cb(err1||err2||err3);
 
         this._memory.set( table + ':' + key, value );
-        this._putExpiration(table, key, new Date().getTime() + expiry, ()=>{
-            cb( null, 1 );
-        });
+        this._putExpiration(table, key, new Date().getTime() + expiry, ()=> cb( null, 1 ) );
 
     }
 
@@ -50,9 +48,7 @@ module.exports = class StoreMemory extends Store{
             return cb(null, 0);
         else {
             this._memory.delete(table + ':' + key);
-            this._delExpiration(table, key, ()=>{
-                cb(null, 1)
-            })
+            this._delExpiration(table, key, ()=> cb(null, 1) )
         }
     }
 

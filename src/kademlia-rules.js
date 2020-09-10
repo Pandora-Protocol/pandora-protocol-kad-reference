@@ -62,7 +62,7 @@ module.exports = class KademliaRules {
          */
         this._asyncIntervalReplicatedStoreToNewNodeExpire = setAsyncInterval(
             next => this._replicatedStoreToNewNodeExpire(next),
-            KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY +  preventConvoy(KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
+            KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY -  preventConvoy(KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
         );
 
         await this.pending.start(opts);

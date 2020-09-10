@@ -26,12 +26,12 @@ module.exports = class RoutingTableRefresher {
 
         this._intervalRefresh = setAsyncInterval(
             next => this.refresh(0, next ),
-            KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
+            KAD_OPTIONS.T_BUCKETS_REFRESH - Utils.preventConvoy(30 * 60 * 1000),
         )
 
         this._intervalReplicate = setAsyncInterval(
             this._replicate.bind(this),
-            KAD_OPTIONS.T_BUCKETS_REFRESH + Utils.preventConvoy(30 * 60 * 1000),
+            KAD_OPTIONS.T_BUCKETS_REFRESH - Utils.preventConvoy(30 * 60 * 1000),
         )
 
         this._started = true;
