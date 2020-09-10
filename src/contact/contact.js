@@ -9,7 +9,7 @@ module.exports = class Contact{
 
         this._argumentIndex = 1;
 
-        this.app = arguments[this._argumentIndex++].toString('ascii');
+        this.app = arguments[this._argumentIndex++].toString();
         if (this.app !== KAD_OPTIONS.VERSION.APP)
             throw "Contact App is not matching"
 

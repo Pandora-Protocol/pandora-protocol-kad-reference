@@ -27,8 +27,11 @@ module.exports = class KademliaRules {
 
         this._allowedStoreTables = {
             '': {
-                validation:  (srcContact, data, ) => true,
+                validation:  (srcContact, self, data, ) => {
+                    return (self.onlyOne && !data[2].length) || !self.onlyOne;
+                },
                 expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
+                onlyOne: true,
                 immutable: true,
             }
         };
@@ -201,23 +204,23 @@ module.exports = class KademliaRules {
      * @param value
      * @param cb
      */
-    _storeCommand(req, srcContact, [table, key, value], cb) {
+    _storeCommand(req, srcContact, [table, masterKey, key, value], cb) {
 
-        const allowedTable = this._allowedStoreTables[table.toString('ascii')];
+        const allowedTable = this._allowedStoreTables[table.toString()];
         if (!allowedTable) return cb(new Error('Table is not allowed'));
 
-        if ( allowedTable.validation( srcContact, [table, key, value] ) )
-            this._store.put(table.toString('hex'), key.toString('hex'), value, allowedTable.expiry, cb);
+        if ( allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value] ) )
+            this._store.put(table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, allowedTable.expiry, cb);
         else cb(null, 0 );
 
     }
 
-    sendStore(contact, [table, key, value], cb ){
+    sendStore(contact, [table, masterKey, key, value], cb ){
 
-        if (!this._allowedStoreTables[table.toString('ascii')])
+        if (!this._allowedStoreTables[table.toString()])
             return cb(new Error('Table is not allowed'));
 
-        this.send(contact,'STORE', [table, key, value], cb)
+        this.send(contact,'STORE', [table, masterKey, key, value], cb)
 
     }
 

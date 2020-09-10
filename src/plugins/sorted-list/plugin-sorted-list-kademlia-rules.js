@@ -15,7 +15,7 @@ module.exports = function (options) {
 
             this._allowedStoreSortedListTables = {
                 '':{
-                    validation:  (srcContact, data, ) => true,
+                    validation:  (srcContact, self, data, ) => true,
                     expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
                 },
             };
@@ -24,10 +24,10 @@ module.exports = function (options) {
 
         _storeSortedListValue(req, srcContact, [table, masterKey, key, value, score], cb){
 
-            const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString('ascii')];
+            const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString()];
             if (!allowedSortedListTable) return cb(new Error('Table is not allowed'));
 
-            if ( allowedSortedListTable.validation( srcContact, [table, masterKey, key, value, score] ) )
+            if ( allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score] ) )
                 this._store.putSortedList(table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, cb);
             else
                 cb(null, 0 );
@@ -36,7 +36,7 @@ module.exports = function (options) {
 
         sendStoreSortedListValue(contact, [table, masterKey, key, value, score], cb){
 
-            if (!this._allowedStoreSortedListTables[table.toString('ascii')])
+            if (!this._allowedStoreSortedListTables[table.toString()])
                 return cb(new Error('Table is not allowed'));
 
             this.send(contact,'STORE_SORTED_LIST_VALUE', [table, masterKey, key, value, score], cb)

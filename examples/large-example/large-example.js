@@ -80,7 +80,7 @@ async.eachLimit( array, 1, (index, next ) => {
 
                 async.each( values, (value, next)=>{
                     const nodeIndex = Math.floor( Math.random() * contacts.length );
-                    nodes[nodeIndex].crawler.iterativeStoreValue( Buffer.alloc(0), value.key, value.value, (err, out) => {
+                    nodes[nodeIndex].crawler.iterativeStoreValue( '', value.key, '', value.value, (err, out) => {
                         outStreams.push(out);
                         next(null, out)
                     } )

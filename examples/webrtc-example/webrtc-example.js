@@ -69,15 +69,15 @@ async.eachLimit( array, 1, (index, next ) => {
             console.log(i, nodes[i].routingTable.count, nodes[i].routingTable.array.map( it => it.contact.contactType ));
 
         const query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        nodes[4].crawler.iterativeFindValue( Buffer.alloc(0), query, true, (err, out)=>{
+        nodes[4].crawler.iterativeFindValue( '', query, (err, out)=>{
             console.log("iterativeFindValue", out.result, out.length);
         })
 
         const query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        nodes[3].crawler.iterativeStoreValue( Buffer.alloc(0), query2, 'query2', (err, out)=>{
+        nodes[3].crawler.iterativeStoreValue( '', query2, '', 'query2', (err, out)=>{
             console.log("iterativeStoreValue", out);
 
-            nodes[5].crawler.iterativeFindValue( Buffer.alloc(0), query2, true, (err, out)=>{
+            nodes[5].crawler.iterativeFindValue( '', query2, (err, out)=>{
                 console.log("iterativeFindValue2", out.result);
             })
 

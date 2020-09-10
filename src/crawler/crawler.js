@@ -64,41 +64,50 @@ module.exports = class Crawler {
 
     }
 
-    iterativeFindValue(table, key, finishWhenValue = true, cb){
+    iterativeFindValue(table, masterKey, cb){
 
-        const err1 = Validation.checkIdentity(key);
+        const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
+        if (!allowedTable) return cb(new Error('Table is not allowed'));
+
+        if (typeof table === 'string') table = Buffer.from(table);
+        if (typeof masterKey === 'string') masterKey = Buffer.from(masterKey);
+
+        const err1 = Validation.checkIdentity(masterKey);
         const err2 = Validation.checkTable(table);
         if (err1 || err2) return cb(err1||err2);
 
-        if (finishWhenValue){
+        if (allowedTable.immutable && allowedTable.onlyOne){
 
-            this._kademliaNode._store.get(table.toString('hex'), key.toString('hex'), (err, out)=>{
+            this._kademliaNode._store.get(table.toString('hex'), masterKey.toString('hex'), (err, out)=>{
 
                 if (out){
                     const obj = {  value: out, contact: this._kademliaNode.contact };
                     return cb(null, obj ? {result: obj} : undefined );
                 }
-                this._iterativeFind( table,'FIND_VALUE', 'STORE', key, finishWhenValue, cb);
+                this._iterativeFind( table,'FIND_VALUE', 'STORE', masterKey, allowedTable.immutable && allowedTable.onlyOne, cb);
 
             });
 
         } else
-            this._iterativeFind( table,'FIND_VALUE', 'STORE', key, finishWhenValue, cb);
+            this._iterativeFind( table,'FIND_VALUE', 'STORE', masterKey, allowedTable.immutable && allowedTable.onlyOne, cb);
 
     }
 
-    _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs){
+    _iterativeFindMerge(table, masterKey, result, contact, finishWhenValueFound, method, finalOutputs){
 
-        const validation = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')].validation;
+        const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
 
-        if ( validation(contact, [table, key, result ]) ) {
-            finalOutputs.value = result;
-            finalOutputs.contact = contact;
-        }
+        for (const key in result)
+            if ( !finalOutputs[key] )
+                if (allowedTable.validation(contact, allowedTable, [ table, masterKey, key, result[key] ]))
+                    finalOutputs[ key ] = {
+                        value: result[1],
+                        contact,
+                    }
 
     }
 
-    _iterativeFind( table, method, methodStore, key, finishWhenValue, cb){
+    _iterativeFind( table, method, methodStore, key, finishWhenValueFound, cb){
 
         const data = ( method === 'FIND_NODE' ) ? [key] : [table, key];
 
@@ -161,10 +170,10 @@ module.exports = class Crawler {
                             finishedSilent = true;
 
                             //let's validate the data
-                            if (finishWhenValue)
+                            if (finishWhenValueFound)
                                 finished = true;
 
-                            this._iterativeFindMerge(table, key, result[1], contact, finishWhenValue, method, finalOutputs);
+                            this._iterativeFindMerge(table, key, result[1], contact, finishWhenValueFound, method, finalOutputs);
 
 
                         }
@@ -242,12 +251,17 @@ module.exports = class Crawler {
 
     }
 
-    iterativeStoreValue(table, key, value, cb){
+    iterativeStoreValue(table, masterKey, key, value, cb){
 
-        const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString('ascii')];
+        if (typeof table === 'string') table = Buffer.from(table);
+        if (typeof masterKey === 'string') masterKey = Buffer.from(masterKey);
+        if (typeof key === 'string') key = Buffer.from(key);
+        if (typeof value === 'string') value = Buffer.from(value);
+
+        const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
         if (!allowedTable) return cb(new Error('Table is not allowed'));
 
-        return this._iterativeStoreValue(  [table, key, value], 'sendStore', (data, next) => this._kademliaNode._store.put( table.toString('hex'), key.toString('hex'), value, allowedTable.expiry, next ), cb)
+        return this._iterativeStoreValue(  [table, masterKey, key, value], 'sendStore', (data, next) => this._kademliaNode._store.put( table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, allowedTable.expiry, next ), cb)
     }
 
     _updateContactFound(contact, cb){

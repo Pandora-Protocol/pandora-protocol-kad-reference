@@ -14,13 +14,13 @@ module.exports = function(options) {
                 this.protocol = arguments[this._argumentIndex++];
                 Validation.validateProtocol(this.protocol);
 
-                this.hostname = arguments[this._argumentIndex++].toString('ascii');
+                this.hostname = arguments[this._argumentIndex++].toString();
                 Validation.validateHostname(this.hostname);
 
                 this.port = arguments[this._argumentIndex++];
                 Validation.validatePort(this.port);
 
-                this.path = arguments[this._argumentIndex++].toString('ascii');
+                this.path = arguments[this._argumentIndex++].toString();
                 Validation.validatePath(this.path);
 
                 this._keys.push('protocol', 'hostname', 'port', 'path');

@@ -8,7 +8,7 @@ module.exports = function (options) {
 
             super(...arguments);
 
-            this.mockId = arguments[this._argumentIndex++].toString('ascii');
+            this.mockId = arguments[this._argumentIndex++].toString();
             if (typeof this.mockId !== "string")
                 throw "MockId is invalid"
 

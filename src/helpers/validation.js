@@ -37,10 +37,16 @@ module.exports.checkStoreTable = (table) => {
     if (typeof table !== "string" && table.length > 64 ) return new Error("Table is invalid");
 }
 
-module.exports.checkStoreKey = (key) => {
-    if (typeof key !== "string" || key.length !== KAD_OPTIONS.NODE_ID_LENGTH*2 ) return new Error("Key is invalid");
+module.exports.checkStoreMasterKey = (key) => {
+    if (typeof key !== "string" || key.length !== KAD_OPTIONS.NODE_ID_LENGTH*2 ) return new Error("MasterKey is invalid");
     if (!/^[0-9a-f]+$/g.test(key)) return new Error(`Key is hex`);
 }
+
+module.exports.checkStoreKey = (key) => {
+    if (typeof key !== "string" || !(!key.length || key.length === KAD_OPTIONS.NODE_ID_LENGTH*2 )) return new Error("Key is invalid");
+    if (key && !/^[0-9a-f]+$/g.test(key)) return new Error(`Key is hex`);
+}
+
 
 module.exports.checkStoreData = (data) => {
     if ( !Buffer.isBuffer(data) || !data.length ) return new Error( "data is invalid" );

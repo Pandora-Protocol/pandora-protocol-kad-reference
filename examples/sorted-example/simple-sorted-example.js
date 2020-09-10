@@ -54,7 +54,7 @@ async.eachLimit( array, 1, (index, next ) => {
         let masterKey = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
         let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
 
-        nodes[4].crawler.iterativeFindSortedList(Buffer.alloc(0), masterKey, false, (err, out)=>{
+        nodes[4].crawler.iterativeFindSortedList( '', masterKey, (err, out)=>{
             console.log("iterativeFindSortedList", out.result);
             if (out.result) console.error('ERROR. Answer should have been undefined')
         })
@@ -62,16 +62,16 @@ async.eachLimit( array, 1, (index, next ) => {
         let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         let query3 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
         let query4 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        nodes[3].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), masterKey, query2, 'query2_5', 5, (err, out)=>{
+        nodes[3].crawler.iterativeStoreSortedListValue( '', masterKey, query2, 'query2_5', 5, (err, out)=>{
             console.log("iterativeStoreSortedListValue", out);
 
-            nodes[1].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), masterKey, query3, 'query2_2', 2, (err, out)=> {
+            nodes[1].crawler.iterativeStoreSortedListValue( '', masterKey, query3, 'query2_2', 2, (err, out)=> {
                 console.log("iterativeStoreSortedListValue", out);
 
-                nodes[4].crawler.iterativeStoreSortedListValue( Buffer.alloc(0), masterKey, query4, 'query2_8', 8, (err, out)=> {
+                nodes[4].crawler.iterativeStoreSortedListValue( '', masterKey, query4, 'query2_8', 8, (err, out)=> {
                     console.log("iterativeStoreSortedListValue", out);
 
-                    nodes[5].crawler.iterativeFindSortedList( Buffer.alloc(0), masterKey, false, (err, out)=>{
+                    nodes[5].crawler.iterativeFindSortedList( '', masterKey, (err, out)=>{
                         console.log("iterativeFindSortedList", out.result);
                     })
 
