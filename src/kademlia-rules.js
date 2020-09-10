@@ -29,6 +29,7 @@ module.exports = class KademliaRules {
             '': {
                 validation:  (srcContact, data, ) => true,
                 expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
+                immutable: true,
             }
         };
 

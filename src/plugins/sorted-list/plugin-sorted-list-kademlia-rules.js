@@ -22,39 +22,39 @@ module.exports = function (options) {
 
         }
 
-        _storeSortedListValue(req, srcContact, [table, treeKey, key, value, score], cb){
+        _storeSortedListValue(req, srcContact, [table, masterKey, key, value, score], cb){
 
             const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString('ascii')];
             if (!allowedSortedListTable) return cb(new Error('Table is not allowed'));
 
-            if ( allowedSortedListTable.validation( srcContact, [table, treeKey, key, value, score] ) )
-                this._store.putSortedList(table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, cb);
+            if ( allowedSortedListTable.validation( srcContact, [table, masterKey, key, value, score] ) )
+                this._store.putSortedList(table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, cb);
             else
                 cb(null, 0 );
 
         }
 
-        sendStoreSortedListValue(contact, [table, treeKey, key, value, score], cb){
+        sendStoreSortedListValue(contact, [table, masterKey, key, value, score], cb){
 
             if (!this._allowedStoreSortedListTables[table.toString('ascii')])
                 return cb(new Error('Table is not allowed'));
 
-            this.send(contact,'STORE_SORTED_LIST_VALUE', [table, treeKey, key, value, score], cb)
+            this.send(contact,'STORE_SORTED_LIST_VALUE', [table, masterKey, key, value, score], cb)
 
         }
 
 
         /**
          * Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
-         * @param treeKey
+         * @param masterKey
          * @param cb
          */
-        _findSortedList(req, srcContact, [table, treeKey], cb){
+        _findSortedList(req, srcContact, [table, masterKey], cb){
 
-            this._store.getSortedList(table.toString('hex'), treeKey.toString('hex'), (err, out) => {
+            this._store.getSortedList(table.toString('hex'), masterKey.toString('hex'), (err, out) => {
                 //found the data
                 if (out) cb(null, [ 1, out ] )
-                else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(treeKey) ] )
+                else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(masterKey) ] )
             })
 
         }

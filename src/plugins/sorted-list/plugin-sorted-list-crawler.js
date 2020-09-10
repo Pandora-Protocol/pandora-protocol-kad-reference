@@ -30,12 +30,12 @@ module.exports = function (options) {
 
         }
 
-        iterativeStoreSortedListValue(table, treeKey, key, value, score, cb){
+        iterativeStoreSortedListValue(table, masterKey, key, value, score, cb){
 
             const allowedSortedListTable = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString('ascii')];
             if (!allowedSortedListTable) return cb(new Error('Table is not allowed'));
 
-            return this._iterativeStoreValue( [table, treeKey, key, value, score], 'sendStoreSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), treeKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, next ), cb)
+            return this._iterativeStoreValue( [table, masterKey, key, value, score], 'sendStoreSortedListValue', (data, next) => this._kademliaNode._store.putSortedList( table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, next ), cb)
         }
 
         _iterativeFindMerge(table, key, result, contact, finishWhenValue, method, finalOutputs ){
