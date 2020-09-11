@@ -345,7 +345,7 @@ module.exports = class KademliaRules {
 
             const value = itValue.value[1];
 
-            const keyNode = Buffer.from(key, 'hex');
+            const keyNode = Buffer.from( masterKey, 'hex');
             const neighbors = this._kademliaNode.routingTable.getClosestToKey(contact.identity)
 
             let newNodeClose, thisClosest;

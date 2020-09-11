@@ -2,7 +2,7 @@ module.exports = {
 
     VERSION:{
         APP: "research",
-        VERSION: "0.1014",
+        VERSION: "0.1016",
         VERSION_COMPATIBILITY: "0.101",
     },
 
@@ -54,6 +54,40 @@ module.exports = {
 
                 {urls:"stun:stun.l.google.com:19302"},
                 {urls:"stun:global.stun.twilio.com:3478?transport=udp"},
+
+
+                {urls:"stun:stun.l.google.com:19302"},
+                {urls:"stun:global.stun.twilio.com:3478?transport=udp"},
+                {
+                    urls: 'turn:relay.backups.cz',
+                    credential: 'webrtc',
+                    username: 'webrtc'
+                },
+                {
+                    urls: 'turn:relay.backups.cz?transport=tcp',
+                    credential: 'webrtc',
+                    username: 'webrtc'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'muazkh',
+                    username: 'webrtc@live.com'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'remember',
+                    username: 'aaronfrost@gmail.com'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'beaver',
+                    username: 'webrtc.websitebeaver@gmail.com'
+                },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'webrtcdemo',
+                    username: 'louis@mozilla.com'
+                },
 
             ]
 
