@@ -16,7 +16,10 @@ module.exports = function (options) {
             this._allowedStoreSortedListTables = {
                 '':{
                     validation:  ( srcContact, self, data, old ) => {
-                        return  (!old || old.score < data[4]);
+
+                        if (  old && old.score >= data[4] ) return null;
+                        return data;
+
                     },
                     expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
                 },
@@ -29,12 +32,14 @@ module.exports = function (options) {
             const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString()];
             if (!allowedSortedListTable) return cb(new Error('Table is not allowed'));
 
-            this._store.getSortedListKey(table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), (err, old)=>{
+            this._store.getSortedListKey(table.toString(), masterKey.toString('hex'), key.toString('hex'), (err, old)=>{
 
                 if (err) return cb(err);
 
-                if ( allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old ) )
-                    this._store.putSortedList(table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry, cb);
+                const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
+
+                if ( data )
+                    this._store.putSortedList(table.toString(), masterKey.toString('hex'), key.toString('hex'), data, score, allowedSortedListTable.expiry, cb);
                 else
                     cb(null, 0 );
 
@@ -59,7 +64,7 @@ module.exports = function (options) {
          */
         _findSortedList(req, srcContact, [table, masterKey], cb){
 
-            this._store.getSortedList(table.toString('hex'), masterKey.toString('hex'), (err, out) => {
+            this._store.getSortedList(table.toString(), masterKey.toString('hex'), (err, out) => {
                 //found the data
                 if (out) cb(null, [ 1, out ] )
                 else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(masterKey) ] )

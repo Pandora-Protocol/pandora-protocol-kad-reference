@@ -29,9 +29,11 @@ module.exports = class KademliaRules {
             '': {
 
                 validation:  (srcContact, self, data, old ) => {
-                    return (self.onlyOne && !data[2].length) || !self.onlyOne;
-                },
 
+                    if ( self.onlyOne && data[2].length ) return null;
+                    return data;
+
+                },
                 expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
                 onlyOne: true,
                 immutable: true,
@@ -208,19 +210,41 @@ module.exports = class KademliaRules {
      */
     _storeCommand(req, srcContact, [table, masterKey, key, value], cb) {
 
-        const allowedTable = this._allowedStoreTables[table.toString()];
+        const tableStr = table.toString();
+        const masterKeyStr = masterKey.toString('hex');
+        const keyStr = key.toString('hex');
+
+        const allowedTable = this._allowedStoreTables[tableStr];
         if (!allowedTable) return cb(new Error('Table is not allowed'));
 
-        this._store.getKey(table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), (err, old)=>{
+        if (allowedTable.immutable){
 
-            if (err) return cb(null, 0);
+            this._store.hasKey( tableStr, masterKeyStr,keyStr, (err, has)=>{
 
-            if ( allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value], old ) )
-                this._store.put(table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, allowedTable.expiry, cb);
-            else
+                if (err) return cb(null, 0)
+                if (has) return this._store.putExpiration(tableStr, masterKeyStr, keyStr, allowedTable.expiry, cb);
+
+                const data = allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value], null );
+                if ( data ) return this._store.put( tableStr, masterKeyStr, keyStr, data, allowedTable.expiry, cb);
+
                 cb(null, 0 );
 
-        });
+            });
+
+        } else {
+
+            this._store.getKey( tableStr, masterKeyStr, keyStr, (err, old)=>{
+
+                if (err) return cb(null, 0);
+
+                const data = allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value], old );
+                if ( data ) return this._store.put( tableStr, masterKeyStr, keyStr, data, allowedTable.expiry, cb);
+
+                cb(null, 0 );
+
+            });
+
+        }
 
     }
 
@@ -257,7 +281,7 @@ module.exports = class KademliaRules {
      */
     _findValue( req, srcContact, [table, key], cb){
 
-        this._store.get(table.toString('hex'), key.toString('hex'), (err, out) => {
+        this._store.get(table.toString(), key.toString('hex'), (err, out) => {
             //found the data
             if (out) cb(null, [1, out] )
             else cb( null, [0, this._kademliaNode.routingTable.getClosestToKey(key) ] )

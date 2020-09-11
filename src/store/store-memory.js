@@ -36,16 +36,23 @@ module.exports = class StoreMemory extends Store{
         cb( null, out );
     }
 
-    getKey(table = '', masterKey, key, cb){
+    hasKey(table = '', masterKey, key, cb){
         const err1 = Validation.checkStoreTable(table);
         const err2 = Validation.checkStoreMasterKey(masterKey);
         const err3 = Validation.checkStoreKey(key);
         if (err1 || err2 || err3) return cb(err1||err2||err3);
 
-        const map = this._masterKeys.get(table + ':'+ masterKey);
-        if (map && map.get(key)) return cb(null, map.get(key));
+        cb(null, this._keys.has(table + ':'+ masterKey+':'+key))
+    }
 
-        cb(null, null)
+    getKey(table = '', masterKey, key, cb){
+
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreMasterKey(masterKey);
+        const err3 = Validation.checkStoreKey(key);
+        if (err1 || err2 || err3) return cb(err1||err2||err3);
+
+        cb(null, this._keys.get(table + ':'+ masterKey+':'+key) )
     }
 
     put(table = '', masterKey, key, value, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, cb){
@@ -67,10 +74,22 @@ module.exports = class StoreMemory extends Store{
         map.set( key, value );
 
         this._keys.set( table + ':'+masterKey+':'+key,  value);
-        this._expiration.set( table + ':'+masterKey+':'+key,  expiry);
+        this._expiration.set( table + ':'+masterKey+':'+key, new Date().getTime() + expiry );
 
         cb(null, 1);
 
+    }
+
+    putExpiration(table='', masterKey, key,  expiry, cb){
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreMasterKey(masterKey);
+        const err3 = Validation.checkStoreKey(key);
+
+        if (err1 || err2 || err3 ) return cb(err1||err2||err3);
+
+        this._expiration.set( table + ':'+masterKey+':'+key, new Date().getTime() + expiry);
+
+        cb(null, 1);
     }
 
     del(table = '', masterKey, key, cb){

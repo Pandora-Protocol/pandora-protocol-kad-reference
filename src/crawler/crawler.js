@@ -76,20 +76,26 @@ module.exports = class Crawler {
         const err2 = Validation.checkTable(table);
         if (err1 || err2) return cb(err1||err2);
 
-        if (allowedTable.immutable && allowedTable.onlyOne){
+        const finishWhenValueFound = allowedTable.immutable && allowedTable.onlyOne;
 
-            this._kademliaNode._store.get(table.toString('hex'), masterKey.toString('hex'), (err, out)=>{
+        if (finishWhenValueFound){
+
+            this._kademliaNode._store.get(table.toString(), masterKey.toString('hex'), (err, out)=>{
 
                 if (out){
-                    const obj = {  value: out, contact: this._kademliaNode.contact };
-                    return cb(null, obj ? {result: obj} : undefined );
+                    for (const key in out)
+                        out[key] = {
+                            value: out[key],
+                            contact: this._kademliaNode.contact
+                        }
+                    return cb(null, out ? {result: out} : undefined );
                 }
-                this._iterativeFind( table,'FIND_VALUE', 'STORE', masterKey, allowedTable.immutable && allowedTable.onlyOne, cb);
+                this._iterativeFind( table,'FIND_VALUE', 'STORE', masterKey, finishWhenValueFound, cb);
 
             });
 
         } else
-            this._iterativeFind( table,'FIND_VALUE', 'STORE', masterKey, allowedTable.immutable && allowedTable.onlyOne, cb);
+            this._iterativeFind( table,'FIND_VALUE', 'STORE', masterKey, finishWhenValueFound, cb);
 
     }
 
@@ -98,12 +104,15 @@ module.exports = class Crawler {
         const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
 
         for (const key in result)
-            if ( (!finalOutputs[key] && !finishWhenValueFound) || finishWhenValueFound )
-                if (allowedTable.validation(contact, allowedTable, [ table, masterKey, key, result[key] ], finalOutputs[key]))
-                    finalOutputs[ key ] = {
-                        value: result[1],
+            if ( (!finalOutputs[key] && !finishWhenValueFound) || finishWhenValueFound ) {
+
+                const data = allowedTable.validation(contact, allowedTable, [table, masterKey, Buffer.from(key, 'hex'), result[key]], finalOutputs[key]);
+                if (data)
+                    finalOutputs[key] = {
+                        value: data,
                         contact,
                     }
+            }
 
     }
 
@@ -261,7 +270,7 @@ module.exports = class Crawler {
         const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
         if (!allowedTable) return cb(new Error('Table is not allowed'));
 
-        return this._iterativeStoreValue(  [table, masterKey, key, value], 'sendStore', (data, next) => this._kademliaNode._store.put( table.toString('hex'), masterKey.toString('hex'), key.toString('hex'), value, allowedTable.expiry, next ), cb)
+        return this._iterativeStoreValue(  [table, masterKey, key, value], 'sendStore', (data, next) => this._kademliaNode._store.put( table.toString(), masterKey.toString('hex'), key.toString('hex'), value, allowedTable.expiry, next ), cb)
     }
 
     _updateContactFound(contact, cb){
