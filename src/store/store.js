@@ -47,18 +47,6 @@ module.exports = class Store{
         throw "interface";
     }
 
-    getExpiration(table = '', key, cb){
-        throw "interface";
-    }
-
-    putExpiration(table = '', key, time, cb){
-        throw "interface";
-    }
-
-    delExpiration(table = '', key, cb){
-        throw "interface";
-    }
-
     //plugin
     use(plugin){
         if (!plugin || typeof plugin !== "function" ) throw "Invalid plugin";
