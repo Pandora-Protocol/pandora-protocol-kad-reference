@@ -39,7 +39,7 @@ module.exports = function (options) {
                 for (const value of result)
                     if ( !finalOutputs[value[0]] || finalOutputs[value[0]] < value[1] ) {
 
-                        if (allowedSortedListTable.validation(contact, allowedSortedListTable, [table, key, value[0], value[1], value[2] ]))
+                        if (allowedSortedListTable.validation(contact, allowedSortedListTable, [table, key, value[0], value[1], value[2] ], finalOutputs[value[0]] ))
                             finalOutputs[value[0]] = {
                                 value: value[1],
                                 score: value[2],

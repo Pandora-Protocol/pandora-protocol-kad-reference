@@ -98,8 +98,8 @@ module.exports = class Crawler {
         const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
 
         for (const key in result)
-            if ( !finalOutputs[key] )
-                if (allowedTable.validation(contact, allowedTable, [ table, masterKey, key, result[key] ]))
+            if ( (!finalOutputs[key] && !finishWhenValueFound) || finishWhenValueFound )
+                if (allowedTable.validation(contact, allowedTable, [ table, masterKey, key, result[key] ], finalOutputs[key]))
                     finalOutputs[ key ] = {
                         value: result[1],
                         contact,

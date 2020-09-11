@@ -36,6 +36,18 @@ module.exports = class StoreMemory extends Store{
         cb( null, out );
     }
 
+    getKey(table = '', masterKey, key, cb){
+        const err1 = Validation.checkStoreTable(table);
+        const err2 = Validation.checkStoreMasterKey(masterKey);
+        const err3 = Validation.checkStoreKey(key);
+        if (err1 || err2 || err3) return cb(err1||err2||err3);
+
+        const map = this._masterKeys.get(table + ':'+ masterKey);
+        if (map && map.get(key)) return cb(null, map.get(key));
+
+        cb(null, null)
+    }
+
     put(table = '', masterKey, key, value, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, cb){
 
         const err1 = Validation.checkStoreTable(table);

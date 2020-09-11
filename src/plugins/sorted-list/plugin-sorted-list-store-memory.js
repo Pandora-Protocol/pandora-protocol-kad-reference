@@ -21,22 +21,38 @@ module.exports = function (options){
         getSortedList(table, masterKey, cb){
 
             const err1 = Validation.checkStoreTable(table);
-            const err2 = Validation.checkStoreKey(masterKey);
+            const err2 = Validation.checkStoreMasterKey(masterKey);
             if (err1 || err2) return cb(err1||err2);
 
             const tree = this._memorySortedList.get(table + ':' + masterKey);
-            if (tree) {
+            if (tree)
                 cb(null, tree.toSortedArray('getValueKeyArray'));
-            }
             else
                 cb( null, undefined );
+        }
+
+        getSortedListKey(table, masterKey, key, cb){
+
+            const err1 = Validation.checkStoreTable(table);
+            const err2 = Validation.checkStoreMasterKey(masterKey);
+            const err3 = Validation.checkStoreMasterKey(key);
+            if (err1 || err2 || err3) return cb(err1||err2||err3);
+
+            const node = this._memorySortedListKeyNodesMap.get(table +':'+ masterKey + ':' + key  );
+
+            if (!node) cb(null, undefined)
+            else cb(null, {
+                value: node.value,
+                score: node.score,
+            })
+
         }
 
         putSortedList(table, masterKey, key, value, score, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, cb){
 
             const err1 = Validation.checkStoreTable(table);
-            const err2 = Validation.checkStoreKey(masterKey);
-            const err3 = Validation.checkStoreKey(key);
+            const err2 = Validation.checkStoreMasterKey(masterKey);
+            const err3 = Validation.checkStoreMasterKey(key);
             const err4 = Validation.checkStoreData(value);
             const err5 = Validation.checkStoreScore(score);
             if (err1 || err2 || err3 || err4 || err5) return cb(err1||err2||err3||err4||err5);
@@ -69,17 +85,22 @@ module.exports = function (options){
                 this._memorySortedListKeyNodesMap.set(table + ':' + masterKey + ':' + key, node);
             }
 
-            this._putExpirationSortedList( table, masterKey + ':' + key, { node, masterKey, key,  time: new Date().getTime() + expiry }, ()=>{
-                cb(null, 1);
+            this._memoryExpirationSortedList.set( table + ':' + masterKey + ':' + key, {
+                node,
+                masterKey,
+                key,
+                time: new Date().getTime() + expiry,
             });
+
+            cb(null, 1);
 
         }
 
         delSortedList(table, masterKey, key, cb){
 
             const err1 = Validation.checkStoreTable(table);
-            const err2 = Validation.checkStoreKey(masterKey);
-            const err3 = Validation.checkStoreKey(key);
+            const err2 = Validation.checkStoreMasterKey(masterKey);
+            const err3 = Validation.checkStoreMasterKey(key);
             if (err1 || err2 || err3) return cb(err1||err2||err3);
 
             const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + masterKey + ':' + key );
@@ -92,36 +113,8 @@ module.exports = function (options){
                 this._memorySortedList.delete( table + ':' + masterKey );
 
             this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + key);
-            this._delExpirationSortedList(table + ':' + masterKey+':'+key, ()=>{
-                cb(null, 1)
-            });
+            this._memoryExpirationSortedList.delete(table + ':' + masterKey+':'+key);
         }
-
-
-
-        //table, key already verified
-        _putExpirationSortedList(table, id, { node, masterKey, key, time }, cb){
-
-            this._memoryExpirationSortedList.set( table + ':' + id +':exp', {
-                node,
-                masterKey,
-                key,
-                time,
-            });
-
-            cb(null, 1);
-        }
-
-        //table, key already verified
-        _delExpirationSortedList(table, masterKey, cb){
-
-            if (this._memoryExpirationSortedList.get(table + ':' +masterKey)) {
-                this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':exp');
-                cb(null, 1)
-            } else
-                cb(null, 0);
-        }
-
 
         iteratorSortedList(){
             return this._memorySortedListKeyNodesMap.entries();
@@ -134,7 +127,7 @@ module.exports = function (options){
 
         start(){
 
-            _start(...arguments);
+            super.start(...arguments);
 
             delete this._expireOldKeysSortedListIterator;
             this._asyncIntervalExpireOldKeysSortedList = setAsyncInterval(
@@ -146,7 +139,7 @@ module.exports = function (options){
 
         stop(){
 
-            _stop(...arguments);
+            super.stop(...arguments);
 
             clearAsyncInterval(this._asyncIntervalExpireOldKeysSortedList);
         }
@@ -159,10 +152,10 @@ module.exports = function (options){
             const itValue =  this._expireOldKeysSortedListIterator.next();
             if (itValue.value && !itValue.done){
 
-                const {node,  time, key, masterKey} = it.value[1];
+                const {node,  time, key, masterKey} = itValue.value[1];
                 if (time < new Date().getTime() ){
 
-                    const str = itValue.value[0].splice(0, itValue[0].length-4 );
+                    const str = itValue.value[0];
                     const table = str.slice(0, str.indexOf(':') ) ;
                     this.delSortedList(table, masterKey, key, next )
                 }
