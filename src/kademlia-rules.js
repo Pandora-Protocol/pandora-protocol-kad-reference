@@ -28,10 +28,10 @@ module.exports = class KademliaRules {
         this._allowedStoreTables = {
             '': {
 
-                validation:  (srcContact, self, data, old ) => {
+                validation:  (srcContact, self, [table, masterKey, key, value], old ) => {
 
-                    if ( self.onlyOne && data[2].length ) return null;
-                    return data;
+                    if ( self.onlyOne && key.length ) return null;
+                    return value;
 
                 },
                 expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
@@ -337,8 +337,11 @@ module.exports = class KademliaRules {
 
         while (itValue.value && !itValue.done) {
 
-            const table = itValue.value[0].slice(  0, itValue.value[0].indexOf(':')  );
-            const key = itValue.value[0].slice(  itValue.value[0].indexOf(':') + 1);
+            const words = itValue.value[0].split(':');
+
+            const table = words[0];
+            const masterKey = words[1];
+            const key = words[2];
 
             const value = itValue.value[1];
 
@@ -354,7 +357,7 @@ module.exports = class KademliaRules {
             }
 
             if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  )
-                return this.sendStore(contact, [ table, key, value], (err, out) => {
+                return this.sendStore(contact, [ table, masterKey, key, value], (err, out) => {
 
                     if (err)
                         return cb(err); //error
