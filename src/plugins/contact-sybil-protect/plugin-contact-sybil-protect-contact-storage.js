@@ -14,7 +14,7 @@ module.exports = function (options){
 
             const sybilSignature = ECCUtils.sign( KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[index].privateKey, CryptoUtils.sha256( message ) );
 
-            let hex = index.toString(16, 2);
+            let hex = (index+1).toString(16, 2);
             if (hex.length === 1) hex = "0"+hex;
 
             const signature = Buffer.concat([

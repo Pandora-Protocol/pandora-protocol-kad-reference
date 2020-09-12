@@ -71,7 +71,7 @@ Later on, a new reference code can be implemented in GO and compiled into web as
 
     It uses Encrypt and decrypt messages between sender and receiver using elliptic curve Diffie-Hellman key exchange. 
     
-7. **Contact-Spartacus**. Well-known defense against Sybill attacks by introducing cryptographic identies using ECDSA. With Spartacus, nodes are required to prove that they own their identity by signing messages with their private EC key and including their public key in the message. The identity is thus derived from the EC public key.   
+7. **Contact-Spartacus**. Well-known defense against Sybil attacks by introducing cryptographic identies using ECDSA. With Spartacus, nodes are required to prove that they own their identity by signing messages with their private EC key and including their public key in the message. The identity is thus derived from the EC public key.   
  
 8. **Sybil-Protect**. Extends Contact Spartacus by requiring a "nonce" generated and signed by someone to avoid spams and sybil attacks. A beacon can be used later on to establish the forgers of the sybil protect.
 

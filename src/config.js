@@ -1,5 +1,7 @@
 module.exports = {
 
+    SIGNATURE_EMPTY: Buffer.alloc(64),
+
     VERSION:{
         APP: "research",
         VERSION: "0.1016",

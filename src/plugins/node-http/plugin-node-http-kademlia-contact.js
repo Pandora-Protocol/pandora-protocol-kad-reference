@@ -41,7 +41,7 @@ module.exports = function(options) {
         }
 
         isContactAcceptableForKademliaRouting(){
-            return this.contactType === ContactType.CONTACT_TYPE_ENABLED;
+            return this.contactType === ContactType.CONTACT_TYPE_ENABLED && super.isContactAcceptableForKademliaRouting();
         }
 
     }

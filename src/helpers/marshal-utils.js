@@ -44,7 +44,44 @@ module.exports = {
         }
 
         return r;
-    }
+    },
 
+    marshalNumberFixed( num, length){
+
+        if (length > 7) throw "marshalNumberFixed length is way too big";
+        if (!length) throw "marshalNumberFixed length is not specified";
+
+        const b = Buffer.alloc(length);
+
+        let p = length-1;
+        while (num > 0){
+
+            b[p] = num % 256;
+            num /= 256;
+
+            p--;
+        }
+
+        return b;
+
+    },
+
+    unmarshalNumberFixed(b, length){
+
+        if (length > 7) throw "unmarshalNumberFixed length is way too big";
+        if (!length) throw "marshalNumberFixed length is not specified";
+
+        let number = 0, power = 1;
+
+        for (let i=0; i < length; i++){
+
+            number += b.read1Byte() * power;
+            power *= 2;
+
+        }
+
+        return number;
+
+    }
 
 }
