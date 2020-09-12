@@ -8,6 +8,7 @@ module.exports = class ContactStorage {
 
     loadContact( opts, cb ){
         this._kademliaNode.storage.getItem('info:contact', async (err, out)=>{
+
             if (err) return cb(err);
             if (!out) return cb(null, null)
 

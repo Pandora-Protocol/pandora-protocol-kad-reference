@@ -7,7 +7,7 @@ module.exports = function (options){
     return class MyContactStorage extends options.ContactStorage {
 
 
-        sybilSign( message, index, cb){
+        async sybilSign( message, index){
 
             if (index === undefined)
                 index = Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
@@ -22,42 +22,34 @@ module.exports = function (options){
                 sybilSignature,
             ]);
 
-            cb(null, {
+            return {
                 index,
                 signature,
-            })
+            }
         }
 
-        createContactArgs ( opts ){
+        async createContactArgs ( opts ){
 
-            return new Promise((resolve, reject)=>{
+            if (!opts.privateKey) {
+                const keyPair = ECCUtils.createPair();
+                opts.privateKey = keyPair.privateKey;
+            }
 
-                if (!opts.privateKey) {
-                    const keyPair = ECCUtils.createPair();
-                    opts.privateKey = keyPair.privateKey;
-                }
+            if (!opts.publicKey)
+                opts.publicKey = ECCUtils.getPublicKey(opts.privateKey);
 
-                if (!opts.publicKey)
-                    opts.publicKey = ECCUtils.getPublicKey(opts.privateKey);
+            if (! opts.sybilSignature ) {
+                const out = await this.sybilSign(opts.publicKey, undefined);
+                opts.sybilSignature = out.signature;
+            }
 
-                this.sybilSign( opts.publicKey, undefined, async (err, sybilSignature )=>{
+            opts.nonce = opts.sybilSignature;
+            opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
 
-                    if (err) return reject(err);
-
-                    opts.nonce = sybilSignature.signature;
-                    opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
-
-                    let out;
-                    try{
-                        out = await super.createContactArgs( opts );
-                    }catch(err){
-                        return reject(err);
-                    }
-                    resolve(out);
-
-                } );
-
-            })
+            return {
+                ...opts,
+                ...( await super.createContactArgs( opts ) ),
+            };
 
 
         }

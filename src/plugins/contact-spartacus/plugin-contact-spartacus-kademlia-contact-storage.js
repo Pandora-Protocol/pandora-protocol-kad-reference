@@ -30,6 +30,8 @@ module.exports = function (options){
             return {
                 ...out,
                 privateKey: opts.privateKey,
+                timestamp: opts.timestamp,
+                nonce: opts.nonce,
                 args: [
                     ...out.args,
                     signature
