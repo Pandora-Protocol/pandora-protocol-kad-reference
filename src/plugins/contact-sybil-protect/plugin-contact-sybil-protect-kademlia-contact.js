@@ -23,7 +23,10 @@ module.exports = function(options) {
                 if ( !ECCUtils.verify( sybilPublicKey, nonceMessage, sybilSignature ))
                     throw "Nonce is invalid";
 
+            } else {
+                if (!this.nonce.equals(KAD_OPTIONS.NONCE_EMPTY)) throw "Nonce needs to be empty"
             }
+
 
         }
 

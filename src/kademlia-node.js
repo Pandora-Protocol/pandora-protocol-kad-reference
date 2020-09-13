@@ -45,6 +45,8 @@ module.exports = class KademliaNode extends EventEmitter {
         this.crawler = new options.Crawler(this);
         this.contactsMap = new options.ContactsMap(this);
 
+        this._options = options;
+
         this._started = false;
         this._starting = false;
     }
@@ -141,6 +143,14 @@ module.exports = class KademliaNode extends EventEmitter {
                 }
 
                 try{
+
+                    if (typeof BROWSER === "undefined"){
+
+                        if (process.argv.indexOf('set-sybil-protect'))
+                            opts.setSybilProtect = 1;
+
+                    }
+
                     const contactArgs = await this.contactStorage.createContactArgs( opts );
                     this.contactStorage.setContact( contactArgs, false, true, (err, out)=>{
                         if (err) return reject(err)

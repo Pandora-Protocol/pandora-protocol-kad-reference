@@ -27,6 +27,7 @@ module.exports = class ContactStorage {
 
         if (saveToStorage) {
             delete contactArgs.args;
+            delete contactArgs.out;
             this._kademliaNode.storage.setItem('info:contact', bencode.encode(contactArgs).toString('base64'), cb);
         }
         else
