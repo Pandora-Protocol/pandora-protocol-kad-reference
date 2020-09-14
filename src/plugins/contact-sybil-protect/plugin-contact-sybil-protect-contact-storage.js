@@ -1,5 +1,6 @@
 const CryptoUtils = require('./../../helpers/crypto-utils')
 const ECCUtils = require('./../../helpers/ecc-utils')
+const bencode = require('bencode')
 
 module.exports = function (options){
 
@@ -34,25 +35,17 @@ module.exports = function (options){
 
                 sybilSignature = Buffer.from(data.signature, 'hex');
 
-                if (!ECCUtils.verify(publicKey, CryptoUtils.sha256(message), sybilSignature))
+                if (!ECCUtils.verify(publicKey, message, sybilSignature))
                     throw 'Signature is incorrect';
 
             }
 
-
-            let hex = (index+1).toString(16, 2);
-            if (hex.length === 1) hex = "0"+hex;
-
-            const signature = Buffer.concat([
-                Buffer.from( hex, "hex"),
-                sybilSignature,
-            ]);
-
             return {
                 index,
-                signature,
+                sybilSignature,
             }
         }
+
 
         async createContactArgs ( opts ){
 
@@ -66,22 +59,42 @@ module.exports = function (options){
 
             if (opts.setSybilProtect || opts.sybilSignature){
 
-                if (! opts.sybilSignature ) {
-                    const out = await this.sybilSign(opts.publicKey, undefined);
-                    opts.sybilSignature = out.signature;
+                if (!opts.sybilSignature) {
+                    const out = await this.sybilSign( CryptoUtils.sha256(opts.publicKey), undefined);
+                    opts.sybilSignature = out.sybilSignature;
+                    opts.sybilIndex = out.index+1;
                 }
 
                 opts.nonce = opts.sybilSignature;
 
             } else {
-                opts.nonce = Buffer.alloc(65);
+                opts.nonce = Buffer.alloc(64);
+                opts.sybilIndex = 0;
             }
 
             opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
 
+            const out = await super.createContactArgs( opts );
+
+            out.args.push(opts.sybilIndex);
+
+            let index;
+            for (let i=0; i < out.args.length; i++)
+                if ( out.args[i] === opts.signature ){
+                    index = i;
+                    out.args.splice(i, 1);
+                    break;
+                }
+
+            const signature = ECCUtils.sign( opts.privateKey, CryptoUtils.sha256( bencode.encode( out.args ) ) );
+            out.args.splice( index, 0, signature);
+
             return {
                 ...opts,
-                ...( await super.createContactArgs( opts ) ),
+                args: [
+                    ...out.args,
+                    opts.sybilIndex,
+                ]
             };
 
 

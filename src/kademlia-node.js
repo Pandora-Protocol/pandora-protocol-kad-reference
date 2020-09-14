@@ -144,13 +144,6 @@ module.exports = class KademliaNode extends EventEmitter {
 
                 try{
 
-                    if (typeof BROWSER === "undefined"){
-
-                        if (process.argv.indexOf('set-sybil-protect'))
-                            opts.setSybilProtect = 1;
-
-                    }
-
                     const contactArgs = await this.contactStorage.createContactArgs( opts );
                     this.contactStorage.setContact( contactArgs, false, true, (err, out)=>{
                         if (err) return reject(err)

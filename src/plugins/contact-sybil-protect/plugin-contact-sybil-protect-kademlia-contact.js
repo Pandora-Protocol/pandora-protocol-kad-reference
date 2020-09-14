@@ -1,5 +1,5 @@
 const CryptoUtils = require('../../helpers/crypto-utils')
-const ECCUtils = require('../../helpers/ecc-utils')
+const Validation = require('../../helpers/validation')
 
 module.exports = function(options) {
 
@@ -9,34 +9,21 @@ module.exports = function(options) {
 
             super(...arguments);
 
-            const nonceMessage = this.getNonceMessage();
+            this.sybilIndex = arguments[this._argumentIndex++];
 
-            const sybilSignature = Buffer.alloc(64);
-            this.nonce.copy(sybilSignature, 0, 1)
+            this._keys.push('sybilIndex');
+            this._allKeys.push('sybilIndex');
 
-            if (this.nonce[0] !== 0){
-
-                const sybilPublicKeyIndex = this.nonce[0]-1;
-                if ( sybilPublicKeyIndex >= KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
-                const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilPublicKeyIndex ].publicKey;
-
-                if ( !ECCUtils.verify( sybilPublicKey, nonceMessage, sybilSignature ))
-                    throw "Nonce is invalid";
-
-            } else {
-                if (!this.nonce.equals(KAD_OPTIONS.NONCE_EMPTY)) throw "Nonce needs to be empty"
-            }
-
+            Validation.validateSybilSignature(this.sybilIndex, this.nonce, this.getNonceMessage());
 
         }
 
         get _spartacusNonceLength(){
-            return 65;
+            return 64;
         }
 
         getNonceMessage (){
-            const publicKey = this.publicKey;
-            return CryptoUtils.sha256( publicKey );
+            return CryptoUtils.sha256( this.publicKey );
         }
 
         isContactAcceptableForKademliaRouting(){

@@ -13,6 +13,18 @@ module.exports = {
         options.ContactStorage = PluginContactSybilProtectContactStorage(options);
         options.PluginSybilSign = PluginSybilSign;
 
+        const _initializeNode = kademliaNode.initializeNode.bind(kademliaNode);
+
+        kademliaNode.initializeNode = async function (opts){
+
+            if (typeof BROWSER === "undefined")
+                if (process.argv.indexOf('set-sybil-protect'))
+                    opts.setSybilProtect = 1;
+
+            return _initializeNode(...arguments)
+
+        }
+
         return {
             name: "PluginContactSybilProtect",
             version: "0.1",

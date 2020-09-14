@@ -1,4 +1,5 @@
 const ContactAddressProtocolType = require('../plugins/contact-type/contact-address-protocol-type')
+const ECCUtils = require('./ecc-utils')
 
 module.exports.validateProtocol = (protocol) => {
     if (!ContactAddressProtocolType._map[protocol]) throw "invalid protocol";
@@ -47,6 +48,21 @@ module.exports.checkStoreKey = (key) => {
     if (key && !/^[0-9a-f]+$/g.test(key)) return new Error(`Key is hex`);
 }
 
+module.exports.validateSybilSignature = (sybilIndex = 0, signature, message) =>{
+
+    if (sybilIndex !== 0){
+
+        if ( sybilIndex > KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
+        const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilIndex-1 ].publicKey;
+
+        if ( !ECCUtils.verify( sybilPublicKey, message, signature ))
+            throw "Nonce is invalid";
+
+    } else {
+        if (!signature.equals(KAD_OPTIONS.SIGNATURE_EMPTY)) throw "Nonce needs to be empty"
+    }
+
+}
 
 module.exports.checkStoreData = (data) => {
     if ( !Buffer.isBuffer(data) || !data.length ) return new Error( "data is invalid" );

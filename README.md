@@ -18,6 +18,10 @@ npm link pandora-protocol-eccrypto ;
 npm link webpack-config ;
 ```
 
+### Run
+
+npm run start --set-sybil-protect
+
 ### INFO
 
 Kademlia is a Distributed Hash Table.
