@@ -1,5 +1,7 @@
 const ContactAddressProtocolType = require('../plugins/contact-type/contact-address-protocol-type')
 const ECCUtils = require('./ecc-utils')
+const MarshalUtils = require('./marshal-utils')
+const CryptoUtils = require('./crypto-utils')
 
 module.exports.validateProtocol = (protocol) => {
     if (!ContactAddressProtocolType._map[protocol]) throw "invalid protocol";
@@ -48,18 +50,26 @@ module.exports.checkStoreKey = (key) => {
     if (key && !/^[0-9a-f]+$/g.test(key)) return new Error(`Key is hex`);
 }
 
-module.exports.validateSybilSignature = (sybilIndex = 0, signature, message) =>{
+module.exports.validateSybilSignature = (sybilIndex = 0, sybilTime = 0, signature, message) =>{
 
     if (sybilIndex !== 0){
 
         if ( sybilIndex > KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
         const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilIndex-1 ].publicKey;
 
+        if (sybilTime){
+            message = CryptoUtils.sha256( Buffer.concat( [
+                message,
+                MarshalUtils.marshalNumberFixed( sybilTime, 7),
+            ]) );
+        }
+
         if ( !ECCUtils.verify( sybilPublicKey, message, signature ))
             throw "Nonce is invalid";
 
     } else {
         if (!signature.equals(KAD_OPTIONS.SIGNATURE_EMPTY)) throw "Nonce needs to be empty"
+        if (sybilTime !== 0) throw "Sybil Time has to be empty"
     }
 
 }

@@ -14,7 +14,7 @@ module.exports = function(options) {
             this._keys.push('sybilIndex');
             this._allKeys.push('sybilIndex');
 
-            Validation.validateSybilSignature(this.sybilIndex, this.nonce, this.getNonceMessage());
+            Validation.validateSybilSignature(this.sybilIndex, 0, this.nonce, this.getNonceMessage());
 
         }
 
@@ -27,7 +27,7 @@ module.exports = function(options) {
         }
 
         isContactAcceptableForKademliaRouting(){
-            return this.nonce[0] > 0 && super.isContactAcceptableForKademliaRouting();
+            return (this.sybilIndex > 0) && super.isContactAcceptableForKademliaRouting();
         }
 
 

@@ -1,4 +1,5 @@
 const CryptoUtils = require('./../../helpers/crypto-utils')
+const MarshalUtils = require('./../../helpers/marshal-utils')
 const ECCUtils = require('./../../helpers/ecc-utils')
 const bencode = require('bencode')
 
@@ -12,9 +13,9 @@ module.exports = function (options){
             options.PluginSybilSign.initialize();
         }
 
-        async sybilSign( message, initialIndex){
+        async sybilSign( message, initialIndex, includeTime ){
 
-            let sybilSignature, index;
+            let sybilSignature, index, time;
 
             index = initialIndex || Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
 
@@ -25,7 +26,7 @@ module.exports = function (options){
             }
             else {
 
-                const finalUri = uri + '/challenge/'+message.toString('hex')+'/1';
+                const finalUri = uri + '/challenge/'+message.toString('hex')+ (includeTime ? '/1' : '/0');
                 console.info('Open', finalUri );
 
                 const data = await options.PluginSybilSign.sign(uri, finalUri, publicKey, message);
@@ -34,15 +35,24 @@ module.exports = function (options){
                     throw 'Signature has to be 64 bytes. Try again';
 
                 sybilSignature = Buffer.from(data.signature, 'hex');
+                time = data.time;
+
+                if (includeTime)
+                    message = CryptoUtils.sha256( Buffer.concat( [
+                        message,
+                        MarshalUtils.marshalNumberFixed( time, 7),
+                    ]) );
 
                 if (!ECCUtils.verify(publicKey, message, sybilSignature))
                     throw 'Signature is incorrect';
+
 
             }
 
             return {
                 index,
                 sybilSignature,
+                time,
             }
         }
 
@@ -60,7 +70,7 @@ module.exports = function (options){
             if (opts.setSybilProtect || opts.sybilSignature){
 
                 if (!opts.sybilSignature) {
-                    const out = await this.sybilSign( CryptoUtils.sha256(opts.publicKey), undefined);
+                    const out = await this.sybilSign( CryptoUtils.sha256(opts.publicKey));
                     opts.sybilSignature = out.sybilSignature;
                     opts.sybilIndex = out.index+1;
                 }
