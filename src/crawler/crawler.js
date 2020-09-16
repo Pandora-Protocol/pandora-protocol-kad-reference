@@ -167,7 +167,7 @@ module.exports = class Crawler {
 
                             const elements = Array.isArray(result[1]) ? result[1] : [ result[1] ];
                             async.eachLimit(elements, KAD_OPTIONS.ALPHA_CONCURRENCY,
-                                (key, next) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
+                                (data, next) => this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, data, () => next() ),
                                 ()=> {}
                             );
 
@@ -318,15 +318,14 @@ module.exports = class Crawler {
 
     _sendStoreMissingKey( table, closestMissingValue, methodStore, key, data, cb ){
 
-        let out;
-        if (Array.isArray(data)) out = [table, key, ...data]
-        else out = [table,  key, data];
+        if (Array.isArray(data)) data = [table, key, ...data]
+        else data = [table,  key, data];
 
-        this._storeMissingKeysQueue.push({closestMissingValue, methodStore, out}, cb);
+        this._storeMissingKeysQueue.push({closestMissingValue, methodStore, data}, cb);
     }
 
-    _sendStoreMissingKeyWorker( {closestMissingValue, methodStore, out}, cb){
-        this._kademliaNode.rules.send( closestMissingValue, methodStore, out, cb);
+    _sendStoreMissingKeyWorker( {closestMissingValue, methodStore, data}, cb){
+        this._kademliaNode.rules.send( closestMissingValue, methodStore, data, cb);
     }
 
 }

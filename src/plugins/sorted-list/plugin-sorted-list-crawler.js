@@ -36,19 +36,18 @@ module.exports = function (options) {
 
                 const allowedSortedListTable = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString()];
 
-                for (const value of result)
-                    if ( !finalOutputs[value[0]] || finalOutputs[value[0]] < value[1] ) {
+                for (const value of result){
 
-                        const out = allowedSortedListTable.validation(contact, allowedSortedListTable, [table, key, Buffer.from(value[0], 'hex'), value[1], value[2] ], finalOutputs[value[0]] );
+                    const out = allowedSortedListTable.validation(contact, allowedSortedListTable, [table, key, Buffer.from(value[0], 'hex'), value[1], value[2] ], finalOutputs[value[0]] );
 
-                        if (out)
-                            finalOutputs[value[0]] = {
-                                value: out.value,
-                                score: out.score,
-                                contact
-                            };
+                    if (out)
+                        finalOutputs[value[0]] = {
+                            value: out.value,
+                            score: out.score,
+                            contact
+                        };
 
-                    }
+                }
 
             }
             else return super._iterativeFindMerge(...arguments);

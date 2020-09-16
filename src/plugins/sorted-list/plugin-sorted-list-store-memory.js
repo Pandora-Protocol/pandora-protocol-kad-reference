@@ -95,7 +95,7 @@ module.exports = function (options){
                     }
                 }
 
-                node = tree.insert(score, key, value);
+                node = tree.insert(score, value, key);
                 this._memorySortedListKeyNodesMap.set(table + ':' + masterKey + ':' + key, node);
 
                 if (saveTree)

@@ -7,19 +7,14 @@ module.exports.sybilCallback = function (event){
     if (!event || !event.data) return;
     const data = event.data;
 
-    if (data.message)
-        data.message = Buffer.from(data.message, 'hex')
-
     const array = map[event.origin];
-    if ( array ){
-
+    if ( array )
         for (let i=0; i < array.length; i++ )
-            if (array[i].message.equals(data.message) ){
+            if (array[i].message === data.message ){
                 array[i].resolve(data.out);
                 break;
             }
 
-    }
 
 }
 
@@ -52,7 +47,7 @@ module.exports.closeWindow = function ( origin, obj ){
         array.splice(array.indexOf(obj), 1)
 
     if (this.onCloseWindow)
-        this.onCloseWindow(true);
+        this.onCloseWindow(obj);
 }
 
 module.exports.sign = function (origin, data, params){
