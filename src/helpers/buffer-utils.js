@@ -1,6 +1,5 @@
 const Validation = require('./validation')
 const { randomBytes } = require('crypto');
-const bencode = require('bencode');
 
 function getPowerOfTwoBufferForIndex(referenceKey, exp) {
     if (exp < 0 || exp >= KAD_OPTIONS.BUCKETS_COUNT_B) throw 'Index out of range';
@@ -85,6 +84,14 @@ module.exports = {
             for (const key in data)
                 data[key] = this.serializeData(data[key] );
         }
+
+        return data;
+    },
+
+    serializeBuffers(data){
+        for (const key in data)
+            if (Buffer.isBuffer(data[key]))
+                data[key] = data[key].toString('hex');
 
         return data;
     }

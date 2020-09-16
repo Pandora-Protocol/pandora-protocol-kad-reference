@@ -9,12 +9,12 @@ module.exports = function(options) {
 
             super(...arguments);
 
-            this.sybilIndex = arguments[this._argumentIndex++];
+            this.sybilProtectIndex = arguments[this._argumentIndex++];
 
-            this._keys.push('sybilIndex');
-            this._allKeys.push('sybilIndex');
+            this._keys.push('sybilProtectIndex');
+            this._allKeys.push('sybilProtectIndex');
 
-            Validation.validateSybilSignature(this.sybilIndex, 0, this.nonce, this.getNonceMessage());
+            Validation.validateSybilProtectSignature(this.sybilProtectIndex, 0, this.nonce, this.getNonceMessage());
 
         }
 
@@ -27,7 +27,7 @@ module.exports = function(options) {
         }
 
         isContactAcceptableForKademliaRouting(){
-            return (this.sybilIndex > 0) && super.isContactAcceptableForKademliaRouting();
+            return (this.sybilProtectIndex > 0) && super.isContactAcceptableForKademliaRouting();
         }
 
 

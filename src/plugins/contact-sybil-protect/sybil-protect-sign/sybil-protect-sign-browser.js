@@ -1,3 +1,5 @@
+const BufferUtils = require('./../../../helpers/buffer-utils')
+
 const map = {};
 
 module.exports.sybilCallback = function (event){
@@ -27,7 +29,7 @@ module.exports.initialize = function (){
 
 }
 
-module.exports.openWindow = function ({origin, uri, publicKey, message, resolve, reject}){
+module.exports.openWindow = function ({origin, uri,  message, resolve, reject}){
 
     const w = window.open(uri);
 
@@ -53,7 +55,9 @@ module.exports.closeWindow = function ( origin, obj ){
         this.onCloseWindow(true);
 }
 
-module.exports.sign = function (origin, uri, publicKey, message){
+module.exports.sign = function (origin, data, params){
+
+    const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
 
     let resolve, reject;
 
@@ -62,14 +66,12 @@ module.exports.sign = function (origin, uri, publicKey, message){
         reject = rej;
     })
 
-    uri = uri + '/0';
-
     if (!map[origin]) map[origin] = [];
     const array = map[origin];
     const obj = {
-        uri,
-        publicKey,
-        message,
+        uri: finalUri,
+        data,
+        params,
         resolve,
         reject
     };
@@ -79,7 +81,7 @@ module.exports.sign = function (origin, uri, publicKey, message){
     promise.then( out => this.closeWindow(origin, obj) )
         .catch( e => this.closeWindow(origin, obj) )
 
-    this.openWindow({origin, uri, publicKey, message, resolve, reject});
+    this.openWindow({origin, uri: finalUri, resolve, reject});
 
     return promise;
 }

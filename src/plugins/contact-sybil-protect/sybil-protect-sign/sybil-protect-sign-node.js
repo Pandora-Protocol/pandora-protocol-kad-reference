@@ -1,13 +1,19 @@
 const open = require('open');
 const readlineUtils = require('./../../../helpers/readline-utils');
+const BufferUtils = require('./../../../helpers/buffer-utils')
 
 module.exports.initialize = function (){
 
 }
 
-module.exports.sign = async function (origin, uri, publicKey, message){
+module.exports.sign = async function (origin, data, params){
 
-    open(uri+'/1');
+    params.showOutput = true;
+    const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
+
+    console.info('Open', finalUri );
+
+    open(finalUri);
 
     const input = await readlineUtils.readline('Paste the answer\n');
     if (typeof input !== "string" || !input.length)

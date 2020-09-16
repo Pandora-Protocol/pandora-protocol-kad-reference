@@ -1,6 +1,7 @@
 const CryptoUtils = require('./../../helpers/crypto-utils')
 const MarshalUtils = require('./../../helpers/marshal-utils')
 const ECCUtils = require('./../../helpers/ecc-utils')
+
 const bencode = require('bencode')
 
 module.exports = function (options){
@@ -13,47 +14,61 @@ module.exports = function (options){
             options.PluginSybilProtectSign.initialize();
         }
 
-        async sybilSign( message, initialIndex, includeTime ){
+        async sybilProtectSign( data, params = {}, initialIndex ){
 
-            let sybilSignature, index, time;
+            const finalOut = {};
 
-            index = initialIndex || Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
+            finalOut.index = initialIndex || Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
 
-            const {privateKey, publicKey, uri} = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[index];
+            const {privateKey, publicKey, uri} = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[finalOut.index];
+
+            let message = [
+                data.message,
+            ];
 
             if (privateKey) {
-                sybilSignature = ECCUtils.sign(privateKey, CryptoUtils.sha256(message))
+
+                if (params.includeTime) {
+                    finalOut.time = Math.floor( new Date().getTime()/1000 );
+                    message.push( MarshalUtils.marshalNumberFixed(finalOut.time, 7) );
+                }
+
+                message = Buffer.concat(message);
+                if (message.length !== 32)
+                    message = CryptoUtils.sha256(message);
+
+                finalOut.signature = ECCUtils.sign(privateKey, message );
+
+
             }
             else {
 
-                const finalUri = uri + '/challenge/'+message.toString('hex')+ (includeTime ? '/1' : '/0');
-                console.info('Open', finalUri );
+                const out = await options.PluginSybilProtectSign.sign( uri,  data, params);
 
-                const data = await options.PluginSybilProtectSign.sign(uri, finalUri, publicKey, message);
-
-                if (typeof data.signature !== "string" || data.signature.length !== 128)
+                if (typeof out.signature !== "string" || out.signature.length !== 128)
                     throw 'Signature has to be 64 bytes. Try again';
 
-                sybilSignature = Buffer.from(data.signature, 'hex');
-                time = data.time;
+                finalOut.signature = Buffer.from(out.signature, 'hex');
 
-                if (includeTime)
-                    message = CryptoUtils.sha256( Buffer.concat( [
-                        message,
-                        MarshalUtils.marshalNumberFixed( time, 7),
-                    ]) );
+                if (params.includeTime) {
 
-                if (!ECCUtils.verify(publicKey, message, sybilSignature))
-                    throw 'Signature is incorrect';
+                    if (typeof out.time !== "number" || !out.time)
+                        throw "Invalid time";
 
+                    finalOut.time = out.time;
+                    message.push( MarshalUtils.marshalNumberFixed(finalOut.time, 7) );
+                }
+
+                message = Buffer.concat(message);
+                if (message.length !== 32)
+                    message = CryptoUtils.sha256(message);
 
             }
 
-            return {
-                index,
-                sybilSignature,
-                time,
-            }
+            if (!ECCUtils.verify(publicKey, message, finalOut.signature))
+                throw 'Signature is incorrect';
+
+            return finalOut
         }
 
 
@@ -67,26 +82,28 @@ module.exports = function (options){
             if (!opts.publicKey)
                 opts.publicKey = ECCUtils.getPublicKey(opts.privateKey);
 
-            if (opts.setSybilProtect || opts.sybilSignature){
+            if (opts.setSybilProtect || opts.sybilProtectSignature){
 
-                if (!opts.sybilSignature) {
-                    const out = await this.sybilSign( CryptoUtils.sha256(opts.publicKey));
-                    opts.sybilSignature = out.sybilSignature;
-                    opts.sybilIndex = out.index+1;
+                if (!opts.sybilProtectSignature) {
+                    const out = await this.sybilProtectSign( {
+                        message: CryptoUtils.sha256(opts.publicKey)
+                    }, {}, undefined);
+                    opts.sybilProtectSignature = out.signature;
+                    opts.sybilProtectIndex = out.index+1;
                 }
 
-                opts.nonce = opts.sybilSignature;
+                opts.nonce = opts.sybilProtectSignature;
 
             } else {
                 opts.nonce = Buffer.alloc(64);
-                opts.sybilIndex = 0;
+                opts.sybilProtectIndex = 0;
             }
 
             opts.identity = CryptoUtils.sha256( Buffer.concat( [ opts.nonce, opts.publicKey ] ) );
 
             const out = await super.createContactArgs( opts );
 
-            out.args.push(opts.sybilIndex);
+            out.args.push(opts.sybilProtectIndex);
 
             let index;
             for (let i=0; i < out.args.length; i++)
@@ -103,7 +120,7 @@ module.exports = function (options){
                 ...opts,
                 args: [
                     ...out.args,
-                    opts.sybilIndex,
+                    opts.sybilProtectIndex,
                 ]
             };
 

@@ -50,17 +50,17 @@ module.exports.checkStoreKey = (key) => {
     if (key && !/^[0-9a-f]+$/g.test(key)) return new Error(`Key is hex`);
 }
 
-module.exports.validateSybilSignature = (sybilIndex = 0, sybilTime = 0, signature, message) =>{
+module.exports.validateSybilProtectSignature = (sybilProtectIndex = 0, sybilProtectTime = 0, signature, message) =>{
 
-    if (sybilIndex !== 0){
+    if (sybilProtectIndex !== 0){
 
-        if ( sybilIndex > KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
-        const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilIndex-1 ].publicKey;
+        if ( sybilProtectIndex > KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
+        const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilProtectIndex-1 ].publicKey;
 
-        if (sybilTime){
+        if (sybilProtectTime){
             message = CryptoUtils.sha256( Buffer.concat( [
                 message,
-                MarshalUtils.marshalNumberFixed( sybilTime, 7),
+                MarshalUtils.marshalNumberFixed( sybilProtectTime, 7),
             ]) );
         }
 
@@ -69,7 +69,7 @@ module.exports.validateSybilSignature = (sybilIndex = 0, sybilTime = 0, signatur
 
     } else {
         if (!signature.equals(KAD_OPTIONS.SIGNATURE_EMPTY)) throw "Nonce needs to be empty"
-        if (sybilTime !== 0) throw "Sybil Time has to be empty"
+        if (sybilProtectTime !== 0) throw "Sybil Time has to be empty"
     }
 
 }
