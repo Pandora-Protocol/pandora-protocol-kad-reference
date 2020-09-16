@@ -4,7 +4,7 @@ module.exports = {
 
     VERSION:{
         APP: "research",
-        VERSION: "0.1016",
+        VERSION: "0.1017",
         VERSION_COMPATIBILITY: "0.101",
     },
 

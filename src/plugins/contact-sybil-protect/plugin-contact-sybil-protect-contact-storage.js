@@ -10,7 +10,7 @@ module.exports = function (options){
         constructor() {
             super(...arguments);
 
-            options.PluginSybilSign.initialize();
+            options.PluginSybilProtectSign.initialize();
         }
 
         async sybilSign( message, initialIndex, includeTime ){
@@ -29,7 +29,7 @@ module.exports = function (options){
                 const finalUri = uri + '/challenge/'+message.toString('hex')+ (includeTime ? '/1' : '/0');
                 console.info('Open', finalUri );
 
-                const data = await options.PluginSybilSign.sign(uri, finalUri, publicKey, message);
+                const data = await options.PluginSybilProtectSign.sign(uri, finalUri, publicKey, message);
 
                 if (typeof data.signature !== "string" || data.signature.length !== 128)
                     throw 'Signature has to be 64 bytes. Try again';

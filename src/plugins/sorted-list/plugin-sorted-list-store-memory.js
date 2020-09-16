@@ -11,7 +11,7 @@ module.exports = function (options){
 
             super(...arguments)
 
-            this._memorySortedList = new Map();
+            this._memorySortedList = {};
             this._memorySortedListKeyNodesMap = new Map();
 
             this._memoryExpirationSortedList = new Map();
@@ -24,7 +24,7 @@ module.exports = function (options){
             const err2 = Validation.checkStoreMasterKey(masterKey);
             if (err1 || err2) return cb(err1||err2);
 
-            const tree = this._memorySortedList.get(table + ':' + masterKey);
+            const tree = this._memorySortedList[table + ':' + masterKey];
             if (tree)
                 cb(null, tree.toSortedArray('getValueKeyArray'));
             else
@@ -57,10 +57,12 @@ module.exports = function (options){
             const err5 = Validation.checkStoreScore(score);
             if (err1 || err2 || err3 || err4 || err5) return cb(err1||err2||err3||err4||err5);
 
-            let tree = this._memorySortedList.get(table + ':' + masterKey);
+            let tree = this._memorySortedList[table + ':' + masterKey],
+                saveTree;
+
             if (!tree) {
+                saveTree = true;
                 tree = new RedBlackTree();
-                this._memorySortedList.set(table + ':' + masterKey, tree );
             }
 
             let node = this._memorySortedListKeyNodesMap.get(table +':'+ masterKey + ':' + key  ),
@@ -71,18 +73,33 @@ module.exports = function (options){
                 if (node.value !== value) node.value = value;
 
                 if (node.key === score)
-                    save = true;
+                    save = false;
                 else {
                     //TODO optimization to avoid removing and inserting
                     //TODO thus saving O(logN)
                     tree.removeNode(node);
+                    this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + key, node);
+                    this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + key, node);
                 }
 
             }
 
             if (save) {
+
+                if (tree.count > 1500 ){
+                    const min = tree.min(tree.root);
+                    if (score > min.key ) {
+                        tree.removeNode(min);
+                        this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + min.id);
+                        this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + min.id);
+                    }
+                }
+
                 node = tree.insert(score, key, value);
                 this._memorySortedListKeyNodesMap.set(table + ':' + masterKey + ':' + key, node);
+
+                if (saveTree)
+                    this._memorySortedList[table + ':' + masterKey] = tree;
             }
 
             this._memoryExpirationSortedList.set( table + ':' + masterKey + ':' + key, {
@@ -106,11 +123,11 @@ module.exports = function (options){
             const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + masterKey + ':' + key );
             if (!foundNode) return cb(null, 0);
 
-            const tree = this._memorySortedList.get(table + ':' + masterKey);
+            const tree = this._memorySortedList[table + ':' + masterKey];
             tree.removeNode(foundNode);
 
             if ( tree.isEmpty )
-                this._memorySortedList.delete( table + ':' + masterKey );
+                delete this._memorySortedList[ table + ':' + masterKey];
 
             this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + key);
             this._memoryExpirationSortedList.delete(table + ':' + masterKey+':'+key);

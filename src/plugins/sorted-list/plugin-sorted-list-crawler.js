@@ -39,11 +39,12 @@ module.exports = function (options) {
                 for (const value of result)
                     if ( !finalOutputs[value[0]] || finalOutputs[value[0]] < value[1] ) {
 
-                        const data = allowedSortedListTable.validation(contact, allowedSortedListTable, [table, key, Buffer.from(value[0], 'hex'), value[1], value[2] ], finalOutputs[value[0]] );
-                        if (data)
+                        const out = allowedSortedListTable.validation(contact, allowedSortedListTable, [table, key, Buffer.from(value[0], 'hex'), value[1], value[2] ], finalOutputs[value[0]] );
+
+                        if (out)
                             finalOutputs[value[0]] = {
-                                value: data,
-                                score: value[2],
+                                value: out.value,
+                                score: out.score,
                                 contact
                             };
 

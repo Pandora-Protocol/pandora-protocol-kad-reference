@@ -15,10 +15,10 @@ module.exports = function (options) {
 
             this._allowedStoreSortedListTables = {
                 '':{
-                    validation:  ( srcContact, self, data, old ) => {
+                    validation:  ( srcContact, self, [table, masterKey, key, value, score], old ) => {
 
-                        if (  old && old.score >= data[4] ) return null;
-                        return data;
+                        if (  old && old.score >= score[4] ) return null;
+                        return {value, score};
 
                     },
                     expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
@@ -36,10 +36,10 @@ module.exports = function (options) {
 
                 if (err) return cb(err);
 
-                const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
+                const out = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
 
-                if ( data )
-                    this._store.putSortedList(table.toString(), masterKey.toString('hex'), key.toString('hex'), data, score, allowedSortedListTable.expiry, cb);
+                if ( out )
+                    this._store.putSortedList(table.toString(), masterKey.toString('hex'), key.toString('hex'), out.value, out.score, allowedSortedListTable.expiry, cb);
                 else
                     cb(null, 0 );
 

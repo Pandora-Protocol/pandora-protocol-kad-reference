@@ -1,6 +1,6 @@
 const PluginContactSybilProtectKademliaContact = require('./plugin-contact-sybil-protect-kademlia-contact')
 const PluginContactSybilProtectContactStorage = require('./plugin-contact-sybil-protect-contact-storage')
-const PluginSybilSign = typeof BROWSER === "undefined" ? require('./sybil-sign/sybil-sign-node') : require('./sybil-sign/sybil-sign-browser')
+const PluginSybilProtectSign = typeof BROWSER === "undefined" ? require('./sybil-protect-sign/sybil-protect-sign-node') : require('./sybil-protect-sign/sybil-protect-sign-browser')
 
 module.exports = {
 
@@ -11,7 +11,7 @@ module.exports = {
 
         options.Contact = PluginContactSybilProtectKademliaContact(options);
         options.ContactStorage = PluginContactSybilProtectContactStorage(options);
-        options.PluginSybilSign = PluginSybilSign;
+        options.PluginSybilProtectSign = PluginSybilProtectSign;
 
         const _initializeNode = kademliaNode.initializeNode.bind(kademliaNode);
 
