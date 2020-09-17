@@ -22,23 +22,19 @@ module.exports = {
     },
 
 
-    validateIdentity : (identity, text='Identity' ) => {
-        if (!Buffer.isBuffer(identity)) throw`${text} is not a buffer`;
-        if (identity.length !== KAD_OPTIONS.NODE_ID_LENGTH)  throw `${text} length is invalid`;
+    validateIdentity : (identity) => {
+        if (!Buffer.isBuffer(identity)) throw`Identity is not a buffer`;
+        if (identity.length !== KAD_OPTIONS.NODE_ID_LENGTH)  throw `Identity length is invalid`;
+    },
+
+    validateKey:  (identity, text='Identity' ) => {
+        if (!Buffer.isBuffer(identity)) throw`Key is not a buffer`;
+        if (identity.length !== KAD_OPTIONS.NODE_ID_LENGTH)  throw `Key length is invalid`;
     },
 
     validateTable : ( table ) => {
         if (!Buffer.isBuffer(table)) throw `table is not a buffer`;
         if (table.length > 32) throw `table length is invalid`;
-    },
-
-    validateStoreTable : (table) => {
-        if (typeof table !== "string" && table.length > 64 ) throw"Table is invalid";
-    },
-
-    validateStoreKey : (key) => {
-        if (typeof key !== "string" || key.length !== KAD_OPTIONS.NODE_ID_LENGTH*2 ) throw "MasterKey is invalid";
-        if (!/^[0-9a-f]+$/g.test(key)) throw `Key is hex`;
     },
 
     validateSybilProtectSignature : (sybilProtectIndex = 0, sybilProtectTime = 0, signature, message) =>{

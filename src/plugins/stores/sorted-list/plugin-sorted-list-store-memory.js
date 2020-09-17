@@ -20,10 +20,10 @@ module.exports = function (options){
 
         getSortedList(table, masterKey){
 
-            Validation.validateStoreTable(table);
-            Validation.validateStoreKey(masterKey);
+            Validation.validateTable(table);
+            Validation.validateKey(masterKey);
 
-            const tree = this._memorySortedList[table + ':' + masterKey];
+            const tree = this._memorySortedList[table.toString() + ':' + masterKey.toString('hex')];
             if (!tree) return undefined;
 
             const out = tree.toSortedArrayInverted('getValueKeyArray');
@@ -34,21 +34,21 @@ module.exports = function (options){
 
         hasSortedListKey(table, masterKey, key){
 
-            Validation.validateStoreTable(table);
-            Validation.validateStoreKey(masterKey);
-            Validation.validateStoreKey(key);
+            Validation.validateTable(table);
+            Validation.validateKey(masterKey);
+            Validation.validateKey(key);
 
-            return this._memorySortedListKeyNodesMap.has(table +':'+ masterKey + ':' + key  );
+            return this._memorySortedListKeyNodesMap.has(table.toString() +':'+ masterKey.toString('hex') + ':' + key.toString('hex')  );
 
         }
 
         getSortedListKey(table, masterKey, key){
 
-            Validation.validateStoreTable(table);
-            Validation.validateStoreKey(masterKey);
-            Validation.validateStoreKey(key);
+            Validation.validateTable(table);
+            Validation.validateKey(masterKey);
+            Validation.validateKey(key);
 
-            const node = this._memorySortedListKeyNodesMap.get(table +':'+ masterKey + ':' + key  );
+            const node = this._memorySortedListKeyNodesMap.get(table.toString() +':'+ masterKey.toString('hex') + ':' + key.toString('hex')  );
             if (!node) return undefined;
 
             return {
@@ -60,13 +60,17 @@ module.exports = function (options){
 
         putSortedList(table, masterKey, key, value, score, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY){
 
-            Validation.validateStoreTable(table);
-            Validation.validateStoreKey(masterKey);
-            Validation.validateStoreKey(key);
+            Validation.validateTable(table);
+            Validation.validateKey(masterKey);
+            Validation.validateKey(key);
             Validation.validateStoreData(value);
             Validation.validateStoreScore(score);
 
-            let tree = this._memorySortedList[table + ':' + masterKey],
+            table = table.toString();
+            masterKey = masterKey.toString('hex');
+            key = key.toString('hex');
+
+            let tree = this._memorySortedList[table + ':' + masterKey ],
                 saveTree;
 
             if (!tree) {
@@ -113,8 +117,6 @@ module.exports = function (options){
 
             this._memoryExpirationSortedList.set( table + ':' + masterKey + ':' + key, {
                 node,
-                masterKey,
-                key,
                 time: new Date().getTime() + expiry,
             });
 
@@ -122,11 +124,7 @@ module.exports = function (options){
 
         }
 
-        delSortedList(table, masterKey, key){
-
-            Validation.validateStoreTable(table);
-            Validation.validateStoreKey(masterKey);
-            Validation.validateStoreKey(key);
+        _delSortedList(table, masterKey, key){
 
             const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + masterKey + ':' + key );
             if (!foundNode) return 0;
@@ -179,12 +177,11 @@ module.exports = function (options){
             const itValue =  this._expireOldKeysSortedListIterator.next();
             if (itValue.value && !itValue.done){
 
-                const {node,  time, key, masterKey} = itValue.value[1];
+                const {node,  time} = itValue.value[1];
                 if (time < new Date().getTime() ){
 
-                    const str = itValue.value[0];
-                    const table = str.slice(0, str.indexOf(':') ) ;
-                    await this.delSortedList(table, masterKey, key )
+                    const words = itValue.value[0].split(':');
+                    await this._delSortedList( words[0], words[1], words[2] )
                 }
 
             } else

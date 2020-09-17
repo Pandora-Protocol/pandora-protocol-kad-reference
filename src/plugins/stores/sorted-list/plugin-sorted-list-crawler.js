@@ -39,13 +39,13 @@ module.exports = function (options) {
             if (typeof masterKey === 'string') masterKey = Buffer.from(masterKey, 'hex');
 
             Validation.validateTable(table);
-            Validation.validateIdentity(masterKey);
+            Validation.validateKey(masterKey);
 
             return this._iterativeFind(table, 'FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', masterKey, false);
 
         }
 
-        iterativeStoreSortedListValue(table, masterKey, key, value, score){
+        async iterativeStoreSortedListValue(table, masterKey, key, value, score){
 
             if (typeof table === 'string') table = Buffer.from(table);
             if (typeof masterKey === 'string') masterKey = Buffer.from(masterKey, 'hex');
@@ -53,13 +53,17 @@ module.exports = function (options) {
             if (typeof value === 'string') value = Buffer.from(value);
 
             Validation.validateTable(table);
-            Validation.validateIdentity(masterKey);
-            Validation.validateIdentity(key);
+            Validation.validateKey(masterKey);
+            Validation.validateKey(key);
 
             const allowedSortedListTable = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString()];
             if (!allowedSortedListTable) throw'Table is not allowed';
 
-            return this._iterativeStoreValue( [table, masterKey, key, value, score], 'sendStoreSortedListValue', data => this._kademliaNode._store.putSortedList( table.toString(), masterKey.toString('hex'), key.toString('hex'), value, score, allowedSortedListTable.expiry ))
+            const out = await this._iterativeStoreValue( [table, masterKey, key, value, score], 'sendStoreSortedListValue' );
+            if (out)
+                await this._kademliaNode._store.putSortedList( table, masterKey, key, value, score, allowedSortedListTable.expiry )
+
+            return out;
         }
 
     }

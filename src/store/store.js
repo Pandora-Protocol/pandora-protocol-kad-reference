@@ -6,4 +6,17 @@ module.exports = class Store{
         this._started = false;
     }
 
+    start(){
+        if (this._started) throw "Store already started";
+
+        this._started = true;
+    }
+
+    stop(){
+        if (!this._started) throw "Store already closed";
+
+        this._started = false;
+    }
+
+
 }

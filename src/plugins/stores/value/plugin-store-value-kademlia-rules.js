@@ -58,7 +58,7 @@ module.exports = function (options) {
          */
         async _findValue( req, srcContact, [table, key]){
 
-            const out = await this._store.get(table.toString(), key.toString('hex') );
+            const out = await this._store.get(table, key );
 
             //found the data
             if (out) return [1, out];
@@ -78,25 +78,22 @@ module.exports = function (options) {
          */
         async _storeCommand(req, srcContact, [table,  key, value]) {
 
-            const tableStr = table.toString();
-            const keyStr = key.toString('hex');
-
-            const allowedTable = this._allowedStoreTables[tableStr];
+            const allowedTable = this._allowedStoreTables[table.toString()];
             if (!allowedTable) throw 'Table is not allowed';
 
             let old;
 
             if (allowedTable.immutable){
 
-                const has = await this._store.hasKey( tableStr,  keyStr);
-                if (has) return this._store.putExpiration(tableStr, keyStr, allowedTable.expiry);
+                const has = await this._store.hasKey( table,  key);
+                if (has) return this._store.putExpiration(table, key, allowedTable.expiry);
 
             } else {
-                const old = await this._store.getKey( tableStr, keyStr);
+                const old = await this._store.getKey( table, key);
             }
 
             const data = allowedTable.validation( srcContact, allowedTable, [table,  key, value], old );
-            if ( data ) return this._store.put( tableStr, keyStr, data, allowedTable.expiry);
+            if ( data ) return this._store.put( table, key, data, allowedTable.expiry);
 
             return 0;
 
@@ -163,7 +160,7 @@ module.exports = function (options) {
                 }
 
                 if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  ) {
-                    const out = await this.sendStore(contact, [table, key, value]);
+                    const out = await this.sendStore(contact, [ Buffer.from(table), keyNode, value ]);
                     NextTick(this._replicateStoreToNewNode.bind(this, contact, iterator), KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_SLEEP);
                 }
                 else

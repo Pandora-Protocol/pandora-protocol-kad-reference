@@ -31,22 +31,18 @@ module.exports = function (options) {
             const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString()];
             if (!allowedSortedListTable) throw 'Table is not allowed';
 
-            const tableStr = table.toString();
-            const masterKeyStr = masterKey.toString('hex');
-            const keyStr = key.toString('hex');
-
             let old;
 
             if (allowedSortedListTable.immutable){
 
-                const has = await this._store.hasSortedListKey( tableStr,  masterKeyStr, keyStr );
-                if (has) return this._store.putExpiration(tableStr, keyStr, allowedSortedListTable.expiry);
+                const has = await this._store.hasSortedListKey( table,  masterKey, key );
+                if (has) return this._store.putExpiration(table, key, allowedSortedListTable.expiry);
 
             } else
-                old = await this._store.getSortedListKey(tableStr, masterKeyStr, keyStr);
+                old = await this._store.getSortedListKey(table, masterKey, key);
 
             const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
-            if ( data ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, data.value, data.score, allowedSortedListTable.expiry);
+            if ( data ) return this._store.putSortedList(table, masterKey, key, data.value, data.score, allowedSortedListTable.expiry);
 
             return 0;
 
@@ -67,7 +63,7 @@ module.exports = function (options) {
          */
         async _findSortedList(req, srcContact, [table, masterKey]){
 
-            const out = await this._store.getSortedList(table.toString(), masterKey.toString('hex'));
+            const out = await this._store.getSortedList(table, masterKey);
 
             //found the data
             if (out) return [ 1, out ];

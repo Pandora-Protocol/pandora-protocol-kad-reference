@@ -37,12 +37,12 @@ module.exports = function (options) {
             if (typeof table === 'string') table = Buffer.from(table);
             if (typeof key === 'string') key = Buffer.from(key, 'hex');
 
-            Validation.validateIdentity(key);
             Validation.validateTable(table);
+            Validation.validateKey(key);
 
             if (allowedTable.immutable){
 
-                const out = await this._kademliaNode._store.get(table.toString(), key.toString('hex') );
+                const out = await this._kademliaNode._store.get(table, key );
                 if (out) return {result: {value: out, contact: this._kademliaNode.contact }, };
 
             }
@@ -78,7 +78,6 @@ module.exports = function (options) {
 
             if (typeof table === 'string') table = Buffer.from(table);
             if (typeof key === 'string') key = Buffer.from(key, 'hex');
-
             if (typeof value === 'string') value = Buffer.from(value);
 
             const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
@@ -86,7 +85,7 @@ module.exports = function (options) {
 
             const out = await this._iterativeStoreValue(  [table, key, value], 'sendStore' );
             if (out)
-                await this._kademliaNode._store.put( table.toString(), key.toString('hex'), value, allowedTable.expiry );
+                await this._kademliaNode._store.put( table, key, value, allowedTable.expiry );
 
             return out;
         }
