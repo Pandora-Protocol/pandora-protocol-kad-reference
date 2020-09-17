@@ -36,14 +36,9 @@ module.exports = {
         if (typeof table !== "string" && table.length > 64 ) throw"Table is invalid";
     },
 
-    validateStoreMasterKey : (key) => {
+    validateStoreKey : (key) => {
         if (typeof key !== "string" || key.length !== KAD_OPTIONS.NODE_ID_LENGTH*2 ) throw "MasterKey is invalid";
         if (!/^[0-9a-f]+$/g.test(key)) throw `Key is hex`;
-    },
-
-    validateStoreKey : (key) => {
-        if (typeof key !== "string" || !(!key.length || key.length === KAD_OPTIONS.NODE_ID_LENGTH*2 )) throw "Key is invalid";
-        if (key && !/^[0-9a-f]+$/g.test(key)) throw `Key is hex`;
     },
 
     validateSybilProtectSignature : (sybilProtectIndex = 0, sybilProtectTime = 0, signature, message) =>{

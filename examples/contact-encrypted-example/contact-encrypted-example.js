@@ -31,6 +31,7 @@ const nodes = array.map(
     (contact, index) => new KAD.KademliaNode(
         path.resolve( __dirname + '/_temp/' + index ),
         [
+            KAD.plugins.PluginStoreValue,
             KAD.plugins.PluginNodeMock,
             KAD.plugins.PluginContactType,
             KAD.plugins.PluginNodeHTTP,
@@ -62,7 +63,7 @@ async function execute() {
     console.log("iterativeFindValue", out.result, out.length);
 
     const query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-    out = await nodes[3].crawler.iterativeStoreValue( '', query2, '', 'query2');
+    out = await nodes[3].crawler.iterativeStoreValue( '', query2,  'query2');
 
     console.log("iterativeStoreValue", out);
 

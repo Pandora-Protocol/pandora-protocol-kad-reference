@@ -4,7 +4,7 @@ const Crawler = require('./crawler/crawler')
 const EventEmitter = require('events');
 const Contact = require('./contact/contact')
 
-const MemoryStore = require('./store/store-memory')
+const Store = require('./store/store')
 const Storage = require('./storage/storage')
 const ContactStorage = require('./contact/contact-storage')
 const KademliaNodePlugins = require('./plugins/kademlia-node-plugins')
@@ -20,7 +20,7 @@ module.exports = class KademliaNode extends EventEmitter {
             Contact,
             Storage,
             ContactStorage,
-            Store: MemoryStore,
+            Store: Store,
             RoutingTable,
             Rules: KademliaRules,
             Crawler,

@@ -2,10 +2,9 @@ var Promise = require("bluebird");
 global.Promise = Promise;
 
 const KademliaNode = require('./src/kademlia-node')
-const Store = require('./src/store/store')
-const StoreMemory = require('./src/store/store-memory')
 const Config = require('./src/config')
 
+const Store = require('./src/store/store')
 const Storage = require('./src/storage/storage')
 
 const Contact = require('./src/contact/contact')
@@ -17,7 +16,8 @@ const PluginNodeMock = require('./src/plugins/node-mock/index')
 const PluginNodeHTTP = require('./src/plugins/node-http/index')
 const PluginNodeWebSocket = require('./src/plugins/node-websocket/index')
 const PluginNodeWebRTC = require('./src/plugins/node-webrtc/index')
-const PluginSortedList = require('./src/plugins/sorted-list/index')
+const PluginStoreValue = require('./src/plugins/stores/value/index')
+const PluginStoreSortedList = require('./src/plugins/stores/sorted-list/index')
 const PluginContactEncrypted = require('./src/plugins/contact-encrypted/index')
 const PluginContactSpartacus = require('./src/plugins/contact-spartacus/index')
 const PluginContactSybilProtect = require('./src/plugins/contact-sybil-protect/index')
@@ -67,7 +67,6 @@ module.exports = {
     storage: {
         Storage,
         Store,
-        StoreMemory,
     },
 
     helpers:{
@@ -82,7 +81,8 @@ module.exports = {
 
     plugins: {
         PluginContactIdentity,
-        PluginSortedList,
+        PluginStoreValue,
+        PluginStoreSortedList,
         PluginNodeMock,
         PluginContactType,
         PluginNodeHTTP,

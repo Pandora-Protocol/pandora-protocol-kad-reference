@@ -27,6 +27,7 @@ const nodes = array.map(
     (contact, index) => new KAD.KademliaNode(
         path.resolve( __dirname + '/_temp/' + index ),
         [
+            KAD.plugins.PluginStoreValue,
             KAD.plugins.PluginContactIdentity,
             KAD.plugins.PluginNodeMock,
             KAD.plugins.PluginContactType,

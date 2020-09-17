@@ -20,6 +20,7 @@ module.exports = function (options) {
 
                     },
                     expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
+                    immutable: true,
                 },
             };
 
@@ -34,11 +35,21 @@ module.exports = function (options) {
             const masterKeyStr = masterKey.toString('hex');
             const keyStr = key.toString('hex');
 
-            const old = await this._store.getSortedListKey(tableStr, masterKeyStr, keyStr);
+            if (allowedSortedListTable.immutable){
 
-            const out = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
+                const has = await this._store.hasSortedListKey( tableStr,  masterKeyStr, keyStr );
+                if (has) return this._store.putExpiration(tableStr, keyStr, allowedSortedListTable.expiry);
 
-            if ( out ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, out.value, out.score, allowedSortedListTable.expiry);
+                const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], null );
+                if ( data ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, data.value, data.score, allowedSortedListTable.expiry);
+
+            } else {
+
+                const old = await this._store.getSortedListKey(tableStr, masterKeyStr, keyStr);
+                const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
+                if ( data ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, data.value, data.score, allowedSortedListTable.expiry);
+            }
+
             return 0;
 
         }
@@ -75,15 +86,11 @@ module.exports = function (options) {
 
             if (!decodedAlready && Buffer.isBuffer(data)) data = bencode.decode(data);
 
-            if ( command === 'FIND_SORTED_LIST' ){
+            if ( command === 'FIND_SORTED_LIST'&& data[0] === 0 ){
+                for (let i = 0; i < data[1].length; i++)
+                    data[1][i] = this._kademliaNode.createContact( data[1][i] );
 
-                if ( data[0] === 0){
-
-                    for (let i = 0; i < data[1].length; i++)
-                        data[1][i] = this._kademliaNode.createContact( data[1][i] );
-
-                    return data;
-                }
+                return data;
             }
 
             return super.decodeSendAnswer(dstContact, command, data, true);

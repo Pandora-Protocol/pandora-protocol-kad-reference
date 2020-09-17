@@ -1,7 +1,7 @@
 const RedBlackTree = require('pandora-protocol-red-black-tree-js');
-const Validation = require('./../../helpers/validation')
-const Utils = require('./../../helpers/utils')
-const {setAsyncInterval, clearAsyncInterval} = require('./../../helpers/async-interval')
+const Validation = require('../../../helpers/validation')
+const Utils = require('../../../helpers/utils')
+const {setAsyncInterval, clearAsyncInterval} = require('../../../helpers/async-interval')
 
 module.exports = function (options){
 
@@ -21,7 +21,7 @@ module.exports = function (options){
         getSortedList(table, masterKey){
 
             Validation.validateStoreTable(table);
-            Validation.validateStoreMasterKey(masterKey);
+            Validation.validateStoreKey(masterKey);
 
             const tree = this._memorySortedList[table + ':' + masterKey];
             if (!tree) return undefined;
@@ -32,11 +32,21 @@ module.exports = function (options){
             return out;
         }
 
+        hasSortedListKey(table, masterKey, key){
+
+            Validation.validateStoreTable(table);
+            Validation.validateStoreKey(masterKey);
+            Validation.validateStoreKey(key);
+
+            return this._memorySortedListKeyNodesMap.has(table +':'+ masterKey + ':' + key  );
+
+        }
+
         getSortedListKey(table, masterKey, key){
 
             Validation.validateStoreTable(table);
-            Validation.validateStoreMasterKey(masterKey);
-            Validation.validateStoreMasterKey(key);
+            Validation.validateStoreKey(masterKey);
+            Validation.validateStoreKey(key);
 
             const node = this._memorySortedListKeyNodesMap.get(table +':'+ masterKey + ':' + key  );
             if (!node) return undefined;
@@ -51,8 +61,8 @@ module.exports = function (options){
         putSortedList(table, masterKey, key, value, score, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY){
 
             Validation.validateStoreTable(table);
-            Validation.validateStoreMasterKey(masterKey);
-            Validation.validateStoreMasterKey(key);
+            Validation.validateStoreKey(masterKey);
+            Validation.validateStoreKey(key);
             Validation.validateStoreData(value);
             Validation.validateStoreScore(score);
 
@@ -115,8 +125,8 @@ module.exports = function (options){
         delSortedList(table, masterKey, key){
 
             Validation.validateStoreTable(table);
-            Validation.validateStoreMasterKey(masterKey);
-            Validation.validateStoreMasterKey(key);
+            Validation.validateStoreKey(masterKey);
+            Validation.validateStoreKey(key);
 
             const foundNode = this._memorySortedListKeyNodesMap.get(table + ':' + masterKey + ':' + key );
             if (!foundNode) return 0;

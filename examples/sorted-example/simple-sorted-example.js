@@ -18,12 +18,13 @@ const nodes = array.map(
     (contact, index) => new KAD.KademliaNode(
         path.resolve( __dirname + '/_temp/' + index ),
         [
+            KAD.plugins.PluginStoreValue,
             KAD.plugins.PluginContactIdentity,
             KAD.plugins.PluginNodeMock,
             KAD.plugins.PluginContactType,
             KAD.plugins.PluginNodeHTTP,
             KAD.plugins.PluginNodeWebSocket,
-            KAD.plugins.PluginSortedList,
+            KAD.plugins.PluginStoreSortedList,
             KAD.plugins.PluginContactRendezvous,
             KAD.plugins.PluginReverseConnection,
         ],
@@ -52,6 +53,7 @@ async function execute(){
     let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     let query3 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     let query4 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+    let query5 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
 
     out = await nodes[3].crawler.iterativeStoreSortedListValue( '', masterKey, query2, 'query2_5', 5);
     console.log("iterativeStoreSortedListValue", out);
@@ -60,6 +62,9 @@ async function execute(){
     console.log("iterativeStoreSortedListValue", out);
 
     out = await nodes[4].crawler.iterativeStoreSortedListValue( '', masterKey, query4, 'query2_8', 8);
+    console.log("iterativeStoreSortedListValue", out);
+
+    out = await nodes[4].crawler.iterativeStoreSortedListValue( '', masterKey, query5, 'query2_10', 10);
     console.log("iterativeStoreSortedListValue", out);
 
     out = await nodes[5].crawler.iterativeFindSortedList( '', masterKey);
