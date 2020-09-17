@@ -25,11 +25,7 @@ module.exports = function(options){
         _updateContact(req, srcContact, [contact]){
 
             if (contact)
-                try{
-                    contact = this._kademliaNode.createContact(contact);
-                }catch(err){
-                    return [0];
-                }
+                contact = this._kademliaNode.createContact(contact);
 
             return [1];
         }

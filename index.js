@@ -34,7 +34,6 @@ const ECCUtils = require('./src/helpers/ecc-utils')
 const CryptoUtils = require('./src/helpers/crypto-utils')
 const Utils = require('./src/helpers/utils')
 
-const async = require('async');
 const bencode = require('bencode');
 const blobToBuffer = require('blob-to-buffer')
 
@@ -96,7 +95,6 @@ module.exports = {
     },
 
     library: {
-        async,
         bencode,
         blobToBuffer,
     }

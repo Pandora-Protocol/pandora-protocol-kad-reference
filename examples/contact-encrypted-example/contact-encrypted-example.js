@@ -1,5 +1,4 @@
 const KAD = require('../../index');
-const async = require('async');
 const path = require('path')
 
 console.log("Simple Encrypted Contact KAD");

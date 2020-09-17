@@ -1,4 +1,3 @@
-const async = require('async');
 const Validation = require('../helpers/validation')
 const ContactList = require('./contact-list')
 const Contact = require('./../contact/contact')
@@ -120,9 +119,12 @@ module.exports = class Crawler {
 
                 }
 
+                return true;
+
             }catch(err){
-                return null;
+
             }
+            return null;
 
         }
 

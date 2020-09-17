@@ -1,6 +1,4 @@
 const BufferUtils = require('../helpers/buffer-utils')
-const async = require('async')
-const NextTick = require('./../helpers/next-tick')
 const {setAsyncInterval, clearAsyncInterval} = require('./../helpers/async-interval')
 const Utils = require('./../helpers/utils')
 module.exports = class RoutingTableRefresher {

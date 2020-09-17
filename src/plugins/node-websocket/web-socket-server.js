@@ -33,6 +33,7 @@ module.exports = class WebSocketServer extends WebSocket.Server {
                 new this._kademliaNode.rules.PluginNodeWebsocketConnectionSocketClass(this._kademliaNode.rules, ws, out[0], );
 
         }catch(err){
+
             if (err) return ws.close();
 
         }

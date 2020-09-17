@@ -35,21 +35,19 @@ module.exports = function (options) {
             if (!allowedTable) throw 'Table is not allowed';
 
             if (typeof table === 'string') table = Buffer.from(table);
-            if (typeof key === 'string') masterKey = Buffer.from(key);
+            if (typeof key === 'string') masterKey = Buffer.from(key, 'hex');
 
             Validation.validateIdentity(key);
             Validation.validateTable(table);
 
-            const finishWhenValueFound = allowedTable.immutable;
-
-            if (finishWhenValueFound){
+            if (allowedTable.immutable){
 
                 const out = await this._kademliaNode._store.get(table.toString(), key.toString('hex') );
                 if (out) return {result: {value: out, contact: this._kademliaNode.contact }, };
 
             }
 
-            return this._iterativeFind( table,'FIND_VALUE', 'STORE', key, finishWhenValueFound);
+            return this._iterativeFind( table,'FIND_VALUE', 'STORE', key, allowedTable.immutable);
 
         }
 
@@ -68,9 +66,9 @@ module.exports = function (options) {
             }
 
             const contacts = await this.iterativeFindNode( key );
-            await Promise.mapLimit( contacts.map( contact => dispatchSendStore.bind( this, contact) ), KAD_OPTIONS.ALPHA_CONCURRENCY);
+            if (!contacts.length) return 0;
 
-            if (!stored) throw "Failed to store key";
+            await Promise.mapLimit( contacts.map( contact => dispatchSendStore.bind( this, contact) ), KAD_OPTIONS.ALPHA_CONCURRENCY);
             this._kademliaNode.routingTable.refresher.publishedByMe[key] = true;
 
             return stored;
@@ -79,14 +77,17 @@ module.exports = function (options) {
         async iterativeStoreValue(table, key, value){
 
             if (typeof table === 'string') table = Buffer.from(table);
-            if (typeof key === 'string') key = Buffer.from(key);
+            if (typeof key === 'string') key = Buffer.from(key, 'hex');
             if (typeof value === 'string') value = Buffer.from(value);
 
             const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
             if (!allowedTable) throw 'Table is not allowed';
 
             const out = await this._iterativeStoreValue(  [table, key, value], 'sendStore' );
-            await this._kademliaNode._store.put( table.toString(), key.toString('hex'), value, allowedTable.expiry );
+            if (out)
+                await this._kademliaNode._store.put( table.toString(), key.toString('hex'), value, allowedTable.expiry );
+
+            return out;
         }
 
     }

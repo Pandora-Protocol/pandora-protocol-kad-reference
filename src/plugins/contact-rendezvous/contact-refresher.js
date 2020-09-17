@@ -1,5 +1,3 @@
-const async = require('async');
-
 module.exports = class ContactRefresher {
 
     constructor(kademliaNode) {

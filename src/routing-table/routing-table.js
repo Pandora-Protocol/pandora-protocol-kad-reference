@@ -1,6 +1,5 @@
 const BufferUtils = require('../helpers/buffer-utils')
 const KBucket = require('./kbucket')
-const async = require('async')
 const RoutingTableRefresher = require('./routing-table-refresher')
 
 /**
