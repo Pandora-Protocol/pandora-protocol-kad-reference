@@ -15,7 +15,7 @@ module.exports = function (options) {
                 '':{
                     validation:  ( srcContact, self, [table, masterKey, key, value, score], old ) => {
 
-                        if (  old && old.score >= score[4] ) return null;
+                        if (  old && old.score >= score ) return null;
                         return {value, score};
 
                     },
@@ -35,20 +35,18 @@ module.exports = function (options) {
             const masterKeyStr = masterKey.toString('hex');
             const keyStr = key.toString('hex');
 
+            let old;
+
             if (allowedSortedListTable.immutable){
 
                 const has = await this._store.hasSortedListKey( tableStr,  masterKeyStr, keyStr );
                 if (has) return this._store.putExpiration(tableStr, keyStr, allowedSortedListTable.expiry);
 
-                const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], null );
-                if ( data ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, data.value, data.score, allowedSortedListTable.expiry);
+            } else
+                old = await this._store.getSortedListKey(tableStr, masterKeyStr, keyStr);
 
-            } else {
-
-                const old = await this._store.getSortedListKey(tableStr, masterKeyStr, keyStr);
-                const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
-                if ( data ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, data.value, data.score, allowedSortedListTable.expiry);
-            }
+            const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
+            if ( data ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, data.value, data.score, allowedSortedListTable.expiry);
 
             return 0;
 

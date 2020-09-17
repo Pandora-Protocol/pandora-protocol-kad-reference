@@ -35,7 +35,7 @@ module.exports = function (options) {
             if (!allowedTable) throw 'Table is not allowed';
 
             if (typeof table === 'string') table = Buffer.from(table);
-            if (typeof key === 'string') masterKey = Buffer.from(key, 'hex');
+            if (typeof key === 'string') key = Buffer.from(key, 'hex');
 
             Validation.validateIdentity(key);
             Validation.validateTable(table);
@@ -78,6 +78,7 @@ module.exports = function (options) {
 
             if (typeof table === 'string') table = Buffer.from(table);
             if (typeof key === 'string') key = Buffer.from(key, 'hex');
+
             if (typeof value === 'string') value = Buffer.from(value);
 
             const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];

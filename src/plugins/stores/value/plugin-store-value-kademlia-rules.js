@@ -14,6 +14,9 @@ module.exports = function (options) {
 
             this._replicatedStoreToNewNodesAlready = {};
 
+            this._commands.STORE = this._storeCommand.bind(this);
+            this._commands.FIND_VALUE = this._findValue.bind(this);
+
         }
 
         start(){
@@ -48,6 +51,24 @@ module.exports = function (options) {
 
         }
 
+        /**
+         * Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
+         * @param key
+         * @param cb
+         */
+        async _findValue( req, srcContact, [table, key]){
+
+            const out = await this._store.get(table.toString(), key.toString('hex') );
+
+            //found the data
+            if (out) return [1, out];
+            else return [0, this._kademliaNode.routingTable.getClosestToKey(key) ];
+
+        }
+
+        sendFindValue(contact, protocol, table, key){
+            return this.send(contact, protocol, 'FIND_VALUE', [table, key]);
+        }
 
         /**
          * Stores a (key, value) pair in one node.
@@ -63,23 +84,20 @@ module.exports = function (options) {
             const allowedTable = this._allowedStoreTables[tableStr];
             if (!allowedTable) throw 'Table is not allowed';
 
+            let old;
+
             if (allowedTable.immutable){
 
                 const has = await this._store.hasKey( tableStr,  keyStr);
                 if (has) return this._store.putExpiration(tableStr, keyStr, allowedTable.expiry);
 
-                const data = allowedTable.validation( srcContact, allowedTable, [table,  key, value], null );
-                if ( data ) return this._store.put( tableStr, keyStr, data, allowedTable.expiry);
-
-
             } else {
-
                 const old = await this._store.getKey( tableStr, keyStr);
-
-                const data = allowedTable.validation( srcContact, allowedTable, [table,  key, value], old );
-                if ( data ) return this._store.put( tableStr, keyStr, data, allowedTable.expiry);
-
             }
+
+            const data = allowedTable.validation( srcContact, allowedTable, [table,  key, value], old );
+            if ( data ) return this._store.put( tableStr, keyStr, data, allowedTable.expiry);
+
             return 0;
 
         }
@@ -93,23 +111,6 @@ module.exports = function (options) {
 
         }
 
-        /**
-         * Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
-         * @param key
-         * @param cb
-         */
-        async _findValue( req, srcContact, [table, key]){
-
-            const out = await this._store.get(table.toString(), key.toString('hex') );
-            //found the data
-            if (out) return [1, out];
-            else return [0, this._kademliaNode.routingTable.getClosestToKey(key) ];
-
-        }
-
-        sendFindValue(contact, protocol, table, key){
-            return this.send(contact, protocol, 'FIND_VALUE', [table, key]);
-        }
 
         decodeSendAnswer(dstContact, command, data, decodedAlready = false){
 
@@ -146,12 +147,11 @@ module.exports = function (options) {
                 const words = itValue.value[0].split(':');
 
                 const table = words[0];
-                const masterKey = words[1];
-                const key = words[2];
+                const key = words[1];
 
                 const value = itValue.value[1];
 
-                const keyNode = Buffer.from( masterKey, 'hex');
+                const keyNode = Buffer.from( key, 'hex');
                 const neighbors = this._kademliaNode.routingTable.getClosestToKey(contact.identity)
 
                 let newNodeClose, thisClosest;
@@ -163,7 +163,7 @@ module.exports = function (options) {
                 }
 
                 if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  ) {
-                    const out = await this.sendStore(contact, [table, masterKey, key, value]);
+                    const out = await this.sendStore(contact, [table, key, value]);
                     NextTick(this._replicateStoreToNewNode.bind(this, contact, iterator), KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_SLEEP);
                 }
                 else

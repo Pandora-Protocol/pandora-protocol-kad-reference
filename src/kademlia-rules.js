@@ -14,9 +14,7 @@ module.exports = class KademliaRules {
             'APP': this._app,
             'IDENTITY': this._identity,
             'PING': this._ping,
-            'STORE': this._storeCommand,
             'FIND_NODE': this._findNode,
-            'FIND_VALUE': this._findValue,
         }
 
         this._allowedStoreTables = {
