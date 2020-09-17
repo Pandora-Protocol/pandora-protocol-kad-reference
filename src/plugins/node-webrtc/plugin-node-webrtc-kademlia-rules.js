@@ -28,21 +28,21 @@ module.exports = function (options) {
 
         }
 
-        _establishConnection(dstContact, cb){
+        _establishConnection(dstContact){
 
             if (dstContact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS && dstContact.webrtcType === ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED )
-                return this._createWebRTC(dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, cb );
+                return this._createWebRTC(dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC );
 
-            return super._establishConnection(dstContact, cb);
+            return super._establishConnection(dstContact);
 
         }
 
-        _createWebRTC( dstContact, protocol, cb ) {
+        async _createWebRTC( dstContact, protocol ) {
 
             if ( dstContact.contactType !== ContactType.CONTACT_TYPE_RENDEZVOUS ||
                 dstContact.webrtcType !== ContactWebRTCType.CONTACT_WEBRTC_TYPE_SUPPORTED &&
                 dstContact.rendezvousContact.contactType !== ContactType.CONTACT_TYPE_ENABLED) {
-                return cb(new Error('Invalid contact for webRTC'));
+                throw 'Invalid contact for webRTC';
             }
 
             const webRTC = new WebRTCConnectionInitiator(this, null, dstContact);
@@ -53,74 +53,46 @@ module.exports = function (options) {
                     this.sendRendezvousIceCandidateWebRTConnection(dstContact.rendezvousContact, dstContact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{})
             }
 
-            webRTC._rtcPeerConnection.onnegotiationneeded = () => {
+            return new Promise((resolve, reject)=>{
 
-                webRTC.createInitiatorOffer((err, offer) => {
+                webRTC._rtcPeerConnection.onnegotiationneeded = async () => {
 
-                    if (err) {
+                    try{
+
+                        const offer = await webRTC.createInitiatorOffer();
+
+                        let chunkMaxSize, data;
+
+                        chunkMaxSize = webRTC.getMaxChunkSize();
+                        data = [ this._kademliaNode.contact, '', [ webRTC.processDataOut(offer), chunkMaxSize] ];
+
+                        //encrypt it
+                        const processedData = await this._sendProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true} );
+
+                        if ( !processedData || !processedData.length) throw 'processed data error';
+
+                        const info = await this.sendRendezvousWebRTCConnection(dstContact.rendezvousContact, dstContact.identity, processedData);
+
+                        if ( !info || !info.length) throw 'Rendezvous error';
+
+                        const received = await this._kademliaNode.rules._receivedProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true} );
+
+                        const [answer, otherPeerMaxChunkSize ] =  bencode.decode(received);
+                        webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
+                        webRTC.processData(answer);
+
+                        await webRTC.userRemoteAnswer(answer);
+
+                        resolve(webRTC);
+
+                    }catch(err){
                         webRTC.closeNow();
-                        return cb(err);
+                        reject(err);
                     }
 
-                    let chunkMaxSize, data;
+                }
 
-                    chunkMaxSize = webRTC.getMaxChunkSize();
-                    data = [ this._kademliaNode.contact, '', [ webRTC.processDataOut(offer), chunkMaxSize] ];
-
-                    //encrypt it
-                    this._sendProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true}, (err, data) =>{
-
-                        if (err){
-                            webRTC.closeNow();
-                            return cb(err);
-                        }
-
-                        this.sendRendezvousWebRTCConnection(dstContact.rendezvousContact, dstContact.identity, data, (err, info ) => {
-
-                            if (err || !info || !info.length){
-                                webRTC.closeNow();
-                                return cb(new Error('Rendezvous error'));
-                            }
-
-                            this._kademliaNode.rules._receivedProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true}, (err, info) =>{
-
-                                if (err){
-                                    webRTC.closeNow();
-                                    return cb(new Error('Answer Decoding error'));
-                                }
-
-                                try{
-
-                                    const [answer, otherPeerMaxChunkSize ] =  bencode.decode(info);
-                                    webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
-                                    webRTC.processData(answer);
-
-                                    webRTC.userRemoteAnswer(answer, (err, out)=>{
-
-                                        if (err){
-                                            webRTC.closeNow();
-                                            return cb(err);
-                                        }
-
-                                        cb(null, webRTC);
-
-                                    });
-
-                                }catch(err){
-                                    webRTC.closeNow();
-                                    return cb(err);
-                                }
-
-
-                            });
-
-                        });
-
-                    });
-
-                })
-
-            }
+            })
 
         }
 
@@ -132,18 +104,16 @@ module.exports = function (options) {
             }
         }
 
-        _webrtcSendSerialized (id, dstContact, protocol, command, data, cb)  {
+        async _webrtcSendSerialized (id, dstContact, protocol, command, data)  {
 
             const buffer = bencode.encode( [0, data] );
 
             //connected once already already
-            const webRTC = this._webRTCActiveConnectionsByContactsMap[dstContact.identityHex];
-            if (webRTC) return webRTC.sendConnectionWaitAnswer(id, buffer, cb);
+            let webRTC = this._webRTCActiveConnectionsByContactsMap[dstContact.identityHex];
+            if (!webRTC)
+                webRTC = await this._createWebRTC( dstContact, protocol );
 
-            this._createWebRTC( dstContact, protocol,(err, webRTC)=>{
-                if (err) return cb(err);
-                webRTC.sendConnectionWaitAnswer( id, buffer, cb);
-            })
+            return webRTC.sendConnectionWaitAnswer( id, buffer);
 
         }
 

@@ -58,17 +58,24 @@ module.exports = function (options) {
             }
         }
 
-        _mockSendSerialized (id, dstContact, protocol, command, buffer, cb)  {
+        _mockSendSerialized (id, dstContact, protocol, command, buffer)  {
 
             //fake some unreachbility
             if (!KAD_MOCKUP[dstContact.mockId] || Math.random() <= MOCKUP_SEND_ERROR_FREQUENCY ) {
                 console.error("LOG: Message couldn't be sent", command, dstContact.identityHex, dstContact.hostname, dstContact.port );
-                return cb(new Error("Message couldn't be sent"), null);
+                throw "Message couldn't be sent"
             }
 
-            setTimeout(()=>{
-                KAD_MOCKUP[dstContact.mockId].receiveSerialized( undefined, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK, buffer, {}, cb );
-            }, Math.floor( Math.random() * 100) + 10)
+            return new Promise((resolve)=>{
+
+                setTimeout(async ()=>{
+
+                    const out = await KAD_MOCKUP[dstContact.mockId].receiveSerialized( undefined, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_MOCK, buffer, {} );
+                    resolve(out);
+
+                }, Math.floor( Math.random() * 100) + 10)
+
+            })
 
         }
 

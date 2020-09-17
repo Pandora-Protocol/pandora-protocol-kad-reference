@@ -20,12 +20,12 @@ module.exports = class RoutingTableRefresher {
     }
 
 
-    async start(opts, cb){
+    async start(opts){
 
         if (this._started) throw "Refresher already started";
 
         this._intervalRefresh = setAsyncInterval(
-            next => this.refresh(0, next ),
+            this.refresh.bind(this, 0 ),
             KAD_OPTIONS.T_BUCKETS_REFRESH - Utils.preventConvoy(30 * 60 * 1000),
         )
 
@@ -55,7 +55,7 @@ module.exports = class RoutingTableRefresher {
      * refresh, an iterativeFindNode using that number as key.
      * @param {number} startIndex
      */
-    refresh(startIndex = 0, cb) {
+    async refresh(startIndex = 0) {
 
         const now = new Date().getTime();
 
@@ -71,51 +71,38 @@ module.exports = class RoutingTableRefresher {
         const results = new Set();
         let consecutiveUnimprovedLookups = 0;
 
-        async.each(  this._routingTable.buckets, (bucket, next) => {
+        for (const bucket of this._routingTable.buckets){
 
-            if ( bucket.bucketIndex < startIndex) return next();
-
-            if (consecutiveUnimprovedLookups >= KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES)
-                return next('Done'); //it will end
-
+            if ( bucket.bucketIndex < startIndex) return;
+            if (consecutiveUnimprovedLookups >= KAD_OPTIONS.MAX_UNIMPROVED_REFRESHES) return;
 
             const lastBucketLookup = this._routingTable.bucketsLookups[bucket.bucketIndex] || 0;
             const needsRefresh = lastBucketLookup + KAD_OPTIONS.T_BUCKETS_REFRESH <= now;
 
             if (bucket.array.length > 0 && needsRefresh){
 
-                this._kademliaNode.crawler.iterativeFindNode(
-                    BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex),
-                    (err, contacts )=>{
+                const randomBufferInBucketRange = BufferUtils.getRandomBufferInBucketRange(this._kademliaNode.contact.identity, bucket.bucketIndex);
+                const contacts = await this._kademliaNode.crawler.iterativeFindNode( randomBufferInBucketRange );
 
-                        if (err) return next();
+                let discoveredNewContacts = false;
 
-                        let discoveredNewContacts = false;
+                for (const contact of contacts)
+                    if (!results.has(contact.identityHex)) {
+                        discoveredNewContacts = true;
+                        consecutiveUnimprovedLookups = 0;
+                        results.add(contact.identityHex);
+                    }
 
-                        for (const contact of contacts)
-                            if (!results.has(contact.identityHex)) {
-                                discoveredNewContacts = true;
-                                consecutiveUnimprovedLookups = 0;
-                                results.add(contact.identityHex);
-                            }
+                if (!discoveredNewContacts)
+                    consecutiveUnimprovedLookups++;
 
-                        if (!discoveredNewContacts)
-                            consecutiveUnimprovedLookups++;
+            }
 
-                        next();
-                    },
-                );
+        }
 
-            } else
-                next();
-
-        }, (err, out ) => {
-            cb(err, out);
-        });
     }
 
-
-    _replicate( next){
+    async _replicate( ){
 
         const now = new Date().getTime();
 
@@ -135,16 +122,15 @@ module.exports = class RoutingTableRefresher {
             const shouldReplicate = !isPublisher && replicateDue;
 
             if (shouldReplicate || shouldRepublish) 
-                return this._kademliaNode.crawler.iterativeStoreValue(key, value, (err, out) => next(1) );
+                return this._kademliaNode.crawler.iterativeStoreValue(key, value );
 
             itValue = this._replicateIterator.next();
         }
 
         if (!itValue.value || !itValue.done) {
             delete this._replicateIterator;
-            next(1);
+            return 10;
         }
-
 
     }
 

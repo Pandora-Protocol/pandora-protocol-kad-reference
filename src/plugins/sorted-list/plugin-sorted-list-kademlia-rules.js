@@ -25,53 +25,49 @@ module.exports = function (options) {
 
         }
 
-        _storeSortedListValue(req, srcContact, [table, masterKey, key, value, score], cb){
+        async _storeSortedListValue(req, srcContact, [table, masterKey, key, value, score]){
 
             const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString()];
-            if (!allowedSortedListTable) return cb(new Error('Table is not allowed'));
+            if (!allowedSortedListTable) throw 'Table is not allowed';
 
-            this._store.getSortedListKey(table.toString(), masterKey.toString('hex'), key.toString('hex'), (err, old)=>{
+            const tableStr = table.toString();
+            const masterKeyStr = masterKey.toString('hex');
+            const keyStr = key.toString('hex');
 
-                if (err) return cb(err);
+            const old = await this._store.getSortedListKey(tableStr, masterKeyStr, keyStr);
 
-                const out = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
+            const out = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
 
-                if ( out )
-                    this._store.putSortedList(table.toString(), masterKey.toString('hex'), key.toString('hex'), out.value, out.score, allowedSortedListTable.expiry, cb);
-                else
-                    cb(null, 0 );
-
-            });
+            if ( out ) return this._store.putSortedList(tableStr, masterKeyStr, keyStr, out.value, out.score, allowedSortedListTable.expiry);
+            return 0;
 
         }
 
-        sendStoreSortedListValue(contact, [table, masterKey, key, value, score], cb){
+        sendStoreSortedListValue(contact, [table, masterKey, key, value, score] ){
 
             if (!this._allowedStoreSortedListTables[table.toString()])
-                return cb(new Error('Table is not allowed'));
+                throw 'Table is not allowed';
 
-            this.send(contact,'STORE_SORTED_LIST_VALUE', [table, masterKey, key, value, score], cb)
-
+            return this.send(contact,'STORE_SORTED_LIST_VALUE', [table, masterKey, key, value, score])
         }
 
 
         /**
          * Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
          * @param masterKey
-         * @param cb
          */
-        _findSortedList(req, srcContact, [table, masterKey], cb){
+        async _findSortedList(req, srcContact, [table, masterKey]){
 
-            this._store.getSortedList(table.toString(), masterKey.toString('hex'), (err, out) => {
-                //found the data
-                if (out) cb(null, [ 1, out ] )
-                else cb( null, [ 0, this._kademliaNode.routingTable.getClosestToKey(masterKey) ] )
-            })
+            const out = await this._store.getSortedList(table.toString(), masterKey.toString('hex'));
+
+            //found the data
+            if (out) return [ 1, out ];
+            else return [ 0, this._kademliaNode.routingTable.getClosestToKey(masterKey) ];
 
         }
 
-        sendFindSortedList(contact, table, key, cb){
-            this.send(contact, 'FIND_SORTED_LIST', [table, key], cb);
+        sendFindSortedList(contact, table, key){
+            return this.send(contact, 'FIND_SORTED_LIST', [table, key]);
         }
 
 
@@ -81,12 +77,8 @@ module.exports = function (options) {
 
             if ( command === 'FIND_SORTED_LIST' ){
 
-                if ( data[0] === 1){
-                    for (let i=0; i < data[1].length; i++)
-                        data[1][i][0] = data[1][i][0].toString();
+                if ( data[0] === 0){
 
-                    return data;
-                } else {
                     for (let i = 0; i < data[1].length; i++)
                         data[1][i] = this._kademliaNode.createContact( data[1][i] );
 

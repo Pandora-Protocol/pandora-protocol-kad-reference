@@ -7,27 +7,22 @@ module.exports = class ContactRefresher {
         this._updateId = 0;
     }
 
-    refreshContact(cb){
+    async refreshContact(){
 
-        this._updateId = new Date().getTime();
-        const updateId = this._updateId;
+        const updateId = this._updateId = new Date().getTime();
 
         const contacts = this._kademliaNode.routingTable.array.map(it => it.contact);
 
-        async.eachLimit( contacts, KAD_OPTIONS.ALPHA_CONCURRENCY,
-            ( contact, next ) => {
+        return Promise.mapLimit( contacts.map( contact => this._refreshContactUpdate.bind(this, contact, updateId) ), KAD_OPTIONS.ALPHA_CONCURRENCY )
 
-                if (updateId !== this._updateId)
-                    return next(new Error('Changed'));
+    }
 
-                this._kademliaNode.rules.sendUpdateContact(contact, (err, out) => next() );
-            },
-            (err)=>{
+    async _refreshContactUpdate(contact, updateId){
 
-                if (err) return cb(err);
-                return cb(null);
+        if (updateId !== this._updateId)
+            throw 'Changed';
 
-            });
+        return this._kademliaNode.rules.sendUpdateContact(contact);
 
     }
 

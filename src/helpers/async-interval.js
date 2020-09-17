@@ -5,7 +5,7 @@ const map = {};
 module.exports.setAsyncInterval = (func, time )=>{
 
     const id = Math.random().toString() + Math.random().toString() + Math.random().toString();
-    const timeout = NextTick( ()=>processTimeout( id), time );
+    const timeout = NextTick( ()=>processTimeout( id ), time );
 
     map[id] = {
         func,
@@ -26,7 +26,7 @@ module.exports.clearAsyncInterval = (id) => {
 
 }
 
-const processTimeout = (id) => {
+async function processTimeout (id)  {
     try{
 
         if (!map[id] || map[id].done){
@@ -35,19 +35,17 @@ const processTimeout = (id) => {
         }
 
         map[id].processing = true;
-        map[id].func( (time)=>{
 
-            if (!map[id] || map[id].done) {
-                delete map[id];
-                return;
-            }
+        const time = await map[id].func();
 
-            map[id].processing = false;
+        if (!map[id] || map[id].done) {
+            delete map[id];
+            return;
+        }
 
-            map[id].timeout = NextTick( () => processTimeout( id ), (time !== undefined) ? time : map[id].time );
+        map[id].processing = false;
 
-        })
-
+        map[id].timeout = NextTick( () => processTimeout( id ), (time !== undefined) ? time : map[id].time );
 
     }catch(err){
         console.error("async interval raised an error", err);

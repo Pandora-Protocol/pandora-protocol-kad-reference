@@ -14,7 +14,7 @@ module.exports = class Store{
 
         delete this._expireOldKeysIterator;
         this._asyncIntervalExpireOldKeys = setAsyncInterval(
-            next => this._expireOldKeys(next),
+            this._expireOldKeys.bind(this),
             KAD_OPTIONS.T_STORE_GARBAGE_COLLECTOR - Utils.preventConvoy(5 * 1000)
         );
 
@@ -35,15 +35,15 @@ module.exports = class Store{
     _iteratorExpiration(){
     }
 
-    get(table = '', key, cb){
+    get(table = '', key){
         throw "interface";
     }
 
-    put(table = '', key, value, expiry, cb){
+    put(table = '', key, value, expiry){
         throw "interface";
     }
 
-    del(table = '', key, cb){
+    del(table = '', key){
         throw "interface";
     }
 
@@ -53,7 +53,7 @@ module.exports = class Store{
         plugin(this);
     }
 
-    _expireOldKeys(next){
+    async _expireOldKeys(){
 
         if (!this._expireOldKeysIterator)
             this._expireOldKeysIterator = this._iteratorExpiration();
@@ -63,11 +63,10 @@ module.exports = class Store{
             const time = itValue.value[1];
             if (time < new Date().getTime() ){
                 const key = itValue.value[0].splice(0, itValue[0].length-4 );
-                this.del(key, next )
+                await this.del(key )
             }
         } else {
             delete this._expireOldKeysIterator;
-            next()
         }
 
     }

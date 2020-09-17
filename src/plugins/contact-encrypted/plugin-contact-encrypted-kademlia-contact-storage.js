@@ -26,16 +26,13 @@ module.exports = function (options){
 
         }
 
-        _setContact( contactArgs, saveToStorage, cb){
+        async _setContact( contactArgs, saveToStorage){
 
-            super._setContact(contactArgs, saveToStorage, (err, out)=>{
+            const out = await super._setContact(contactArgs, saveToStorage);
 
-                if (err) return cb(err);
-                this._kademliaNode._contact.privateKey = contactArgs.privateKey;
+            this._kademliaNode._contact.privateKey = contactArgs.privateKey;
 
-                cb(null, out);
-
-            })
+            return out;
 
         }
 

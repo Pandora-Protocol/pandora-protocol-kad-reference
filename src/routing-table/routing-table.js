@@ -27,7 +27,7 @@ module.exports = class RoutingTable {
         this._starting = false;
     }
 
-    async start(opts, cb){
+    async start(opts){
 
         if (this._started || this._starting) throw "Already started";
 

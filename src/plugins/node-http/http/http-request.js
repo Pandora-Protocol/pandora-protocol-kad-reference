@@ -2,6 +2,7 @@ const ContactAddressProtocolType = require('../../contact-type/contact-address-p
 
 const httpRequest = require('http').request;
 const httpsRequest = require('https').request;
+const PromisesMap = require('../../../helpers/promises-map')
 
 module.exports = class HTTPRequest {
 
@@ -21,10 +22,10 @@ module.exports = class HTTPRequest {
      * Implements the writable interface
      * @private
      */
-    request( id, dstContact,  protocol, buffer, callback) {
+    request( id, dstContact,  protocol, buffer ) {
 
-        if (this._kademliaRules.pending.list['http:'+id])
-            return callback(new Error('Pending Id already exists'));
+        if ( PromisesMap.get('http:'+id) )
+            throw 'Pending Id already exists';
 
         // NB: If originating an outbound request...
         if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP) protocol = 'http:';
@@ -39,16 +40,13 @@ module.exports = class HTTPRequest {
         };
 
         //optional path
-        if ( dstContact.path) reqopts.path = dstContact.path;
+        if ( dstContact.path ) reqopts.path = dstContact.path;
 
-        this._kademliaRules.pending.pendingAdd('http:'+id, '',  () => callback(new Error('Timeout')), out => callback(null, out ),  );
+        const promiseData = PromisesMap.add('http'+id, KAD_OPTIONS.T_RESPONSE_TIMEOUT);
 
         const request = this._createRequest( reqopts, (response) =>{
 
-            response.on('error', (err) => {
-                this._kademliaRules.pending.pendingDelete('http:'+id)
-                callback(err)
-            });
+            response.on('error', err => promiseData.reject(err) );
 
             const data = [];
             response.on('data', (chunk) => {
@@ -63,10 +61,7 @@ module.exports = class HTTPRequest {
 
                 const bufferAnswer = Buffer.concat(data);
 
-                if (this._kademliaRules.pending.list['http:'+id]) {
-                    this._kademliaRules.pending.pendingDelete('http:'+id);
-                    callback(null, bufferAnswer);
-                }
+                promiseData.resolve(bufferAnswer);
 
             });
 
@@ -75,14 +70,13 @@ module.exports = class HTTPRequest {
         request.on('error', (err) => {
 
             err.dispose = id;
-
-            if (this._kademliaRules.pending.list['http:'+id]) {
-                this._kademliaRules.pending.pendingDelete('http:'+id);
-                callback(err)
-            }
+            promiseData.reject(err)
 
         });
         request.end(buffer);
+
+        return promiseData.promise;
+
     }
 
 }

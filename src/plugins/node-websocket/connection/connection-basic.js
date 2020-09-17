@@ -2,10 +2,11 @@ const EventEmitter = require('events');
 const bencode = require('bencode');
 const blobToBuffer = require('blob-to-buffer')
 const ContactConnectedStatus = require('../../../contact/contact-connected-status')
+const PromisesMap = require('../../../helpers/promises-map')
 
 module.exports = class ConnectionBasic extends EventEmitter {
 
-    constructor(kademliaRules, connection, contact, contactProtocol, pendingPrefix = 'ws') {
+    constructor(kademliaRules, connection, contact, contactProtocol, pendingPrefix = 'ws', connecting) {
 
         super();
 
@@ -20,6 +21,11 @@ module.exports = class ConnectionBasic extends EventEmitter {
         this._queue = [];
 
         this._pendingPrefix = pendingPrefix+':'+this.id;
+
+        if (connecting) {
+            const promiseData = PromisesMap.add(this._pendingPrefix, KAD_OPTIONS.T_RESPONSE_TIMEOUT);
+            promiseData.promise.catch(err => this.closeNow() )
+        }
 
     }
 
@@ -38,13 +44,13 @@ module.exports = class ConnectionBasic extends EventEmitter {
 
         this._updateTimeout();
 
-        this._kademliaRules.pending.pendingResolve(this._pendingPrefix, 'creation', resolve => resolve(null) );
+        PromisesMap.resolve(this._pendingPrefix, true );
 
         if (this._queue.length) {
             const copy = [...this._queue];
             this._queue = [];
             for (const data of copy)
-                this.sendConnectionWaitAnswer( data.id, data.buffer, data.cb);
+                this.sendData( data.id, data.buffer )
         }
 
         this.emit("opened", this );
@@ -59,7 +65,7 @@ module.exports = class ConnectionBasic extends EventEmitter {
         if (this._kademliaRules.alreadyConnected[this.contact.identityHex] === this)
             delete this._kademliaRules.alreadyConnected[this.contact.identityHex];
 
-        this._kademliaRules.pending.pendingTimeoutAll(this._pendingPrefix, timeout => timeout() );
+        clearTimeout(this._timeoutDisconnect);
 
         if (this._queue.length) {
 
@@ -67,7 +73,7 @@ module.exports = class ConnectionBasic extends EventEmitter {
             this._queue = [];
 
             for (const data of queue)
-                data.cb(new Error('Disconnected or Error'))
+                data.promiseData.reject( new Error('Disconnected or Error') )
         }
 
         this.emit("closed", this );
@@ -93,7 +99,7 @@ module.exports = class ConnectionBasic extends EventEmitter {
 
     };
 
-    _processConnectionMessage ( id, message) {
+    async _processConnectionMessage ( id, message) {
 
         this._updateTimeout();
         let c = 0;
@@ -106,17 +112,14 @@ module.exports = class ConnectionBasic extends EventEmitter {
 
         if ( status === 1 ){ //received an answer
 
-            if (this._kademliaRules.pending.list[ this._pendingPrefix ] && this._kademliaRules.pending.list[ this._pendingPrefix][id])
-                this._kademliaRules.pending.pendingResolve(this._pendingPrefix, id, (resolve) => resolve( null, data ));
+            const promiseData = PromisesMap.get( this._pendingPrefix + ':' + id);
+            if (promiseData)
+                promiseData.resolve(data);
 
         } else {
 
-            this._kademliaRules.receiveSerialized( this, id, this.contact, this.contactProtocol, data, {}, (err, buffer )=>{
-
-                if (err) return;
-                this.sendData(id, buffer);
-
-            });
+            const buffer = await this._kademliaRules.receiveSerialized( this, id, this.contact, this.contactProtocol, data, {});
+            this.sendData(id, buffer);
 
         }
 
@@ -126,32 +129,23 @@ module.exports = class ConnectionBasic extends EventEmitter {
         return KAD_OPTIONS.PLUGINS.NODE_WEBSOCKET.T_WEBSOCKET_DISCONNECT_INACTIVITY
     }
 
-    _setTimeoutConnection () {
-        this._kademliaRules.pending.pendingAdd( this._pendingPrefix, '',() => this.closeNow(), ()=>{}, this._getTimeoutConnectionTime(),  );
-    }
-
     _updateTimeout () {
 
-        const pending = this._kademliaRules.pending.list[ this._pendingPrefix ];
-        if (pending && pending['']) {
-            pending[''].timestamp = new Date().getTime();
-            pending[''].time = this._getTimeoutConnectionTime();
-        }
-        else
-            this._setTimeoutConnection();
+        clearTimeout(this._timeoutDisconnect);
+        this._timeoutDisconnect = setTimeout(()=> this.closeNow(), this._getTimeoutConnectionTime() );
+
     }
 
-    sendConnectionWaitAnswer ( id, buffer, cb)  {
+    sendConnectionWaitAnswer ( id, buffer )  {
+
+        const promiseData = PromisesMap.add(this._pendingPrefix + ':' + id, KAD_OPTIONS.T_RESPONSE_TIMEOUT );
 
         if (this.status !== ContactConnectedStatus.CONTACT_OPEN  )
-            this._queue.push( {id, buffer, cb} );
-        else {
-
-            this._kademliaRules.pending.pendingAdd( this._pendingPrefix, id, ()=> cb(new Error('Timeout')), cb);
+            this._queue.push( {id, buffer, promiseData } );
+        else
             this.sendData( id, buffer )
 
-        }
-
+        return promiseData.promise;
     }
 
     sendData(id, buffer){

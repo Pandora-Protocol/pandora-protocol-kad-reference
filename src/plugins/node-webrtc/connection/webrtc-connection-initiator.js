@@ -22,35 +22,23 @@ module.exports = class WebRTCConnectionInitiator extends WebRTConnection{
         this._channel.onerror = e => this._onChannelStateChange(e, this._channel);
     }
 
-    async createInitiatorOffer(cb){
+    async createInitiatorOffer(){
 
-        try{
+        const offer = await this._rtcPeerConnection.createOffer(  );
+        await this._rtcPeerConnection.setLocalDescription(offer);
 
-            const offer = await this._rtcPeerConnection.createOffer(  );
-            await this._rtcPeerConnection.setLocalDescription(offer);
-
-        }catch(err){
-            return cb(err);
-        }
-
-        cb(null, this._rtcPeerConnection.localDescription );
-
+        return this._rtcPeerConnection.localDescription;
     }
 
-    async userRemoteAnswer(answer, cb){
+    async userRemoteAnswer(answer){
 
-        try{
+        answer = new WebRTC.RTCSessionDescription(answer);
 
-            answer = new WebRTC.RTCSessionDescription(answer);
+        await this._rtcPeerConnection.setRemoteDescription(answer);
+        this._iceCandidatesReady = true;
+        this._useAllCandidates();
 
-            await this._rtcPeerConnection.setRemoteDescription(answer);
-            this._iceCandidatesReady = true;
-            this._useAllCandidates();
-        }catch(err){
-            return cb(err);
-        }
-
-        cb(null, true);
+        return true;
 
     }
 

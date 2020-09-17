@@ -18,41 +18,12 @@ module.exports =  {
         return Buffer.from( eccrypto.getPublic(privateKey) );
     },
 
-    encrypt(publicKey, message, cb){
-
-        let done;
-        eccrypto.encrypt(publicKey, message)
-            .then( out => {
-                if (!done) {
-                    done = true;
-                    cb(null, out)
-                }
-            } )
-            .catch( err => {
-                if (!done) {
-                    done = true;
-                    cb(err)
-                }
-            } )
+    async encrypt(publicKey, message){
+        return eccrypto.encrypt(publicKey, message)
     },
 
-    decrypt(privateKey, message, cb){
-
-        let done;
-
-        eccrypto.decrypt( privateKey, message, )
-            .then( out => {
-                if (!done) {
-                    done = true;
-                    cb(null, out)
-                }
-            } )
-            .catch( err => {
-                if (!done) {
-                    done = true;
-                    cb(err)
-                }
-            } )
+    async decrypt(privateKey, message){
+        return eccrypto.decrypt( privateKey, message, );
     },
 
     sign(privateKey, msg){
@@ -64,12 +35,8 @@ module.exports =  {
 
     verify(publicKey, msg, sig){
 
-        try{
-            const out = eccrypto.verify( publicKey, msg, sig);
-            if (out === true) return true;
-        }catch(err){
-            console.error("error verifying signature", err);
-        }
+        const out = eccrypto.verify( publicKey, msg, sig);
+        if (out === true) return true;
 
         return false;
     }

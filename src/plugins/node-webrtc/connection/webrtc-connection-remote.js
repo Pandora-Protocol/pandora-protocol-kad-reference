@@ -23,27 +23,21 @@ module.exports = class WebRTCConnectionRemote extends WebRTConnection{
     }
 
 
-    async useInitiatorOffer(offer, cb){
+    async useInitiatorOffer(offer){
 
         let answer;
 
-        try{
+        offer = new WebRTC.RTCSessionDescription(offer);
 
-            offer = new WebRTC.RTCSessionDescription(offer);
+        await this._rtcPeerConnection.setRemoteDescription(offer);
 
-            await this._rtcPeerConnection.setRemoteDescription(offer);
+        answer = await this._rtcPeerConnection.createAnswer();
+        await this._rtcPeerConnection.setLocalDescription(answer);
 
-            answer = await this._rtcPeerConnection.createAnswer();
-            await this._rtcPeerConnection.setLocalDescription(answer);
+        this._iceCandidatesReady = true;
+        this._useAllCandidates();
 
-            this._iceCandidatesReady = true;
-            this._useAllCandidates();
-
-        }catch(err){
-            return cb(err);
-        }
-
-        cb(null, this._rtcPeerConnection.localDescription);
+        return this._rtcPeerConnection.localDescription;
     }
 
 

@@ -5,7 +5,6 @@ const {setAsyncInterval, clearAsyncInterval} = require('./helpers/async-interval
 const {preventConvoy} = require('./helpers/utils')
 const bencode = require('bencode');
 const BufferHelper = require('./helpers/buffer-utils')
-const KademliaRulesPending = require('./kademlia-rules-pending')
 
 module.exports = class KademliaRules {
 
@@ -44,22 +43,20 @@ module.exports = class KademliaRules {
 
         }
 
-        this.pending = new KademliaRulesPending();
-
         this.alreadyConnected = {};
 
     }
 
-    _establishConnection(dstContact, cb){
-        cb(new Error("Can't establish connection to contact"));
+    _establishConnection(dstContact){
+        throw ("Can't establish connection to contact");
     }
 
-    establishConnection(dstContact, cb){
+    establishConnection(dstContact){
 
         if (this.alreadyConnected[dstContact.identityHex])
-            return cb(null, this.alreadyConnected[dstContact.identityHex]);
+            return this.alreadyConnected[dstContact.identityHex];
 
-        this._establishConnection(dstContact, cb);
+        return this._establishConnection(dstContact);
 
     }
 
@@ -69,11 +66,9 @@ module.exports = class KademliaRules {
          * @private
          */
         this._asyncIntervalReplicatedStoreToNewNodeExpire = setAsyncInterval(
-            next => this._replicatedStoreToNewNodeExpire(next),
+            this._replicatedStoreToNewNodeExpire.bind(this),
             KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY -  preventConvoy(KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY_CONVOY),
         );
-
-        await this.pending.start(opts);
 
         return {rules: true}
     }
@@ -84,11 +79,10 @@ module.exports = class KademliaRules {
 
     stop(){
         clearAsyncInterval(this._asyncIntervalReplicatedStoreToNewNodeExpire)
-        this.pending.stop();
     }
 
-    _sendProcess(dstContact, protocol, data, opts, cb){
-        cb(null, bencode.encode(BufferHelper.serializeData(data) ) );
+    _sendProcess(dstContact, protocol, data, opts){
+        return bencode.encode(BufferHelper.serializeData(data));
     }
 
     _sendGetProtocol(dstContact, command, data){
@@ -100,90 +94,70 @@ module.exports = class KademliaRules {
         return KAD_OPTIONS.TEST_PROTOCOL || dstContact.getProtocol(command);
     }
 
-    _sendNow(dstContact, command, data, cb){
+    async _sendNow(dstContact, command, data){
 
         const protocol = this._sendGetProtocol(dstContact, command, data);
-        if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
+        if (!this._protocolSpecifics[ protocol ]) throw "Can't contact";
 
         const {sendSerialize, sendSerialized} = this._protocolSpecifics[ protocol ];
-        let { id, out } = sendSerialize(dstContact, command, data);
+        const { id, out } = sendSerialize(dstContact, command, data);
 
-        this._sendProcess(dstContact, protocol, out, {},(err, buffer)=>{
+        const buffer = await this._sendProcess(dstContact, protocol, out, {} );
 
-            if (err) return cb(err);
+        const serialized = await sendSerialized( id, dstContact, protocol, command, buffer);
 
-            sendSerialized( id, dstContact, protocol, command, buffer, (err, buffer)=>{
-
-                if (err) return cb(err);
-
-                this.sendReceivedSerialized(dstContact, protocol, command, buffer, cb);
-
-            });
-
-        })
+        return this.sendReceivedSerialized(dstContact, protocol, command, serialized);
 
     }
 
-    send(dstContact, command, data, cb){
+    send(dstContact, command, data){
 
         if ( dstContact.identity && dstContact.identity.equals(this._kademliaNode.contact.identity) )
-            return cb(new Error("Can't contact myself"));
+            return null; //"Can't contact myself";
 
-        this._sendNow(dstContact, command, data, cb);
-
-    }
-
-    _receivedProcess(dstContact, protocol, buffer, opts, cb){
-        cb(null, buffer );
-    }
-
-    sendReceivedSerialized(dstContact, protocol, command, buffer, cb){
-
-        this._receivedProcess(dstContact, protocol, buffer, {},(err, buffer)=>{
-
-            if (err) return cb(err);
-
-            const decoded = this.decodeSendAnswer(dstContact, command, buffer);
-            if (!decoded) return cb(new Error('Error decoding data'));
-
-            cb(null, decoded);
-
-        })
+        return this._sendNow(dstContact, command, data);
 
     }
 
-    receiveSerialized( req, id, srcContact, protocol, buffer, opts, cb){
+    _receivedProcess(dstContact, protocol, buffer, opts){
+        return buffer;
+    }
+
+    async sendReceivedSerialized(dstContact, protocol, command, buffer){
+
+        const out = await this._receivedProcess(dstContact, protocol, buffer, {});
+
+        if (!out.length) return [];
+
+        const decoded = this.decodeSendAnswer(dstContact, command, out);
+        if (!decoded) throw 'Error decoding data';
+
+        return decoded;
+
+    }
+
+    async receiveSerialized( req, id, srcContact, protocol, buffer, opts){
 
         const decoded = this.decodeReceiveAnswer( id, srcContact, buffer );
-        if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
+        if (!decoded) throw 'Error decoding data. Invalid bencode';
 
         let c = 0;
         if (id === undefined) id = decoded[c++];
         if (srcContact === undefined) srcContact = decoded[c++];
 
-        if (opts.returnNotAllowed) return cb(null, decoded);
+        if (opts.returnNotAllowed) return decoded;
 
-        this.receive( req, id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
+        const out = await this.receive( req, id, srcContact, decoded[c++], decoded[c++]);
 
-            if (err) return cb(err);
-
-            const {receiveSerialize} = this._protocolSpecifics[protocol];
-            const buffer = receiveSerialize(id, srcContact, out );
-            cb(null, buffer );
-
-        });
+        const {receiveSerialize} = this._protocolSpecifics[protocol];
+        return receiveSerialize(id, srcContact, out );
 
     }
 
-    receive(req, id, srcContact, command, data, cb){
+    receive(req, id, srcContact, command, data){
 
-        try{
-            if (this._commands[command])
-                return this._commands[command].call(this, req, srcContact, data, cb);
-
-        }catch(err){
-            cb(err);
-        }
+        if (this._commands[command])
+            return this._commands[command].call(this, req, srcContact, data);
 
         throw "invalid command";
     }
@@ -192,14 +166,14 @@ module.exports = class KademliaRules {
      * used to verify that a node is still alive.
      * @param cb
      */
-    _ping(req, srcContact, data, cb) {
+    _ping(req, srcContact, data) {
 
-        cb(null, [1] );
+        return [1];
 
     }
 
-    sendPing(contact, cb){
-        this.send(contact,'PING', [  ],  cb);
+    sendPing(contact){
+        return this.send(contact,'PING', [  ]);
     }
 
     /**
@@ -208,52 +182,44 @@ module.exports = class KademliaRules {
      * @param value
      * @param cb
      */
-    _storeCommand(req, srcContact, [table, masterKey, key, value], cb) {
+    async _storeCommand(req, srcContact, [table, masterKey, key, value]) {
 
         const tableStr = table.toString();
         const masterKeyStr = masterKey.toString('hex');
         const keyStr = key.toString('hex');
 
         const allowedTable = this._allowedStoreTables[tableStr];
-        if (!allowedTable) return cb(new Error('Table is not allowed'));
+        if (!allowedTable) throw 'Table is not allowed';
 
         if (allowedTable.immutable){
 
-            this._store.hasKey( tableStr, masterKeyStr,keyStr, (err, has)=>{
+            const has = await this._store.hasKey( tableStr, masterKeyStr, keyStr);
+            if (has) return this._store.putExpiration(tableStr, masterKeyStr, keyStr, allowedTable.expiry);
 
-                if (err) return cb(null, 0)
-                if (has) return this._store.putExpiration(tableStr, masterKeyStr, keyStr, allowedTable.expiry, cb);
+            const data = allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value], null );
+            if ( data ) return this._store.put( tableStr, masterKeyStr, keyStr, data, allowedTable.expiry);
 
-                const data = allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value], null );
-                if ( data ) return this._store.put( tableStr, masterKeyStr, keyStr, data, allowedTable.expiry, cb);
-
-                cb(null, 0 );
-
-            });
+            return 0;
 
         } else {
 
-            this._store.getKey( tableStr, masterKeyStr, keyStr, (err, old)=>{
+            const old = await this._store.getKey( tableStr, masterKeyStr, keyStr);
 
-                if (err) return cb(null, 0);
+            const data = allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value], old );
+            if ( data ) return this._store.put( tableStr, masterKeyStr, keyStr, data, allowedTable.expiry);
 
-                const data = allowedTable.validation( srcContact, allowedTable, [table, masterKey, key, value], old );
-                if ( data ) return this._store.put( tableStr, masterKeyStr, keyStr, data, allowedTable.expiry, cb);
-
-                cb(null, 0 );
-
-            });
+            return 0;
 
         }
 
     }
 
-    sendStore(contact, [table, masterKey, key, value], cb ){
+    sendStore(contact, [table, masterKey, key, value] ){
 
         if (!this._allowedStoreTables[table.toString()])
-            return cb(new Error('Table is not allowed'));
+            throw 'Table is not allowed';
 
-        this.send(contact,'STORE', [table, masterKey, key, value], cb)
+        return this.send(contact,'STORE', [table, masterKey, key, value] )
 
     }
 
@@ -262,16 +228,15 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    _findNode( req, srcContact, [key], cb ){
+    _findNode( req, srcContact, [key] ){
 
-        const err = Validation.checkIdentity(key);
-        if (err) return cb(err);
+        Validation.validateIdentity(key);
 
-        cb( null, [0, this._kademliaNode.routingTable.getClosestToKey(key) ] );
+        return [0, this._kademliaNode.routingTable.getClosestToKey(key) ];
     }
 
-    sendFindNode(contact, key, cb){
-        this.send(contact,'FIND_NODE', [key], cb);
+    sendFindNode(contact, key){
+        return this.send(contact,'FIND_NODE', [key] );
     }
 
     /**
@@ -279,20 +244,18 @@ module.exports = class KademliaRules {
      * @param key
      * @param cb
      */
-    _findValue( req, srcContact, [table, key], cb){
+    async _findValue( req, srcContact, [table, key]){
 
-        this._store.get(table.toString(), key.toString('hex'), (err, out) => {
-            //found the data
-            if (out) cb(null, [1, out] )
-            else cb( null, [0, this._kademliaNode.routingTable.getClosestToKey(key) ] )
-        })
+        const out = await this._store.get(table.toString(), key.toString('hex') );
+        //found the data
+        if (out) return [1, out];
+        else return [0, this._kademliaNode.routingTable.getClosestToKey(key) ];
 
     }
 
-    sendFindValue(contact, protocol, table, key, cb){
-        this.send(contact, protocol, 'FIND_VALUE', [table, key], cb);
+    sendFindValue(contact, protocol, table, key){
+        return this.send(contact, protocol, 'FIND_VALUE', [table, key]);
     }
-
 
     /**
      *  Given a new node, send it all the keys/values it should be storing,
@@ -314,7 +277,7 @@ module.exports = class KademliaRules {
             return false; //skipped
 
         this._replicatedStoreToNewNodesAlready[contact.identityHex] = new Date().getTime();
-        this._replicateStoreToNewNode(contact, undefined, ()=>{} )
+        this._replicateStoreToNewNode(contact, undefined )
 
         return true;
     }
@@ -328,7 +291,7 @@ module.exports = class KademliaRules {
      * @param iterator
      * @private
      */
-    _replicateStoreToNewNode(contact, iterator, cb){
+    async _replicateStoreToNewNode(contact, iterator){
 
         if (!iterator )  //first time
             iterator = this._store.iterator();
@@ -356,22 +319,17 @@ module.exports = class KademliaRules {
                 thisClosest = Buffer.compare( BufferUtils.xorDistance( this._kademliaNode.contact.identity, keyNode ), first)
             }
 
-            if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  )
-                return this.sendStore(contact, [ table, masterKey, key, value], (err, out) => {
-
-                    if (err)
-                        return cb(err); //error
-
-                    NextTick( this._replicateStoreToNewNode.bind(this, contact, iterator, cb), KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_SLEEP )
-
-                });
+            if (!neighbors.length || ( newNodeClose < 0 && thisClosest < 0 )  ) {
+                const out = await this.sendStore(contact, [table, masterKey, key, value]);
+                NextTick(this._replicateStoreToNewNode.bind(this, contact, iterator), KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_SLEEP);
+            }
             else
                 itValue = iterator.next();
 
         }
 
         if (!itValue.value || !itValue.done)
-            cb(null, "done");
+            return "done";
 
     }
 
@@ -379,14 +337,14 @@ module.exports = class KademliaRules {
      * Clear expired _replicatedStoreToNewNodesAlready
      * @private
      */
-    _replicatedStoreToNewNodeExpire(next){
+    async _replicatedStoreToNewNodeExpire(){
         
         const expiration = new Date() - KAD_OPTIONS.T_REPLICATE_TO_NEW_NODE_EXPIRY;
         for (const identityHex in this._replicatedStoreToNewNodesAlready)
             if (this._replicatedStoreToNewNodesAlready[identityHex] < expiration )
                 delete this._replicatedStoreToNewNodesAlready[identityHex];
 
-        next()
+        return true;
     }
 
     decodeSendAnswer(dstContact, command, data, decodedAlready = false){
@@ -427,16 +385,16 @@ module.exports = class KademliaRules {
 
     }
 
-    _version(req, srcContact, data, cb){
-        cb(null, KAD_OPTIONS.VERSION.VERSION);
+    _version(req, srcContact, data){
+        return KAD_OPTIONS.VERSION.VERSION;
     }
 
-    _app(req, srcContact, data, cb){
-        cb(null, KAD_OPTIONS.VERSION.APP);
+    _app(req, srcContact, data){
+        return KAD_OPTIONS.VERSION.APP;
     }
 
-    _identity(req, srcContact, data, cb){
-        cb(null, this._kademliaNode.contact.identity);
+    _identity(req, srcContact, data){
+        return this._kademliaNode.contact.identity;
     }
 
 }

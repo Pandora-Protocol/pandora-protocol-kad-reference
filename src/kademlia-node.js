@@ -87,8 +87,8 @@ module.exports = class KademliaNode extends EventEmitter {
     /**
      * Bootstrap by connecting to other known node in the network.
      */
-    bootstrap(contact, first, cb = ()=>{} ){
-        this.join(contact, first, cb)
+    async bootstrap(contact, first ){
+        return this.join(contact, first)
     }
 
     /**
@@ -97,69 +97,47 @@ module.exports = class KademliaNode extends EventEmitter {
      * then refreshes all buckets further than it's closest neighbor, which will
      * be in the occupied bucket with the lowest index
      */
-    join(contact, first = false, cb = ()=>{} ) {
+    async join(contact, first = false ) {
 
         contact = this.contactsMap.updateContact(contact);
         this.routingTable.addContact(contact);
 
-        this.crawler.iterativeFindNode( this.contact.identity, (err, out)=>{
+        try{
 
-            if (err) {
-                this.routingTable.removeContact( contact );
-                this.emit('join', err);
-                return cb(err, out);
-            }
+            const out = await this.crawler.iterativeFindNode( this.contact.identity );
 
             const bucketsClosest = this.routingTable.getBucketsBeyondClosest();
             if (bucketsClosest.length)
-                this.routingTable.refresher.refresh( bucketsClosest[0].bucketIndex, ()=> { });
+                this.routingTable.refresher.refresh( bucketsClosest[0].bucketIndex );
 
             if (!first && this.routingTable.count === 1){
                 this.routingTable.removeContact( contact );
-
-                err = new Error("Failed to discover nodes")
-                this.emit('join', err );
-                return cb( err );
-
+                throw "Failed to discover nodes";
             }
             else{
                 this.emit('join', out );
-                cb(err, out);
+                return out;
             }
 
-        } );
+        }catch(err){
+            this.routingTable.removeContact( contact );
+            this.emit('join', err );
+            throw err;
+        }
+
     }
 
     async initializeNode( opts ){
 
-        return new Promise((resolve, reject)=>{
+        let out = await this.contactStorage.loadContact( opts );
 
-            this.contactStorage.loadContact( opts, async (err, out) =>{
+        if (!out) {
+            const contactArgs = await this.contactStorage.createContactArgs( opts );
+            out = await this.contactStorage.setContact( contactArgs, false, true );
+        }
 
-                if (err) return reject(err);
-                if (out) {
-                    this.rules.initContact(this.contact);
-                    return resolve(out);
-                }
-
-                try{
-
-                    const contactArgs = await this.contactStorage.createContactArgs( opts );
-                    this.contactStorage.setContact( contactArgs, false, true, (err, out)=>{
-                        if (err) return reject(err)
-
-                        this.rules.initContact(this.contact);
-                        resolve(out);
-
-                    })
-
-                }catch(err){
-                    reject(err);
-                }
-
-            });
-
-        })
+        this.rules.initContact(this.contact);
+        return out;
 
     }
 

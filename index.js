@@ -1,3 +1,6 @@
+var Promise = require("bluebird");
+global.Promise = Promise;
+
 const KademliaNode = require('./src/kademlia-node')
 const Store = require('./src/store/store')
 const StoreMemory = require('./src/store/store-memory')
@@ -34,6 +37,17 @@ const Utils = require('./src/helpers/utils')
 const async = require('async');
 const bencode = require('bencode');
 const blobToBuffer = require('blob-to-buffer')
+
+Promise.mapLimit = async (funcs, limit) => {
+    let results = [];
+    await Promise.all(funcs.slice(0, limit).map(async (func, i) => {
+        results[i] = await func();
+        while ((i = limit++) < funcs.length) {
+            results[i] = await funcs[i]();
+        }
+    }));
+    return results;
+};
 
 module.exports = {
 

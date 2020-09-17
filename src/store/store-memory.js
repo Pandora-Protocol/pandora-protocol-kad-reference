@@ -20,51 +20,46 @@ module.exports = class StoreMemory extends Store{
         return this._expiration.entries();
     }
 
-    get(table = '', masterKey, cb){
+    get(table = '', masterKey){
 
-        const err1 = Validation.checkStoreTable(table);
-        const err2 = Validation.checkStoreKey(masterKey);
-        if (err1 || err2) return cb(err1||err2);
+        Validation.validateStoreTable(table);
+        Validation.validateStoreKey(masterKey);
 
         const map = this._masterKeys.get(table + ':'+ masterKey);
-        if (!map) return cb(null, null);
+        if (!map) return null;
 
-        let out = {};
+        const out = [];
         for (const entry of map.entries() )
-            out[entry[0].toString('hex')] = entry[1];
+            out.push( [Buffer.from(entry[0], 'hex'), entry[1]]);
 
-        cb( null, out );
+        return out;
     }
 
-    hasKey(table = '', masterKey, key, cb){
-        const err1 = Validation.checkStoreTable(table);
-        const err2 = Validation.checkStoreMasterKey(masterKey);
-        const err3 = Validation.checkStoreKey(key);
-        if (err1 || err2 || err3) return cb(err1||err2||err3);
+    hasKey(table = '', masterKey, key){
+        Validation.validateStoreTable(table);
+        Validation.validateStoreMasterKey(masterKey);
+        Validation.validateStoreKey(key);
 
-        cb(null, this._keys.has(table + ':'+ masterKey+':'+key))
+        return this._keys.has(table + ':'+ masterKey+':'+key);
     }
 
-    getKey(table = '', masterKey, key, cb){
+    getKey(table = '', masterKey, key){
 
-        const err1 = Validation.checkStoreTable(table);
-        const err2 = Validation.checkStoreMasterKey(masterKey);
-        const err3 = Validation.checkStoreKey(key);
-        if (err1 || err2 || err3) return cb(err1||err2||err3);
+        Validation.validateStoreTable(table);
+        Validation.validateStoreMasterKey(masterKey);
+        Validation.validateStoreKey(key);
 
-        cb(null, this._keys.get(table + ':'+ masterKey+':'+key) )
+        return this._keys.get(table + ':'+ masterKey+':'+key);
     }
 
-    put(table = '', masterKey, key, value, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, cb){
+    put(table = '', masterKey, key, value, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY){
 
-        const err1 = Validation.checkStoreTable(table);
-        const err2 = Validation.checkStoreMasterKey(masterKey);
-        const err3 = Validation.checkStoreKey(key);
-        const err4 = Validation.checkStoreData(value);
+        Validation.validateStoreTable(table);
+        Validation.validateStoreMasterKey(masterKey);
+        Validation.validateStoreKey(key);
+        Validation.validateStoreData(value);
 
-        if (err1 || err2 || err3 || err4) return cb(err1||err2||err3||err4);
-
-        let map = this._masterKeys[table+':'+masterKey], map2;
+        let map = this._masterKeys[table+':'+masterKey];
 
         if (!map ) {
             map = new Map();
@@ -76,37 +71,34 @@ module.exports = class StoreMemory extends Store{
         this._keys.set( table + ':'+masterKey+':'+key,  value);
         this._expiration.set( table + ':'+masterKey+':'+key, new Date().getTime() + expiry );
 
-        cb(null, 1);
-
+        return 1;
     }
 
-    putExpiration(table='', masterKey, key,  expiry, cb){
-        const err1 = Validation.checkStoreTable(table);
-        const err2 = Validation.checkStoreMasterKey(masterKey);
-        const err3 = Validation.checkStoreKey(key);
+    putExpiration(table='', masterKey, key,  expiry){
 
-        if (err1 || err2 || err3 ) return cb(err1||err2||err3);
+        Validation.validateStoreTable(table);
+        Validation.validateStoreMasterKey(masterKey);
+        Validation.validateStoreKey(key);
 
         this._expiration.set( table + ':'+masterKey+':'+key, new Date().getTime() + expiry);
 
-        cb(null, 1);
+        return 1;
     }
 
-    del(table = '', masterKey, key, cb){
+    del(table = '', masterKey, key){
 
-        const err1 = Validation.checkStoreTable(table);
-        const err2 = Validation.checkStoreKey(masterKey);
-        const err3 = Validation.checkStoreKey(key);
-        if (err1 || err2 || err3) return cb(err1||err2||err3);
+        Validation.validateStoreTable(table);
+        Validation.validateStoreKey(masterKey);
+        Validation.validateStoreKey(key);
 
-        if (!this._keys.get( table + ':'+masterKey+':'+key)) return cb(null, 0);
+        if (!this._keys.get( table + ':'+masterKey+':'+key)) return 0;
 
         this._masterKeys[table+':'+masterKey].delete(key);
 
         if ( this._masterKeys[table+':'+masterKey].size === 0 )
             this._masterKeys.delete(table+':'+masterKey);
 
-        cb(null, 1);
+        return 1;
     }
 
 

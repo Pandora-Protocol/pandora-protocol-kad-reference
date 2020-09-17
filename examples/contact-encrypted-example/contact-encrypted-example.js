@@ -43,47 +43,35 @@ const nodes = array.map(
         ],
     ) )
 
-async.eachLimit( array, 1, (index, next ) => {
 
-    nodes[index].start( {port: 10096+index} ).then((out)=>{
-        console.log("BOOTSTRAPING...", nodes[index].contact.identityHex, nodes[index].contact.port );
-        next(null, out)
-    })
+async function execute() {
 
-}, (err, out)=>{
+    for (let i = 0; i < nodes.length; i++)
+        await nodes[i].start({port: 10096 + i});
 
-    //encountering
-    async.eachLimit( array.slice(1), 1, ( index, next) =>{
+    for (let i = 1; i < nodes.length; i++) {
+        const out = await nodes[i].bootstrap(nodes[0].contact, true);
+        console.log("BOOTSTRAPING...", out.length);
+    }
 
-        nodes[index].bootstrap( nodes[ 0 ].contact, true, (err, out)=>{
+    for (let i = 0; i < nodes.length; i++)
+        console.log(i, nodes[i].routingTable.count, nodes[i].routingTable.array.map(it => it.contact.contactType));
 
-            //fix for websockets
-            setTimeout( next, 1 );
+    const query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+    let out = await nodes[4].crawler.iterativeFindValue( '', query);
+    console.log("iterativeFindValue", out.result, out.length);
 
-        } );
+    const query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+    out = await nodes[3].crawler.iterativeStoreValue( '', query2, '', 'query2');
 
-    }, (err, out)=> {
+    console.log("iterativeStoreValue", out);
 
-        for (let i=0; i < nodes.length; i++)
-            console.log(i, nodes[i].routingTable.count, nodes[i].routingTable.array.map( it => it.contact.contactType ));
+    out = await nodes[5].crawler.iterativeFindValue( '', query2)
+    console.log("iterativeFindValue2", out.result);
 
-        const query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        nodes[4].crawler.iterativeFindValue( '', query, (err, out)=>{
-            console.log("iterativeFindValue", out.result, out.length);
-        })
+}
 
-        const query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        nodes[3].crawler.iterativeStoreValue( '', query2, '', 'query2', (err, out)=>{
-            console.log("iterativeStoreValue", out);
 
-            nodes[5].crawler.iterativeFindValue( '', query2, (err, out)=>{
-                console.log("iterativeFindValue2", out.result);
-            })
-
-        })
-
-    });
-
-});
+execute();
 
 global.NODES = nodes;

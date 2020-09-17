@@ -18,29 +18,29 @@ module.exports = class NodeStorage {
         }
     }
 
-    clear(cb){
-        return this._db.clear(cb)
+    clear(){
+        return this._db.clear()
     }
 
-    removeItem(key, callback) {
-        return this._db.del(key, callback)
+    removeItem(key) {
+        return this._db.del(key)
     }
 
-    setItem(key, value, callback) {
-        return this._db.put(key, value, callback)
+    setItem(key, value) {
+        return this._db.put(key, value)
     }
 
-    getItem(key, callback) {
-        return this._db.get(key, (err, out) =>{
-
-            if (err && err.type === "NotFoundError") return callback(null, null);
-            callback(err, out);
-
-        })
+    async getItem(key) {
+        try{
+            const out = await this._db.get(key);
+            return out;
+        }catch(err){
+            return null;
+        }
     }
 
-    iterator(cb) {
-        return this._db.iterator(cb)
+    iterator() {
+        return this._db.iterator()
     }
 
 }

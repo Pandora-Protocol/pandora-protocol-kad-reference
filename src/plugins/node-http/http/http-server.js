@@ -111,16 +111,13 @@ module.exports = class HTTPServer extends EventEmitter {
         const data = [];
         req.on('data', (chunk) => {
             data.push(chunk);
-        }).on('end', () => {
+        }).on('end', async () => {
 
             const buffer = Buffer.concat(data);
+            const output = await this._kademliaNode.rules.receiveSerialized( res, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, {});
 
-            this._kademliaNode.rules.receiveSerialized( res, undefined, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_HTTP, buffer, {}, (err, buffer)=>{
-
-                res.statusCode = 200;
-                res.end(buffer);
-
-            });
+            res.statusCode = 200;
+            res.end(output);
 
         });
 

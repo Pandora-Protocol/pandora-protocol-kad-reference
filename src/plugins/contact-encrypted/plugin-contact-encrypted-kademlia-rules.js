@@ -19,7 +19,7 @@ module.exports = function (options) {
 
         }
 
-        _sendProcess(dstContact, protocol, data, opts = {}, cb){
+        async _sendProcess(dstContact, protocol, data, opts = {}){
 
             if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super._sendProcess(...arguments);
 
@@ -27,87 +27,70 @@ module.exports = function (options) {
             const signature = this._kademliaNode.contact.sign( CryptoUtils.sha256( data ) );
             data = [data, signature]
 
-            ECCUtils.encrypt(dstContact.publicKey, bencode.encode(data), (err, out)=>{
-
-                if (err) return cb(err);
-                cb(null, bencode.encode(out));
-
-            });
+            const out = await ECCUtils.encrypt(dstContact.publicKey, bencode.encode(data) );
+            return bencode.encode(out);
         }
 
-        _receivedProcess(dstContact, protocol, buffer, opts, cb){
+        async _receivedProcess(dstContact, protocol, buffer, opts){
 
             if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super._receivedProcess(...arguments);
 
-            if (!dstContact) return cb(new Error('dstContact needs to be set for decryption'));
+            if (!dstContact) throw 'dstContact needs to be set for decryption';
 
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
-            if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
+            if (!decoded) throw 'Error decoding data. Invalid bencode';
 
-            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, info)=>{
+            const decrypted = await ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded);
 
-                if (err)
-                    return cb(err);
+            const info = bencode.decode(decrypted);
+            if (!info) throw "Error decoding the encrypted info";
 
-                info = bencode.decode(info);
-                if (!info) return cb(new Error("Error decoding the encrypted info"));
-                const [payload, signature ] = info;
+            const [payload, signature ] = info;
 
-                if (!dstContact.verify( CryptoUtils.sha256(payload), signature )) return cb(new Error('Signature for encrypted message is invalid'));
-                cb(null, payload);
+            if (!dstContact.verify( CryptoUtils.sha256(payload), signature ))
+                throw 'Signature for encrypted message is invalid';
 
-            });
+            return payload;
+
         }
 
-        receiveSerialized( req, id, srcContact, protocol, buffer, opts = {}, cb){
+        async receiveSerialized( req, id, srcContact, protocol, buffer, opts = {}){
 
             if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super.receiveSerialized(...arguments);
 
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
-            if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
+            if (!decoded) throw 'Error decoding data. Invalid bencode';
 
-            ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded, (err, info ) => {
+            const decrypted = await ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded);
 
-                if (err)
-                    return cb(err);
+            const info = bencode.decode(decrypted);
+            if (!info) throw "Error decoding the encrypted info";
 
-                info = bencode.decode(info);
-                if (!info) return cb(new Error("Error decoding the encrypted info"));
-                const [payload, signature ] = info;
+            const [payload, signature ] = info;
 
-                const decoded = this.decodeReceiveAnswer( id, srcContact, payload );
-                if (!decoded) return cb( new Error('Error decoding data. Invalid bencode'));
+            const answerDecoded = this.decodeReceiveAnswer( id, srcContact, payload );
+            if (!answerDecoded) throw 'Error decoding data. Invalid bencode';
 
-                let c = 0;
-                if (id === undefined) id = decoded[c++];
-                if (srcContact === undefined) srcContact = decoded[c++];
+            let c = 0;
+            if (id === undefined) id = answerDecoded[c++];
+            if (srcContact === undefined) srcContact = answerDecoded[c++];
 
-                if (!srcContact.verify( CryptoUtils.sha256(payload), signature )) return cb(new Error('Signature for encrypted message is invalid'));
-                if (opts.returnNotAllowed) return cb(null, decoded);
+            if (!srcContact.verify( CryptoUtils.sha256(payload), signature )) throw 'Signature for encrypted message is invalid';
+            if (opts.returnNotAllowed) return answerDecoded;
 
-                this.receive( req, id, srcContact, decoded[c++], decoded[c++], (err, out )=>{
+            const outReceived = await this.receive( req, id, srcContact, answerDecoded[c++], answerDecoded[c++]);
 
-                    if (err) return cb(err);
+            const myOut = bencode.encode( BufferHelper.serializeData(outReceived) );
+            const mySignature = this._kademliaNode.contact.sign( CryptoUtils.sha256( myOut ) );
 
-                    out = bencode.encode( BufferHelper.serializeData(out) );
-                    const signature = this._kademliaNode.contact.sign( CryptoUtils.sha256( out ) );
-                    out = [out, signature]
+            const out = await ECCUtils.encrypt( srcContact.publicKey, bencode.encode(  [myOut, mySignature] ) );
 
-                    ECCUtils.encrypt( srcContact.publicKey, bencode.encode( out ), (err, out)=>{
+            if (!this._protocolSpecifics[ protocol ]) throw "Can't contact";
 
-                        if (err) return cb(err);
-                        if (!this._protocolSpecifics[ protocol ]) return cb(new Error("Can't contact"));
+            const {receiveSerialize} = this._protocolSpecifics[protocol];
+            const finalBuffer = receiveSerialize(id, srcContact, out );
 
-                        const {receiveSerialize} = this._protocolSpecifics[protocol];
-                        const buffer = receiveSerialize(id, srcContact, out );
-                        cb(null, buffer );
-
-                    });
-
-                });
-
-
-            })
+            return finalBuffer;
 
         }
 

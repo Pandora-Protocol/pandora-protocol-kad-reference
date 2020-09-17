@@ -35,24 +35,28 @@ module.exports = class BrowserStorage {
         }
     }
 
-    clear(cb){
-        return this._store.clear(cb)
+    clear(){
+        return this._store.clear()
     }
 
-    removeItem(key, callback) {
-        return this._store.removeItem(key, callback)
+    removeItem(key) {
+        return this._store.removeItem(key)
     }
 
-    setItem(key, value, callback) {
-        return this._store.setItem(key, value, callback)
+    setItem(key, value) {
+        return this._store.setItem(key, value)
     }
 
-    getItem(key, callback) {
-        return this._store.getItem(key, callback)
+    async getItem(key) {
+        try{
+            const out = await this._db.get(key);
+            return out;
+        }catch(err){
+            return null;
+        }
     }
 
     iterator() {
-
         const self = this;
         return {
             _index: -1,

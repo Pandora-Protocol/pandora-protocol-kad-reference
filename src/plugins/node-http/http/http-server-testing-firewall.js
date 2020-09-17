@@ -34,12 +34,8 @@ module.exports = class HttpServerTestingFirewall {
                 res.setEncoding('utf8');
                 let output = '';
 
-                res.on('data',  (chunk) => {
-                    output += chunk;
-                });
-                res.on('error', (e)=>{
-                    reject(e);
-                })
+                res.on('data',  (chunk) => output += chunk );
+                res.on('error', (e)=> reject(e) )
                 res.on('end',()=>{
                     if (res.statusCode === 200 && output === this._id)
                         resolve(true);
@@ -49,9 +45,7 @@ module.exports = class HttpServerTestingFirewall {
 
             });
 
-            req.on('error', function(e) {
-                resolve(false);
-            });
+            req.on('error', e => resolve(false) );
 
             req.end(this._id);
 

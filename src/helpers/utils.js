@@ -3,26 +3,34 @@ function isObject(item) {
 }
 
 
-module.exports.preventConvoy = (timeout = 30 * 60 * 1000) => {
-    return Math.ceil( Math.random() * timeout );
-}
+module.exports = {
 
-module.exports.mergeDeep = (target, ...sources) => {
+    preventConvoy: function (timeout = 30 * 60 * 1000) {
+        return Math.ceil( Math.random() * timeout );
+    },
 
-    if (!sources.length) return target;
-    const source = sources.shift();
+    sleep: function (ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
 
-    if (isObject(target) && isObject(source)) {
-        for (const key in source) {
-            if (isObject(source[key])) {
-                if (!target[key]) Object.assign(target, { [key]: {} });
-                this.mergeDeep(target[key], source[key]);
-            } else {
-                Object.assign(target, { [key]: source[key] });
+    mergeDeep: function (target, ...sources) {
+
+        if (!sources.length) return target;
+        const source = sources.shift();
+
+        if (isObject(target) && isObject(source)) {
+            for (const key in source) {
+                if (isObject(source[key])) {
+                    if (!target[key]) Object.assign(target, { [key]: {} });
+                    this.mergeDeep(target[key], source[key]);
+                } else {
+                    Object.assign(target, { [key]: source[key] });
+                }
             }
         }
-    }
 
-    return this.mergeDeep(target, ...sources);
+        return this.mergeDeep(target, ...sources);
+
+    }
 
 }

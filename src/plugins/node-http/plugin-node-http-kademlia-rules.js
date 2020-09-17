@@ -58,9 +58,9 @@ module.exports = function (options) {
             }
         }
 
-        _httpSendSerialized (id, dstContact, protocol, command, data, cb) {
+        _httpSendSerialized (id, dstContact, protocol, command, data) {
             const buffer = Buffer.isBuffer(data) ? data : bencode.encode( data );
-            this._httpRequest.request( id, dstContact, protocol, buffer, cb )
+            return this._httpRequest.request( id, dstContact, protocol, buffer )
         }
 
         _httpReceiveSerialize (id, srcContact, out )  {

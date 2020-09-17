@@ -34,14 +34,14 @@ module.exports = function (options) {
 
         }
 
-        _requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate], cb){
-
-            const sourceIdentityHex = sourceIdentity.toString('hex');
-
-            const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentityHex ];
-            if (!webRTC) return cb(null, []);
+        async _requestIceCandidateWebRTCConnection(req, srcContact, [sourceIdentity, candidate]){
 
             try{
+
+                const sourceIdentityHex = sourceIdentity.toString('hex');
+
+                const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentityHex ];
+                if (!webRTC) return [0];
 
                 candidate = bencode.decode(candidate);
                 webRTC.processData(candidate);
@@ -49,45 +49,46 @@ module.exports = function (options) {
                 webRTC.addIceCandidate(candidate);
 
             }catch(err){
-                console.log("_requestIceCandidateWebRTCConnection", err)
-                return cb(null, []);
+                return [];
             }
 
-            cb(null, [1] );
+            return [1] ;
 
         }
 
-        sendRequestIceCandidateWebRTCConnection(contact, sourceIdentity, candidate, cb){
-            this.send(contact, 'REQ_ICE', [sourceIdentity, candidate ], cb)
+        sendRequestIceCandidateWebRTCConnection(contact, sourceIdentity, candidate){
+            return this.send(contact, 'REQ_ICE', [sourceIdentity, candidate ])
         }
 
-        _rendezvousIceCandidateWebRTCConnection(req, srcContact, [finalIdentity, candidate], cb){
+        _rendezvousIceCandidateWebRTCConnection(req, srcContact, [finalIdentity, candidate]){
 
             const finalIdentityHex = finalIdentity.toString('hex');
 
             const ws = this._webSocketActiveConnectionsByContactsMap[ finalIdentityHex ];
-            if (!ws || !ws.isWebSocket) return cb(null, [] );
+            if (!ws || !ws.isWebSocket) return [];
 
-            this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate, cb );
+            this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate);
 
         }
 
-        sendRendezvousIceCandidateWebRTConnection(contact, identity, candidate, cb){
-            this.send(contact, 'RNDZ_ICE', [identity, bencode.encode(candidate) ], cb)
+        sendRendezvousIceCandidateWebRTConnection(contact, identity, candidate){
+            return this.send(contact, 'RNDZ_ICE', [identity, bencode.encode(candidate) ])
         }
 
-        _requestWebRTCConnection(req, srcContact, data, cb){
+        async _requestWebRTCConnection(req, srcContact, data){
 
-            this._kademliaNode.rules.receiveSerialized( req, 0, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, data, {returnNotAllowed: true}, (err, info) =>{
+            let webRTC ;
 
-                if (err) return cb(null, []);
+            try{
+
+                const info = await this._kademliaNode.rules.receiveSerialized( req, 0, undefined, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, data, {returnNotAllowed: true});
 
                 const contact = info[0];
                 this._welcomeIfNewNode( contact );
 
-                if (this.alreadyConnected[contact.identityHex]) return cb(null, []);
+                if (this.alreadyConnected[contact.identityHex]) return [];
 
-                const webRTC = new WebRTCConnectionRemote(this, null, contact);
+                webRTC = new WebRTCConnectionRemote(this, null, contact);
 
                 const [offer, otherPeerMaxChunkSize ] = info[2];
 
@@ -95,54 +96,43 @@ module.exports = function (options) {
                 webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
 
                 webRTC._rtcPeerConnection.onicecandidate = e => {
-                    console.log("onicecandidate", e)
                     if (e.candidate)
                         this.sendRendezvousIceCandidateWebRTConnection( srcContact, contact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{ })
                 }
 
                 webRTC.processData(offer);
-                webRTC.useInitiatorOffer(offer, (err, answer)=>{
+                const answer = await webRTC.useInitiatorOffer(offer);
 
-                    if (err){
-                        webRTC.closeNow();
-                        return cb(null, []);
-                    }
+                const finalData = [ webRTC.processDataOut(answer), chunkMaxSize ];
 
-                    const data = [ webRTC.processDataOut(answer), chunkMaxSize ];
-                    this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, data, {forceEncryption: true} , (err, data) =>{
+                return this._sendProcess( contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, finalData, {forceEncryption: true} );
 
-                        if (err){
-                            webRTC.closeNow();
-                            return cb(null, []);
-                        }
+            }catch(err) {
 
-                        cb(null, data );
+                if (webRTC)
+                    webRTC.closeNow();
 
-                    });
-
-                })
-
-            });
+            }
 
         }
 
-        sendRequestWebRTConnection(contact, offer, cb){
-            this.send(contact, 'REQ_WRTC_CON', offer, cb)
+        sendRequestWebRTConnection(contact, offer){
+            return this.send(contact, 'REQ_WRTC_CON', offer, )
         }
 
-        _rendezvousWebRTCConnection(req, srcContact, [identity, offer], cb){
+        _rendezvousWebRTCConnection(req, srcContact, [identity, offer] ){
 
             const identityHex = identity.toString('hex');
 
             const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-            if (!ws || !ws.isWebSocket) return cb(null, [] );
+            if (!ws || !ws.isWebSocket) return [];
 
-            this.sendRequestWebRTConnection(ws.contact, offer, cb );
+            return this.sendRequestWebRTConnection(ws.contact, offer );
 
         }
 
-        sendRendezvousWebRTCConnection(contact, identity, offer, cb){
-            this.send(contact, 'RNDZ_WRTC_CON', [ identity, offer ], cb)
+        sendRendezvousWebRTCConnection(contact, identity, offer){
+            return this.send(contact, 'RNDZ_WRTC_CON', [ identity, offer ])
         }
 
     }

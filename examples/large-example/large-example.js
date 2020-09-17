@@ -1,5 +1,4 @@
 const KAD = require('../../index');
-const async = require('async');
 const path = require('path')
 
 KAD.init({});
@@ -38,14 +37,14 @@ const nodes = array.map(
         ],
     ) )
 
-async.eachLimit( array, 1, (index, next ) => {
+async function execute(){
 
-    nodes[index].start( {hostname: '127.0.0.1', port: 10000+index} ).then((out)=>{
+    await Promise.mapLimit( nodes.map( (node, index) => async () => {
+
+        const out = await node.start( {hostname: '127.0.0.1', port: 10000+index} );
         console.log("START", 10000+index, nodes[index].contact.contactType );
-        next(null, out)
-    })
 
-}, (err, out)=>{
+    } ), 25 );
 
     const nodesList = [];
 
@@ -64,38 +63,33 @@ async.eachLimit( array, 1, (index, next ) => {
     }
 
     const outBootstrap = [], outStreams = [];
-    nodes[0].bootstrap( nodes[1].contact, true, ()=>{
 
-        nodes[0].bootstrap( nodes[2].contact, true, () => {
+    await nodes[0].bootstrap( nodes[1].contact, true);
+    await nodes[0].bootstrap( nodes[2].contact, true);
 
-            async.eachLimit( nodesList, 25, (node, next) =>{
-                node.bootstrap( nodes[0].contact, false, (err, out) => {
-                    outBootstrap.push(out);
-                    console.log("joined already",  outBootstrap.length);
-                    next(null, out)
-                } );
-            }, (err, out)=>{
+    await Promise.mapLimit( nodesList.map( node => async () => {
 
-                console.log("bootstrap finished ", outBootstrap.length );
+        const out = await node.bootstrap( nodes[0].contact, false);
+        outBootstrap.push(out);
+        console.log("joined already",  outBootstrap.length);
 
-                async.each( values, (value, next)=>{
-                    const nodeIndex = Math.floor( Math.random() * contacts.length );
-                    nodes[nodeIndex].crawler.iterativeStoreValue( '', value.key, '', value.value, (err, out) => {
-                        outStreams.push(out);
-                        next(null, out)
-                    } )
-                }, (err, out)=>{
+    }), 25);
 
-                    console.log("streams stored", outStreams )
+    console.log("bootstrap finished ", outBootstrap.length );
 
-                })
+    await Promise.mapLimit( values.map( value => async () => {
 
-            } );
+        const nodeIndex = Math.floor( Math.random() * contacts.length );
+        const out = await nodes[nodeIndex].crawler.iterativeStoreValue( '', value.key, '', value.value);
 
+        outStreams.push(out);
 
-        })
-    })
+    }), 1);
 
-});
+    console.log("streams stored", outStreams )
+
+}
 
 
+
+execute();

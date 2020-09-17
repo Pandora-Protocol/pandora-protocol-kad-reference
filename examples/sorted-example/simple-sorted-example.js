@@ -29,62 +29,42 @@ const nodes = array.map(
         ],
     ) )
 
-async.eachLimit( array, 1, (index, next ) => {
 
-    nodes[index].start( {port: 10000+index} ).then((out)=>{
-        next(null, out)
-    })
+async function execute(){
 
-}, (err, out)=>{
+    for (let i=0; i < nodes.length; i++)
+        await nodes[i].start({port: 10000 + i});
 
-    //encountering
-    const connections = [[0,1],[0,2],[1,2],[1,4],[2,3],[2,4],[4,5]];
-    async.eachLimit( connections, 1, ( connection, next) =>{
+    for (let i=1; i < nodes.length; i++){
+        const out = await nodes[i].bootstrap( nodes[0].contact, true );
+        console.log("BOOTSTRAPING...", out.length);
+    }
 
-        nodes[connection[0]].bootstrap( nodes[ connection[1] ].contact, false, ()=>{
+    for (let i=0; i < nodes.length; i++)
+        console.log(i, nodes[i].routingTable.count, nodes[i].routingTable.array.map( it => it.contact.contactType ));
 
-            console.log("BOOTSTRAPING...");
-            //fix for websockets
-            setTimeout( next, 100 );
+    let masterKey = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
 
-        } );
+    let out = await nodes[4].crawler.iterativeFindSortedList( '', masterKey);
+    console.log("iterativeFindSortedList", out.result);
+    if (out.result) console.error('ERROR. Answer should have been undefined')
 
-    }, (err, out)=> {
+    let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+    let query3 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+    let query4 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
 
-        let masterKey = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
-        let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
+    out = await nodes[3].crawler.iterativeStoreSortedListValue( '', masterKey, query2, 'query2_5', 5);
+    console.log("iterativeStoreSortedListValue", out);
 
-        nodes[4].crawler.iterativeFindSortedList( '', masterKey, (err, out)=>{
-            console.log("iterativeFindSortedList", out.result);
-            if (out.result) console.error('ERROR. Answer should have been undefined')
-        })
+    out = await nodes[1].crawler.iterativeStoreSortedListValue( '', masterKey, query3, 'query2_2', 2);
+    console.log("iterativeStoreSortedListValue", out);
 
-        let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        let query3 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        let query4 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
-        nodes[3].crawler.iterativeStoreSortedListValue( '', masterKey, query2, 'query2_5', 5, (err, out)=>{
-            console.log("iterativeStoreSortedListValue", out);
+    out = await nodes[4].crawler.iterativeStoreSortedListValue( '', masterKey, query4, 'query2_8', 8);
+    console.log("iterativeStoreSortedListValue", out);
 
-            nodes[1].crawler.iterativeStoreSortedListValue( '', masterKey, query3, 'query2_2', 2, (err, out)=> {
-                console.log("iterativeStoreSortedListValue", out);
+    out = await nodes[5].crawler.iterativeFindSortedList( '', masterKey);
+    console.log("iterativeFindSortedList", out.result);
 
-                nodes[4].crawler.iterativeStoreSortedListValue( '', masterKey, query4, 'query2_8', 8, (err, out)=> {
-                    console.log("iterativeStoreSortedListValue", out);
+}
 
-                    nodes[5].crawler.iterativeFindSortedList( '', masterKey, (err, out)=>{
-                        console.log("iterativeFindSortedList", out.result);
-                    })
-
-                });
-
-
-            });
-
-        })
-
-    });
-
-
-})
-
-
+execute();

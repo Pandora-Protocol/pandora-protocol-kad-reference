@@ -21,12 +21,11 @@ module.exports = {
         options.Crawler = PluginContactRendezvousCrawler(options);
 
         const _bootstrap = kademliaNode.bootstrap.bind(kademliaNode);
-        kademliaNode.bootstrap = function (contact, first, cb = ()=>{} ){
+        kademliaNode.bootstrap = async function (contact, first ) {
 
-            _bootstrap(contact, first, (err, out)=>{
-                if (err) return cb(err);
-                this.rules._setRendezvousRelayNow(()=> cb( null, out) )
-            } )
+            const out = await _bootstrap(contact, first );
+            await this.rules._setRendezvousRelayNow( )
+            return out;
 
         }
 

@@ -22,22 +22,22 @@ module.exports = function(options){
 
         }
 
-        _updateContact(req, srcContact, [contact], cb){
+        _updateContact(req, srcContact, [contact]){
 
             if (contact)
                 try{
                     contact = this._kademliaNode.createContact(contact);
                 }catch(err){
-                    return cb(null, [0]);
+                    return [0];
                 }
 
-            cb(null, [1]);
+            return [1];
         }
 
-        sendUpdateContact(contact, cb){
+        sendUpdateContact(contact){
 
             const data = this.alreadyConnected[contact.identityHex] ? [this._kademliaNode.contact] : [];
-            this.send(contact, 'UPD_CONTACT', data, cb)
+            return this.send(contact, 'UPD_CONTACT', data)
 
         }
 
@@ -45,7 +45,10 @@ module.exports = function(options){
 
             const out = await super.start(opts);
 
-            this._asyncIntervalSetRendezvous = setAsyncInterval( this._setRendezvousRelayNow.bind(this),  1000 );
+            this._asyncIntervalSetRendezvous = setAsyncInterval(
+                this._setRendezvousRelayNow.bind(this),
+                1000
+            );
 
             return out;
         }
@@ -55,13 +58,13 @@ module.exports = function(options){
             clearAsyncInterval( this._asyncIntervalSetRendezvous );
         }
 
-        _rendezvousJoin(req, srcContact, data, cb){
+        async _rendezvousJoin(req, srcContact, data){
 
-            if ( !req.isWebSocket ) return cb(new Error('Rendezvous Join is available only for WebSockets') );
-            if ( req.rendezvoused ) return cb(new Error('Req is not rendezvoused by me'))
+            if ( !req.isWebSocket ) throw 'Rendezvous Join is available only for WebSockets';
+            if ( req.rendezvoused ) throw 'Req is not rendezvoused by me';
 
             if (this._rendezvousedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RENDEZVOUS.RENDEZVOUS_JOINED_MAX)
-                return cb( null, [0]);
+                return [0];
 
             this._rendezvousedJoined++;
             req.rendezvoused = true;
@@ -73,111 +76,96 @@ module.exports = function(options){
 
             req._updateTimeout();
 
-            cb(null, [1] );
+            return [1];
 
         }
 
-        sendRendezvousJoin(contact, cb){
-            this.send(contact, 'RNDZ_JOIN', [  ],  cb);
+        sendRendezvousJoin(contact){
+            return this.send(contact, 'RNDZ_JOIN', [  ]);
         }
 
 
-        _selectRendezvous(array, cb){
+        async _selectRendezvous(array){
 
             if (!array) array = this._kademliaNode.routingTable.array;
 
             let contact, index;
 
-            while (true){
-
-                if (!array.length) return cb(null, null );
+            while (array.length){
 
                 index = Math.floor( Math.random(  ) * array.length )
                 contact = array[index].contact;
 
                 array.splice(index, 1);
 
-                if (contact.contactType === ContactType.CONTACT_TYPE_ENABLED)
+                if (contact.contactType === ContactType.CONTACT_TYPE_ENABLED) {
+
+                    const out = await this._kademliaNode.rules.sendRendezvousJoin(contact);
+                    if (out && out[0] && out[0] === 1) return contact;
+
                     break;
+                }
 
             }
 
-            this._kademliaNode.rules.sendRendezvousJoin(contact, (err, out)=> {
-
-                if (out && out[0] && out[0] === 1) return cb(null, contact );
-                else NextTick( this._selectRendezvous.bind(this, array, cb) );
-
-            });
-
         }
 
-
-
-        _connectRendezvous(contact, cb){
+        async _connectRendezvous(contact){
 
             const address = contact.hostname +':'+ contact.port + contact.path;
 
             let protocol = contact.convertProtocolToWebSocket(  );
-            if (!protocol) return cb(new Error('Protocol is invalid'));
+            if (!protocol) throw 'Protocol is invalid';
 
             let ws = this._webSocketActiveConnectionsMap[address];
             if (ws) {
                 ws.socketConnectedAsRendezvousSocket();
-                return cb(null, ws )
+                return ws;
             }
 
-            this._createWebSocket( contact, protocol,(err, ws) => {
+            const newWs = await this._createWebSocket( contact, protocol);
 
-                if (err) return cb(err);
-                ws.socketConnectedAsRendezvousSocket();
-                cb(null, ws);
-
-            });
+            newWs.socketConnectedAsRendezvousSocket();
+            return newWs;
 
         }
 
-        _setRendezvousRelay( cb ){
+        async _setRendezvousRelay(  ){
 
-            this._selectRendezvous(undefined, (err, contact )=>{
+            const contact = await this._selectRendezvous();
+            if (!contact) return;
 
-                if (err) return cb(err);
-                if (!contact) return cb(new Error("No Rendezvous"))
+            const out = await this._connectRendezvous(contact);
+            if ( !out ) return;
 
-                this._connectRendezvous(contact, (err, out)=>{
+            const rendezvous = contact.toArrayBuffer();
 
-                    if (err) return cb(err);
+            if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS && this._kademliaNode.contact.rendezvous.equals(rendezvous) )
+                return contact;
 
-                    const rendezvous = contact.toArrayBuffer();
+            this._kademliaNode.contact.contactType = ContactType.CONTACT_TYPE_RENDEZVOUS;
+            this._kademliaNode.contact.addKey('rendezvous');
 
-                    if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS && this._kademliaNode.contact.rendezvous.equals(rendezvous) )
-                        return cb(null, contact);
+            this._kademliaNode.contact.rendezvous = rendezvous;
+            this._kademliaNode.contact.rendezvousContact = contact;
 
-                    this._kademliaNode.contact.contactType = ContactType.CONTACT_TYPE_RENDEZVOUS;
-                    this._kademliaNode.contact.addKey('rendezvous');
+            this._kademliaNode.contact.contactUpdated();
 
-                    this._kademliaNode.contact.rendezvous = rendezvous;
-                    this._kademliaNode.contact.rendezvousContact = contact;
+            await this._kademliaNode.crawler.contactRefresher.refreshContact();
+            return contact;
 
-                    this._kademliaNode.contact.contactUpdated();
-
-                    this._kademliaNode.crawler.contactRefresher.refreshContact((err, out)=>{
-                        cb(null, contact);
-                    })
-
-
-                })
-
-            })
         }
 
 
-        _setRendezvousRelayNow( next ){
+        async _setRendezvousRelayNow( ){
 
-            if (!this._kademliaNode.contact) return next(1000); //contact was not yet created.
-            if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED) return next(5000);
-            if (this._myRendezvousRelaySocket) return next(2500)
+            if (!this._kademliaNode.contact) return 1000; //contact was not yet created.
+            if (this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED) return 5000;
+            if (this._myRendezvousRelaySocket) return 2500;
 
-            this._setRendezvousRelay( () => next(1000) );
+            await this._setRendezvousRelay( );
+
+            return 1000;
 
         }
 

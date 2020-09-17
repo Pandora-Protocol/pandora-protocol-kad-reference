@@ -1,12 +1,13 @@
 const PluginNodeWebsocketConnectionBasic = require('./connection-basic')
 const ContactAddressProtocolType = require('../../contact-type/contact-address-protocol-type')
 const ContactConnectedStatus = require('../../../contact/contact-connected-status')
+const PromisesMap = require('../../../helpers/promises-map')
 
 module.exports = class WebSocketConnectionSocket extends PluginNodeWebsocketConnectionBasic {
 
-    constructor(kademliaRules, connection, contact) {
+    constructor(kademliaRules, connection, contact, connecting = false) {
 
-        super(kademliaRules, connection, contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, 'ws');
+        super(kademliaRules, connection, contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, 'ws', connecting);
 
         const address = contact.hostname +':'+ contact.port + contact.path;
         this.address = address;

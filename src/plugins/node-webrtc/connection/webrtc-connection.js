@@ -1,5 +1,6 @@
 const WebRTC = require('../webrtc/isomorphic-webrtc')
 const MarshalUtils = require('../../../helpers/marshal-utils')
+const PromisesMap = require('../../../helpers/promises-map')
 const BufferReader = require('../../../helpers/buffer-reader')
 const ContactAddressProtocolType = require('../../contact-type/contact-address-protocol-type')
 const ContactConnectedStatus = require('../../../contact/contact-connected-status')
@@ -10,7 +11,7 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
 
     constructor(kademliaRules, connection, contact, config = { iceServers: KAD_OPTIONS.PLUGINS.NODE_WEBRTC.ICE_SERVERS }) {
 
-        super(kademliaRules, connection, contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, 'webrtc');
+        super(kademliaRules, connection, contact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBRTC, 'webrtc', true);
 
         this._readyState = 'close';
 
@@ -29,8 +30,6 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
         this._kademliaRules._webRTCActiveConnectionsByContactsMap[contact.identityHex] = this;
         this._kademliaRules._webRTCActiveConnections.push(this)
 
-        this._kademliaRules.pending.pendingAdd( this._pendingPrefix, 'creation', timeout => this.closeNow(), resolve => {}, 12 * KAD_OPTIONS.T_RESPONSE_TIMEOUT );
-
     }
 
     setChunkSize(otherPeerMaxChunkSize, myMaxChunkSize = this.getMaxChunkSize()){
@@ -43,63 +42,6 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
 
     _findSelected( stats ) {
         return [...stats.values()].find(s => s.type === "candidate-pair" && s.selected);
-    }
-
-    onopen() {
-        if (this.status === ContactConnectedStatus.CONTACT_OPEN) return;
-
-        super.onopen(...arguments)
-    }
-
-    getConnectionDetails(cb){
-
-        const connectionDetails = {};
-
-        if (window.chrome){
-
-            const reqFields = [   'googLocalAddress',
-                'googLocalCandidateType',
-                'googRemoteAddress',
-                'googRemoteCandidateType'
-            ];
-
-            this._rtcPeerConnection.getStats( (stats)=>{
-
-                const filtered = stats.result().filter(function(e){return e.id.indexOf('Conn-audio')===0 && e.stat('googActiveConnection')==='true'})[0];
-                if (!filtered) return cb(new Error('Something is wrong'));
-
-                reqFields.forEach(function(e){
-                    connectionDetails[e.replace('goog', '')] = filtered.stat(e)
-                });
-
-                console.log("connectionDetails", connectionDetails);
-                cb(null, connectionDetails);
-
-            });
-
-        } else {
-
-            this._rtcPeerConnection.getStats(null).then( (stats)=>{
-
-                const selectedCandidatePair = stats[Object.keys(stats).filter(function(key){return stats[key].selected})[0]]
-
-                if (!selectedCandidatePair) return cb(new Error('Something is wrong'));
-
-                const remoteICE = stats[selectedCandidatePair.remoteCandidateId];
-                const localICE = stats[selectedCandidatePair.localCandidateId];
-
-                connectionDetails.LocalAddress = [localICE.ipAddress, localICE.portNumber].join(':');
-                connectionDetails.RemoteAddress = [remoteICE.ipAddress, remoteICE.portNumber].join(':');
-                connectionDetails.LocalCandidateType = localICE.candidateType;
-                connectionDetails.RemoteCandidateType = remoteICE.candidateType;
-
-                console.log("connectionDetails", connectionDetails);
-                cb(null, connectionDetails);
-
-            });
-
-        }
-
     }
 
     close(){
@@ -159,7 +101,9 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
             }
 
             //to avoid memory leak
-            this._kademliaRules.pending.pendingAdd( this._pendingPrefix+':pending', id,() => delete this._chunks[id], ()=> delete this._chunks[id], KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_RESPONSE_TIMEOUT,  );
+            const promiseData = PromisesMap.add(this._pendingPrefix+':pending:' +  id, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_RESPONSE_TIMEOUT );
+            promiseData.promise.catch( () => delete this._chunks[id] )
+            promiseData.promise.then( () => delete this._chunks[id] )
         }
 
         if (!this._chunks[id].list[index]){
@@ -176,8 +120,7 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
             const buffer = Buffer.concat(array);
 
             //to avoid memory leak
-            this._kademliaRules.pending.pendingResolve(this._pendingPrefix+':pending', id, resolve => resolve( ) );
-
+            PromisesMap.resolve(this._pendingPrefix+':pending:' +  id, true );
             super._processConnectionMessage(id, buffer);
         }
 
@@ -287,12 +230,9 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
                 const candidate = new WebRTC.RTCIceCandidate(item);
 
                 this._rtcPeerConnection.addIceCandidate(candidate)
-                    .then(answer => {
-                        console.log("addIceCandidate success", answer)
-                    })
-                    .catch(err => {
-                        console.log("addIceCandidate raised an error", err)
-                    });
+                    .then(answer => console.log("addIceCandidate success", answer) )
+                    .catch(err => console.log("addIceCandidate raised an error", err) );
+
             }catch(err){
                 console.error( "new WebRTC.RTCIceCandidate raised an error", err  )
             }

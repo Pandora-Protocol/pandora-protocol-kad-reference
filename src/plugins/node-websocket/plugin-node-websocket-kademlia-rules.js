@@ -3,6 +3,7 @@ const IsomorphicWebSocket = require('isomorphic-ws')
 const bencode = require('bencode');
 const BufferHelper = require('../../helpers/buffer-utils')
 const ContactType = require('../contact-type/contact-type')
+const PromisesMap = require('../../helpers/promises-map')
 
 const WebSocketServer = typeof BROWSER === "undefined" ? require('./web-socket-server') : undefined;
 const PluginNodeWebsocketConnectionSocket = require('./connection/websocket-connection-socket')
@@ -39,12 +40,12 @@ module.exports = function (options){
 
         }
 
-        _establishConnection(dstContact, cb){
+        async _establishConnection(dstContact){
 
             if (dstContact.contactType === ContactType.CONTACT_TYPE_ENABLED)
-                return this._createWebSocket(dstContact, dstContact.convertProtocolToWebSocket(), cb );
+                return this._createWebSocket(dstContact, dstContact.convertProtocolToWebSocket()  );
 
-            return super._establishConnection(dstContact, cb);
+            return super._establishConnection(dstContact);
         }
 
         async start(opts){
@@ -58,7 +59,6 @@ module.exports = function (options){
                     'Access-Control-Allow-Origin': "*",
                 });
 
-
             return out;
         }
 
@@ -66,30 +66,22 @@ module.exports = function (options){
             return super.stop(...arguments);
         }
 
-        _createWebSocket(  dstContact, protocol, cb ) {
+        async _createWebSocket(  dstContact, protocol ) {
 
             let address = dstContact.hostname +':'+ dstContact.port + dstContact.path;
 
-            const data = [ this._kademliaNode.contact.toArray(), ''];
-            this._sendProcess(dstContact, protocol, data, {forceEncryption: true}, (err, data) =>{
+            const data = await this._sendProcess(dstContact, protocol, [ this._kademliaNode.contact.toArray(), ''], {forceEncryption: true});
 
-                if (err) return cb(err);
+            if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET) address = 'ws://'+address;
+            else if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET_SECURED) address = 'wss://'+address;
+            else throw 'invalid protocol type';
 
-                if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET) address = 'ws://'+address;
-                else if (protocol === ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET_SECURED) address = 'wss://'+address;
-                else return cb(new Error('invalid protocol type'));
+            if (!this._checkWebSocket(dstContact))
+                throw 'Already connected';
 
-                if (!this._checkWebSocket(dstContact))
-                    return cb(new Error('Already connected'));
+            const ws = new IsomorphicWebSocket(address, data.toString('hex') );
 
-                const ws = new IsomorphicWebSocket(address, data.toString('hex') );
-
-                const connection = new this.PluginNodeWebsocketConnectionSocketClass(this, ws, dstContact, );
-                this.pending.pendingAdd( connection._pendingPrefix, 'creation', () => connection.closeNow(), () => {}, KAD_OPTIONS.T_RESPONSE_TIMEOUT );
-
-                cb(null, connection);
-
-            } );
+            return  new this.PluginNodeWebsocketConnectionSocketClass(this, ws, dstContact, true );
 
         }
 
@@ -103,19 +95,16 @@ module.exports = function (options){
             }
         }
 
-        _websocketSendSerialized (id, dstContact, protocol, command, data, cb)  {
+        async _websocketSendSerialized (id, dstContact, protocol, command, data)  {
 
             const buffer = bencode.encode( [0, id, data] );
 
             //connected once already already
-            if (this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex])
-                return this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex].sendConnectionWaitAnswer( id, buffer, cb);
+            let connection = this._webSocketActiveConnectionsByContactsMap[dstContact.identityHex];
+            if (!connection)
+                connection = await this._createWebSocket( dstContact, protocol );
 
-            this._createWebSocket( dstContact, protocol,(err, connection ) => {
-                if (err) return cb(err);
-                connection.sendConnectionWaitAnswer( id, buffer, cb);
-            });
-
+            return connection.sendConnectionWaitAnswer( id, buffer);
         }
 
         _websocketReceiveSerialize (id, srcContact, out ) {
@@ -133,7 +122,6 @@ module.exports = function (options){
                     return false;
 
             }
-
 
             return true;
         }

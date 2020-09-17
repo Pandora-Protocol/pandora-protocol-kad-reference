@@ -6,21 +6,19 @@ module.exports = class ContactStorage {
         this._kademliaNode = kademliaNode;
     }
 
-    loadContact( opts, cb ){
-        this._kademliaNode.storage.getItem('info:contact', async (err, out)=>{
+    async loadContact( opts ){
 
-            if (err) return cb(err);
-            if (!out) return cb(null, null)
+        const out = await this._kademliaNode.storage.getItem('info:contact');
+        if (!out) return null;
 
-            const obj = bencode.decode( Buffer.from(out, 'base64') );
+        const obj = bencode.decode( Buffer.from(out, 'base64') );
+        const args = await this.createContactArgs({...opts, ...obj} );
 
-            const args = await this.createContactArgs({...opts, ...obj} );
-            this._setContact( args, false, cb );
+        return this._setContact( args, false );
 
-        })
     }
 
-    _setContact(contactArgs, saveToStorage, cb){
+    async _setContact(contactArgs, saveToStorage){
 
         this._kademliaNode._contact = this._kademliaNode.createContact( contactArgs.args );
         this._kademliaNode._contact.mine = true;
@@ -28,30 +26,26 @@ module.exports = class ContactStorage {
         if (saveToStorage) {
             delete contactArgs.args;
             delete contactArgs.out;
-            this._kademliaNode.storage.setItem('info:contact', bencode.encode(contactArgs).toString('base64'), cb);
+            await this._kademliaNode.storage.setItem('info:contact', bencode.encode(contactArgs).toString('base64') );
         }
         else
-            cb(null, contactArgs );
+            return contactArgs;
 
     }
 
-    setContact( contactArgs, loadFromStorage = true, saveToStorage = true,  cb){
+    async setContact( contactArgs, loadFromStorage = true, saveToStorage = true ){
 
-        if (loadFromStorage)
-            this.loadContact( (err, out) =>{
+        if (!loadFromStorage)
+            return this._setContact( contactArgs, saveToStorage );
 
-                if (err) return cb(err);
-                if (out) return cb(null, out);
+        const out =  await this.loadContact();
+        if (out) return out;
 
-                this._setContact( contactArgs, saveToStorage, cb );
+        return this._setContact( contactArgs, saveToStorage );
 
-            } );
-        else
-            this._setContact( contactArgs, saveToStorage, cb );
     }
 
-    async createContactArgs( opts = {} ){
-
+    createContactArgs( opts = {} ){
         return {
             args: [
                 opts.app || KAD_OPTIONS.VERSION.APP,

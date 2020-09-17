@@ -1,4 +1,5 @@
 const ContactType = require('../contact-type/contact-type')
+const PromisesMap = require('../../helpers/promises-map');
 
 module.exports = function(options) {
 
@@ -14,36 +15,35 @@ module.exports = function(options) {
 
         }
 
-        _reverseConnect(req, srcContact, data, cb){
+        _reverseConnect(req, srcContact, data){
 
-            this.pending.pendingResolveAll('rendezvous:reverseConnection:' + srcContact.identityHex,  resolve => resolve(null, true ));
-            cb(null, [1] );
+            PromisesMap.resolve('rendezvous:reverseConn:' + srcContact.identityHex, true)
+            return [1];
 
         }
 
-        sendReverseConnect(contact, cb){
-            this.send(contact, 'REV_CON', [], cb)
+        sendReverseConnect(contact){
+            return this.send(contact, 'REV_CON', [] )
         }
 
-        _requestReverseConnect(req, srcContact, [contact], cb ){
+        _requestReverseConnect(req, srcContact, [contact] ){
 
             try{
 
                 contact = this._kademliaNode.createContact( contact );
 
             }catch(err){
-                return cb(null, []);
+                return [];
             }
 
-            this.sendReverseConnect( contact, cb );
-
+            return this.sendReverseConnect( contact );
         }
 
-        sendRequestReverseConnect(contact, contactFinal,  cb){
-            this.send(contact, 'REQ_REV_CON', [contactFinal], cb)
+        sendRequestReverseConnect(contact, contactFinal){
+            return this.send(contact, 'REQ_REV_CON', [contactFinal])
         }
 
-        _rendezvousReverseConnection(req, srcContact, [identity], cb){
+        _rendezvousReverseConnection(req, srcContact, [identity]){
 
             let identityHex, connection;
 
@@ -52,20 +52,20 @@ module.exports = function(options) {
                 identityHex = identity.toString('hex');
                 connection = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
 
+                if (!connection) return []
+                return this.sendRequestReverseConnect( connection.contact, srcContact );
+
             }catch(err){
-                return cb(null, []);
+                return [];
             }
 
-            if (!connection) return cb(null, []);
-            this.sendRequestReverseConnect( connection.contact, srcContact, cb );
-
         }
 
-        sendRendezvousReverseConnection(contact, identity, cb){
-            this.send(contact, 'RNDZ_REV_CON', [ identity ],  cb);
+        sendRendezvousReverseConnection(contact, identity,){
+            return this.send(contact, 'RNDZ_REV_CON', [ identity ],);
         }
 
-        _sendNow(dstContact, command, data, cb){
+        async _sendNow(dstContact, command, data){
 
             if ( this._kademliaNode.contact.contactType === ContactType.CONTACT_TYPE_ENABLED &&
                 !this.alreadyConnected[dstContact.identityHex] &&
@@ -73,27 +73,28 @@ module.exports = function(options) {
                 dstContact.rendezvousContact.contactType === ContactType.CONTACT_TYPE_ENABLED){
 
                 //reverse connection is pending...
-                const requestExistsAlready = !!this.pending.list['rendezvous:reverseConnection:' + dstContact.identityHex];
+                let promiseData = PromisesMap.get( 'rendezvous:reverseConn:' + dstContact.identityHex );
 
-                this.pending.pendingAdd(
-                    'rendezvous:reverseConnection:'+dstContact.identityHex,
-                    undefined, //newly
-                    () => cb(new Error('Timeout')),
-                    () => super._sendNow(dstContact, command, data, cb),
-                    KAD_OPTIONS.T_RESPONSE_TIMEOUT
-                );
+                if (promiseData) {
+                    await promiseData.promise;
+                    return super._sendNow(dstContact, command, data);
+                }
 
-                if (requestExistsAlready) return;
-                else return this.sendRendezvousReverseConnection( dstContact.rendezvousContact, dstContact.identity, (err, out) => {
+                promiseData = PromisesMap.add('rendezvous:reverseConn:' + dstContact.identityHex, KAD_OPTIONS.T_RESPONSE_TIMEOUT);
 
-                    if (err || !out || !out.length) this.pending.pendingTimeoutAll('rendezvous:reverseConnection:'+dstContact.identityHex, timeout => timeout() );
-                    //already solved... if successful
+                try{
+                    const out = await this.sendRendezvousReverseConnection( dstContact.rendezvousContact, dstContact.identity);
+                    if (!out || !out.length) throw 'Invalid';
+                }catch(err){
+                    PromisesMap.reject('rendezvous:reverseConn:' + dstContact.identityHex);
+                }
 
-                }  );
+                await promiseData.promise.then( (out) => super._sendNow(dstContact, command, data));
+                return super._sendNow(dstContact, command, data);
 
             }
 
-            super._sendNow(dstContact, command, data, cb);
+            return super._sendNow(dstContact, command, data);
         }
 
 
