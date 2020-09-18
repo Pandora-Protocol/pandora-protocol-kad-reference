@@ -140,10 +140,7 @@ module.exports = function(options){
                 return contact;
 
             this._kademliaNode.contact.contactType = ContactType.CONTACT_TYPE_RENDEZVOUS;
-            this._kademliaNode.contact.addKey('rendezvous');
-
             this._kademliaNode.contact.rendezvous = rendezvous;
-            this._kademliaNode.contact.rendezvousContact = contact;
 
             this._kademliaNode.contact.contactUpdated();
 

@@ -12,7 +12,6 @@ module.exports = function(options) {
             this.sybilProtectIndex = arguments[this._argumentIndex++];
 
             this._keys.push('sybilProtectIndex');
-            this._allKeys.push('sybilProtectIndex');
 
             Validation.validateSybilProtectSignature(this.sybilProtectIndex, 0, this.nonce, this.getNonceMessage());
 

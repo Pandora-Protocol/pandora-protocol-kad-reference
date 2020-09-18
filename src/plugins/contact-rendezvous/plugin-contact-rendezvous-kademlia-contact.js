@@ -9,17 +9,29 @@ module.exports = function(options) {
 
             super(...arguments);
 
-            if (this.contactType === ContactType.CONTACT_TYPE_RENDEZVOUS) {
-
+            if (this._contactType === ContactType.CONTACT_TYPE_RENDEZVOUS)
                 this.rendezvous = arguments[this._argumentIndex++];
 
-                this._keys.push('rendezvous');
-
-            }
-
-            this._allKeys.push('rendezvous');
+            this._keys.push('rendezvous');
 
             this._specialContactProtocolByCommands['RNDZ_JOIN'] = this.convertProtocolToWebSocket.bind(this);
+        }
+
+        set contactType(value){
+
+            super.contactType = value;
+
+            if (this._contactType === ContactType.CONTACT_TYPE_RENDEZVOUS) {
+                delete this._keysFilter.rendezvous;
+                this._rendezvous = undefined;
+                this.rendezvousContact = undefined;
+            }
+            else
+                this._keysFilter.rendezvous = true;
+        }
+
+        get contactType(){
+            return this._contactType;
         }
 
         set rendezvous(rendezvous){

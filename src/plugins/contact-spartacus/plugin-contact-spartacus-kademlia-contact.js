@@ -23,7 +23,6 @@ module.exports = function(options) {
             if (!Buffer.isBuffer(this.signature) || this.signature.length !== 64) throw "Invalid Contact Public Key";
 
             this._keys.push('nonce','timestamp','signature');
-            this._allKeys.push('nonce','timestamp','signature');
 
         }
 

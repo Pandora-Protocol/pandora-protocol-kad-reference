@@ -12,7 +12,6 @@ module.exports = function(options) {
             this.publicKey = publicKey;
 
             this._keys.push('publicKey');
-            this._allKeys.push('publicKey');
         }
 
         //sign signature

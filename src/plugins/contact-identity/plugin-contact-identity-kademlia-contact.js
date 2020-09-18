@@ -8,7 +8,6 @@ module.exports = function(options) {
 
             this.identity = arguments[this._argumentIndex++];
             this._keys.push( 'identity');
-            this._allKeys.push( 'identity');
 
         }
 

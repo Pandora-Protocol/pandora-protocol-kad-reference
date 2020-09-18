@@ -157,9 +157,8 @@ module.exports = class Crawler {
 
                 if (closestMissingValue) {
 
-                    if (finalOutputs.result){
-                        this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, finalOutputs.result.data )
-                    }
+                    if (finalOutputs.value)
+                        this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, finalOutputs.data )
                     else
                         for (const it in finalOutputs)
                             this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, finalOutputs[it].data )

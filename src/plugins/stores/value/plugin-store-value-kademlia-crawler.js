@@ -17,12 +17,10 @@ module.exports = function (options) {
 
                     const value = allowedTable.validation(contact, allowedTable,[table, key, data], finalOutputs.result );
                     if (value) {
-                        finalOutputs.result = {
-                            value,
-                            contact,
+                        finalOutputs.value = value;
+                        finalOutputs.contact = contact;
+                        finalOutputs.data = data;
 
-                            data,
-                        };
                         return true;
                     }
 

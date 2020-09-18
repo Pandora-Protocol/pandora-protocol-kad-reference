@@ -89,7 +89,7 @@ module.exports = function(options) {
                     PromisesMap.reject('rendezvous:reverseConn:' + dstContact.identityHex);
                 }
 
-                await promiseData.promise.then( (out) => super._sendNow(dstContact, command, data));
+                await promiseData.promise;
                 return super._sendNow(dstContact, command, data);
 
             }

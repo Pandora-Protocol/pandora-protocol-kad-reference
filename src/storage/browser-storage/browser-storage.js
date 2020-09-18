@@ -49,7 +49,7 @@ module.exports = class BrowserStorage {
 
     async getItem(key) {
         try{
-            const out = await this._db.get(key);
+            const out = await this._store.getItem(key);
             return out;
         }catch(err){
             return null;

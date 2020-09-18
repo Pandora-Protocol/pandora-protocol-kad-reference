@@ -18,24 +18,7 @@ module.exports = class Contact{
             throw "Contact Version is not compatible"
 
         this._keys = ['app', 'version'];
-        this._allKeys = ['app', 'version'];
-
-    }
-
-    addKey(key){
-
-        if (this._keys.indexOf(key) === -1){
-
-            for (let i = this._allKeys.indexOf(key)-1; i >= 0; i--){
-                const pos = this._keys.indexOf( this._allKeys[i] );
-                if (pos !== -1) {
-                    this._keys.splice(pos+1, 0, key);
-                    return;
-                }
-            }
-            this._keys.unshift(key);
-
-        }
+        this._keysFilter = {};
 
     }
 
@@ -52,7 +35,7 @@ module.exports = class Contact{
 
         let arr = [];
         for (const key of this._keys)
-            if (!filter[key])
+            if (!filter[key] && !this._keysFilter[key])
                 arr.push( this[ key ])
 
         return arr;
@@ -60,11 +43,11 @@ module.exports = class Contact{
 
     fromContact(otherContact){
 
-        for (const key of this._allKeys)
-            delete this[this._allKeys[key]];
+        for (const key of this._keys)
+            if (!this._keysFilter[key])
+                this[this._keys[key]] = undefined;
 
         this._keys = otherContact._keys;
-        this._allKeys = otherContact._allKeys;
 
         for (const key of otherContact._keys)
             this[key] = otherContact[key];
@@ -75,13 +58,14 @@ module.exports = class Contact{
         return bencode.encode(this.toArray());
     }
 
-    toJSON(){
+    toJSON(hex = false){
 
         const obj = {};
-        for (const key of this._keys) {
-            obj[key] = this[key];
-            if (Buffer.isBuffer(obj[key])) obj[key] = obj[key].toString('hex');
-        }
+        for (const key of this._keys)
+            if (!this._keysFilter[key]) {
+                obj[key] = this[key];
+                if (Buffer.isBuffer(obj[key])) obj[key] = obj[key].toString( hex ? 'hex' : '');
+            }
 
         return obj;
     }

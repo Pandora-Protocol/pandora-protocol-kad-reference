@@ -33,38 +33,33 @@ module.exports = {
 
         if (!id) throw "Invalid id";
 
-        const it = _map[id];
+        let it = _map[id];
         if (it) return it.promise;
 
         let timeoutId;
 
-        const promise = new Promise((resolve, err)=>{
-            _map[id] = { resolve, err }
+        const promise = new Promise((resolve, reject)=>{
+            _map[id] = it = { resolve, reject };
         })
-        let finalPromise = promise;
         if (ms){
-            const timeout = new Promise((resolve, reject) => {
-                timeoutId = setTimeout(() => {
-                    clearTimeout(timeoutId);
-                    reject('Timed out in '+ ms + 'ms.')
-                }, ms)
-            })
 
-            finalPromise = Promise.race([
-                promise,
-                timeout
-            ])
+            timeoutId = setTimeout(() => {
+                clearTimeout(timeoutId);
+                _map[id].reject('Timed out in '+ ms + 'ms.')
+            }, ms)
+
+
         }
 
-        _map[id].promise = finalPromise;
+        it.promise = promise;
 
-        finalPromise.then( () => {
+        promise.then( () => {
+            clearTimeout(timeoutId);
             delete _map[id];
+        } )
+        .catch( () => {
             clearTimeout(timeoutId);
-        } );
-        finalPromise.catch( () => {
             delete _map[id]
-            clearTimeout(timeoutId);
         } );
 
         return _map[id];

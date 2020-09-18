@@ -13,7 +13,6 @@ module.exports = function (options) {
                 throw "MockId is invalid"
 
             this._keys.push('mockId');
-            this._allKeys.push('mockId');
 
         }
 

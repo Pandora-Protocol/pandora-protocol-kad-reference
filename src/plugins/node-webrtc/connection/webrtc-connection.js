@@ -102,8 +102,9 @@ module.exports = class WebRTCConnection extends PluginNodeWebsocketConnectionBas
 
             //to avoid memory leak
             const promiseData = PromisesMap.add(this._pendingPrefix+':pending:' +  id, KAD_OPTIONS.PLUGINS.NODE_WEBRTC.T_RESPONSE_TIMEOUT );
-            promiseData.promise.catch( () => delete this._chunks[id] )
-            promiseData.promise.then( () => delete this._chunks[id] )
+            promiseData.promise
+                .then( () => delete this._chunks[id] )
+                .catch( () => delete this._chunks[id] )
         }
 
         if (!this._chunks[id].list[index]){
