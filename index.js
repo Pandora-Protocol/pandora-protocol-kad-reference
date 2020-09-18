@@ -1,6 +1,3 @@
-var Promise = require("bluebird");
-global.Promise = Promise;
-
 const KademliaNode = require('./src/kademlia-node')
 const Config = require('./src/config')
 

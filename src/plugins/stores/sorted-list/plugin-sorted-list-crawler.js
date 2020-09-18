@@ -9,24 +9,30 @@ module.exports = function (options) {
 
             this._methods.FIND_SORTED_LIST = {
 
-                findMerge: (table, masterKey, result, contact, method, finalOutputs ) => {
+                findMerge: (table, masterKey, data, contact, method, finalOutputs ) => {
 
                     const allowedSortedListTable = this._kademliaNode.rules._allowedStoreSortedListTables[table.toString()];
+                    let merged;
 
-                    for (const value of result){
+                    for (const value of data){
 
                         const key = value[0].toString('hex');
                         const out = allowedSortedListTable.validation(contact, allowedSortedListTable, [table, masterKey, value[0], value[1], value[2] ], finalOutputs[key] );
 
-                        if (out)
-                            finalOutputs[ key ] = {
+                        if (out) {
+                            finalOutputs[key] = {
                                 value: out.value,
                                 score: out.score,
-                                contact
+                                contact,
+
+                                data: value,
                             };
+                            merged = true;
+                        }
 
                     }
 
+                    return merged;
                 }
 
             }
