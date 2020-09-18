@@ -1,4 +1,5 @@
 const Validation = require('./../helpers/validation')
+const Utils = require('./../helpers/utils')
 const bencode = require('bencode');
 
 module.exports = class Contact{
@@ -26,19 +27,13 @@ module.exports = class Contact{
         return this._kademliaNode.createContact( this.toArray() );
     }
 
+    //used for bencode
     toArray(){
         return this._toArray();
     }
 
-    //used for bencode
     _toArray(filter = {}){
-
-        let arr = [];
-        for (const key of this._keys)
-            if (!filter[key] && !this._keysFilter[key])
-                arr.push( this[ key ])
-
-        return arr;
+        return Utils.toArray(this, this._keys, {...filter, ...this._keysFilter} );
     }
 
     fromContact(otherContact){
@@ -59,15 +54,7 @@ module.exports = class Contact{
     }
 
     toJSON(hex = false){
-
-        const obj = {};
-        for (const key of this._keys)
-            if (!this._keysFilter[key]) {
-                obj[key] = this[key];
-                if (Buffer.isBuffer(obj[key])) obj[key] = obj[key].toString( hex ? 'hex' : '');
-            }
-
-        return obj;
+        return Utils.toArray(this, this._keys, this._keysFilter, hex);
     }
 
     get identity(){
