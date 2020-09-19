@@ -6,26 +6,30 @@ module.exports = function (options) {
 
     return class MySybilProtectSignBase extends (options.SybilProtectSignBase || Object){
 
-        async sybilProtectSign( data, params = {}, initialIndex ){
-
-            const finalOut = {};
-            let privateKey, publicKey, uri;
+        getRandomSybilIndex(){
 
             let trials = 0;
             while (trials < 10){
-                finalOut.index = initialIndex || Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
-                const it = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[finalOut.index];
-                publicKey = it.publicKey;
 
-                if (publicKey) {
-                    uri = it.uri;
-                    privateKey = it.privateKey;
-                    break;
-                } else {
-                    trials++;
-                }
+                const index = Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
+
+                if (KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[index].publicKey)
+                    return index;
+
+                trials++;
 
             }
+
+            throw "Sybil Index couldn't be set"
+
+        }
+
+        async sign( data, params = {}, initialIndex ){
+
+            const finalOut = {};
+            finalOut.index = initialIndex || this.getRandomSybilIndex()
+
+            const {privateKey, publicKey, uri} = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[finalOut.index];
 
             let message = [
                 data.message,
@@ -48,7 +52,7 @@ module.exports = function (options) {
             }
             else {
 
-                const out = await options.sybilProtectSign.sign( uri,  data, params);
+                const out = await this.signNow( uri,  data, params);
 
                 if (typeof out.signature !== "string" || out.signature.length !== 128)
                     throw 'Signature has to be 64 bytes. Try again';
@@ -77,7 +81,7 @@ module.exports = function (options) {
         }
 
 
-        validateSybilProtectSignature (sybilProtectIndex = 0, sybilProtectAdditional, signature, message) {
+        validateSignature (sybilProtectIndex = 0, sybilProtectAdditional, signature, message) {
 
             if (sybilProtectIndex !== 0){
 

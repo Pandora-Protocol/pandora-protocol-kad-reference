@@ -53,7 +53,7 @@ module.exports = function (options){
                 this.onCloseWindow(obj);
         }
 
-        sign (origin, data, params){
+        signNow (origin, data = {}, params = {}){
 
             const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
 

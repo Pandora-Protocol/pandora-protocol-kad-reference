@@ -6,7 +6,7 @@ module.exports = function (options){
 
     return class SybilProtectSignNode extends options.SybilProtectSignBase {
 
-        async sign (origin, data, params){
+        async signNow (origin, data = {}, params = {}){
 
             params.showOutput = true;
             const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );

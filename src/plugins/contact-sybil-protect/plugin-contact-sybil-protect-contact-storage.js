@@ -26,7 +26,7 @@ module.exports = function (options){
             if (opts.setSybilProtect || opts.sybilProtectSignature){
 
                 if (!opts.sybilProtectSignature) {
-                    const out = await this.sybilProtectSign( {
+                    const out = await this._kademliaNode.sybilProtectSign.sign( {
                         message: CryptoUtils.sha256(opts.publicKey)
                     }, {}, undefined);
                     opts.sybilProtectSignature = out.signature;
