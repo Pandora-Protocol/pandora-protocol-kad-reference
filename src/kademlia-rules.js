@@ -103,10 +103,11 @@ module.exports = class KademliaRules {
 
         const out = await this._receivedProcess(dstContact, protocol, buffer, {});
 
-        if (!out.length) return [];
+        let decoded;
+        if (Buffer.isBuffer(out)) decoded = bencode.decode(out);
+        else decoded = out;
 
-        const decoded = this.decodeSendAnswer(dstContact, command, out);
-        if (!decoded) throw 'Error decoding data';
+        if (decoded === undefined || decoded === null) throw 'Error decoding data'; // ! can not be used as numbers like 0 or empty strings can be sent.
 
         return decoded;
 
@@ -144,7 +145,7 @@ module.exports = class KademliaRules {
      */
     _ping(req, srcContact, data) {
 
-        return [1];
+        return 1;
 
     }
 
@@ -189,23 +190,12 @@ module.exports = class KademliaRules {
         return true;
     }
 
-
-    decodeSendAnswer(dstContact, command, data, decodedAlready = false){
-
-        if (!decodedAlready && Buffer.isBuffer(data)) data = bencode.decode(data);
-
-        if (command === 'FIND_NODE'  )
-            for (let i = 0; i < data[1].length; i++)
-                data[1][i] = this._kademliaNode.createContact ( data[1][i] );
-
-        return data;
-    }
-
     decodeReceiveAnswer(  id, srcContact, buffer ){
 
         try{
 
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
+            if (decoded === undefined || decoded === null) return; // ! can not be used as numbers like 0 or empty strings can be sent.
 
             let c = 0;
 

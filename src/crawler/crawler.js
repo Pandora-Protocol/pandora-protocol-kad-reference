@@ -12,7 +12,18 @@ module.exports = class Crawler {
         this._updateContactQueue = new PQueue({concurrency: KAD_OPTIONS.ALPHA_CONCURRENCY});
         this._storeMissingKeysQueue = new PQueue({concurrency: KAD_OPTIONS.ALPHA_CONCURRENCY});
 
-        this._methods = {};
+        this._methods = {
+            FIND_NODE: {
+                decode: (data) => {
+
+                    if (data && data[0] === 0)
+                        for (let i=0; i < data[1].length; i++)
+                            data[1][i] = this._kademliaNode.createContact ( data[1][i] );
+
+                    return data;
+                }
+            }
+        };
 
     }
 
@@ -78,15 +89,17 @@ module.exports = class Crawler {
 
             try{
 
-                const result = await this._kademliaNode.rules.send(contact, method, data);
+                const out = await this._kademliaNode.rules.send(contact, method, data);
 
                 if (finished) return true;
 
                 // mark this node as active to include it in any return values
                 shortlist.responded(contact);
 
-                if (!result || (Array.isArray(result) && !result.length))
+                if (!out || (Array.isArray(out) && !out.length))
                     return null;
+
+                const result = this._methods[method].decode( out );
 
                 //If the result is a contact/node list, just keep track of it
                 if ( result[0] === 0 ){
@@ -195,7 +208,7 @@ module.exports = class Crawler {
             const out = await this._kademliaNode.rules.sendPing(tail.contact);
             tail.pingLastCheck = new Date().getTime();
 
-            if (out){
+            if (out === 1){
                 tail.pingResponded = true;
             } else {
                 this._kademliaNode.routingTable.removeContact(tail.contact);

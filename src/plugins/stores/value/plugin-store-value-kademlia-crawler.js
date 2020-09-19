@@ -24,7 +24,10 @@ module.exports = function (options) {
                         return true;
                     }
 
-                }
+                },
+
+                decode: this._methods.FIND_NODE.decode,
+
             }
 
         }

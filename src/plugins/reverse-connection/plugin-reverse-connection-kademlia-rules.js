@@ -18,7 +18,7 @@ module.exports = function(options) {
         _reverseConnect(req, srcContact, data){
 
             PromisesMap.resolve('rendezvous:reverseConn:' + srcContact.identityHex, true)
-            return [1];
+            return 1;
 
         }
 
@@ -33,7 +33,7 @@ module.exports = function(options) {
                 contact = this._kademliaNode.createContact( contact );
 
             }catch(err){
-                return [];
+                return 0;
             }
 
             return this.sendReverseConnect( contact );
@@ -52,11 +52,11 @@ module.exports = function(options) {
                 identityHex = identity.toString('hex');
                 connection = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
 
-                if (!connection) return []
+                if (!connection) return 0
                 return this.sendRequestReverseConnect( connection.contact, srcContact );
 
             }catch(err){
-                return [];
+                return 0;
             }
 
         }
@@ -84,7 +84,7 @@ module.exports = function(options) {
 
                 try{
                     const out = await this.sendRendezvousReverseConnection( dstContact.rendezvousContact, dstContact.identity);
-                    if (!out || !out.length) throw 'Invalid';
+                    if (out !== 1) throw 'Invalid';
                 }catch(err){
                     PromisesMap.reject('rendezvous:reverseConn:' + dstContact.identityHex);
                 }

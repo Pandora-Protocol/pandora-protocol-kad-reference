@@ -38,7 +38,7 @@ module.exports = function (options) {
             if (!dstContact) throw 'dstContact needs to be set for decryption';
 
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
-            if (!decoded) throw 'Error decoding data. Invalid bencode';
+            if (decoded === undefined || decoded === null) throw 'Error decoding data. Invalid bencode';  // ! can not be used as numbers like 0 or empty strings can be sent.
 
             const decrypted = await ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded);
 
@@ -59,12 +59,12 @@ module.exports = function (options) {
             if (this._skipProtocolEncryptions[protocol] && !opts.forceEncryption) return super.receiveSerialized(...arguments);
 
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
-            if (!decoded) throw 'Error decoding data. Invalid bencode';
+            if (decoded === undefined || decoded === null) throw 'Error decoding data. Invalid bencode';  // ! can not be used as numbers like 0 or empty strings can be sent.
 
             const decrypted = await ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded);
 
             const info = bencode.decode(decrypted);
-            if (!info) throw "Error decoding the encrypted info";
+            if (info === undefined || info === null) throw "Error decoding the encrypted info";  // ! can not be used as numbers like 0 or empty strings can be sent.
 
             const [payload, signature ] = info;
 

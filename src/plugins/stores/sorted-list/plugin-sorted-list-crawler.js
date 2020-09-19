@@ -33,7 +33,9 @@ module.exports = function (options) {
                     }
 
                     return merged;
-                }
+                },
+
+                decode: this._methods.FIND_NODE.decode,
 
             }
 

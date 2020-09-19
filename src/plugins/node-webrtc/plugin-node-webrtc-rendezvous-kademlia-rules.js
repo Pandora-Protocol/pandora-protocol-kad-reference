@@ -41,7 +41,7 @@ module.exports = function (options) {
                 const sourceIdentityHex = sourceIdentity.toString('hex');
 
                 const webRTC = this._webRTCActiveConnectionsByContactsMap[ sourceIdentityHex ];
-                if (!webRTC) return [0];
+                if (!webRTC) return 0;
 
                 candidate = bencode.decode(candidate);
                 webRTC.processData(candidate);
@@ -49,10 +49,10 @@ module.exports = function (options) {
                 webRTC.addIceCandidate(candidate);
 
             }catch(err){
-                return [];
+                return 0;
             }
 
-            return [1] ;
+            return 1 ;
 
         }
 
@@ -65,9 +65,9 @@ module.exports = function (options) {
             const finalIdentityHex = finalIdentity.toString('hex');
 
             const ws = this._webSocketActiveConnectionsByContactsMap[ finalIdentityHex ];
-            if (!ws || !ws.isWebSocket) return [];
+            if (!ws || !ws.isWebSocket) return 0;
 
-            this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate);
+            return this.sendRequestIceCandidateWebRTCConnection(ws.contact, srcContact.identity, candidate);
 
         }
 
@@ -86,7 +86,7 @@ module.exports = function (options) {
                 const contact = info[0];
                 this._welcomeIfNewNode( contact );
 
-                if (this.alreadyConnected[contact.identityHex]) return [];
+                if (this.alreadyConnected[contact.identityHex]) return 0;
 
                 webRTC = new WebRTCConnectionRemote(this, null, contact);
 
@@ -96,8 +96,14 @@ module.exports = function (options) {
                 webRTC.setChunkSize(otherPeerMaxChunkSize, chunkMaxSize);
 
                 webRTC._rtcPeerConnection.onicecandidate = e => {
-                    if (e.candidate)
-                        this.sendRendezvousIceCandidateWebRTConnection( srcContact, contact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{ })
+
+                    if (!e.candidate) return;
+
+                    try{
+                        this.sendRendezvousIceCandidateWebRTConnection(srcContact, contact.identity, webRTC.processDataOut(e.candidate))
+                    }catch(err){
+                        console.error(err);
+                    }
                 }
 
                 webRTC.processData(offer);
@@ -112,6 +118,7 @@ module.exports = function (options) {
                 if (webRTC)
                     webRTC.closeNow();
 
+                return 0;
             }
 
         }
@@ -125,7 +132,7 @@ module.exports = function (options) {
             const identityHex = identity.toString('hex');
 
             const ws = this._webSocketActiveConnectionsByContactsMap[ identityHex ];
-            if (!ws || !ws.isWebSocket) return [];
+            if (!ws || !ws.isWebSocket) return 0;
 
             return this.sendRequestWebRTConnection(ws.contact, offer );
 

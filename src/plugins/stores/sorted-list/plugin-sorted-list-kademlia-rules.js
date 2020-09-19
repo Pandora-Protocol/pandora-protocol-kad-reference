@@ -76,20 +76,6 @@ module.exports = function (options) {
         }
 
 
-        decodeSendAnswer(dstContact, command, data, decodedAlready = false){
-
-            if (!decodedAlready && Buffer.isBuffer(data)) data = bencode.decode(data);
-
-            if ( command === 'FIND_SORTED_LIST'&& data[0] === 0 ){
-                for (let i = 0; i < data[1].length; i++)
-                    data[1][i] = this._kademliaNode.createContact( data[1][i] );
-
-                return data;
-            }
-
-            return super.decodeSendAnswer(dstContact, command, data, true);
-        }
-
 
     }
 

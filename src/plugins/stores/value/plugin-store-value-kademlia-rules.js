@@ -89,7 +89,7 @@ module.exports = function (options) {
                 if (has) return this._store.putExpiration(table, key, allowedTable.expiry);
 
             } else {
-                const old = await this._store.getKey( table, key);
+                old = await this._store.getKey( table, key);
             }
 
             const data = allowedTable.validation( srcContact, allowedTable, [table,  key, value], old );
@@ -108,20 +108,6 @@ module.exports = function (options) {
 
         }
 
-
-        decodeSendAnswer(dstContact, command, data, decodedAlready = false){
-
-            if (!decodedAlready && Buffer.isBuffer(data)) data = bencode.decode(data);
-
-            if (command === 'FIND_VALUE'  && data[0] === 0  ){
-                for (let i = 0; i < data[1].length; i++)
-                    data[1][i] = this._kademliaNode.createContact( data[1][i] );
-
-                return data;
-            }
-
-            return super.decodeSendAnswer(dstContact, command, data, true);
-        }
 
         /**
          * For each key in storage, get k closest nodes.  If newnode is closer

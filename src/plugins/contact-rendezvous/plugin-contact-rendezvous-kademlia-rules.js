@@ -27,7 +27,7 @@ module.exports = function(options){
             if (contact)
                 contact = this._kademliaNode.createContact(contact);
 
-            return [1];
+            return 1;
         }
 
         sendUpdateContact(contact){
@@ -60,7 +60,7 @@ module.exports = function(options){
             if ( req.rendezvoused ) throw 'Req is not rendezvoused by me';
 
             if (this._rendezvousedJoined >= KAD_OPTIONS.PLUGINS.CONTACT_RENDEZVOUS.RENDEZVOUS_JOINED_MAX)
-                return [0];
+                return 0;
 
             this._rendezvousedJoined++;
             req.rendezvoused = true;
@@ -72,7 +72,7 @@ module.exports = function(options){
 
             req._updateTimeout();
 
-            return [1];
+            return 1;
 
         }
 
@@ -97,7 +97,7 @@ module.exports = function(options){
                 if (contact.contactType === ContactType.CONTACT_TYPE_ENABLED) {
 
                     const out = await this._kademliaNode.rules.sendRendezvousJoin(contact);
-                    if (out && out[0] && out[0] === 1) return contact;
+                    if (out === 1) return contact;
 
                     break;
                 }
@@ -144,7 +144,16 @@ module.exports = function(options){
 
             this._kademliaNode.contact.contactUpdated();
 
-            await this._kademliaNode.crawler.contactRefresher.refreshContact();
+            try{
+
+                const out = await this._kademliaNode.crawler.contactRefresher.refreshContact();
+                if (!out.length)
+                    return null;
+
+            }catch(err){
+                return null;
+            }
+
             return contact;
 
         }

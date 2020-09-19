@@ -58,7 +58,7 @@ async function execute(){
     console.log("iterativeFindValue2_2", out.result);
 
     out = await nodes[3].rules.sendPing(nodes[5].contact);
-    console.log("reverse connection", out[0] === 1 );
+    console.log("reverse connection", out === 1 );
 
 }
 
