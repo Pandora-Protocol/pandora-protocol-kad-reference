@@ -44,13 +44,11 @@ module.exports = {
                 if (Array.isArray(it) && it.length && typeof it[0] === "object" && it[0].toArray){
 
                     const v = it.map( it => it.toArray() );
-                    for (const val of v)
-                        arr.push(val);
+                    arr.push(v);
 
                 }else if (typeof it === "object" && it.toArray  ) {
                     const v = it.toArray();
-                    for (const val of v)
-                        arr.push(val);
+                    arr.push(v);
                 } else
                     arr.push(it)
             }

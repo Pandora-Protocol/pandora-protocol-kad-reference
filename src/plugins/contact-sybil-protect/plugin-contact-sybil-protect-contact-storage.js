@@ -11,66 +11,7 @@ module.exports = function (options){
         constructor() {
             super(...arguments);
 
-            options.PluginSybilProtectSign.initialize();
         }
-
-        async sybilProtectSign( data, params = {}, initialIndex ){
-
-            const finalOut = {};
-
-            finalOut.index = initialIndex || Math.floor( Math.random() * KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length);
-
-            const {privateKey, publicKey, uri} = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[finalOut.index];
-
-            let message = [
-                data.message,
-            ];
-
-            if (privateKey) {
-
-                if (params.includeTime) {
-                    finalOut.time = Math.floor( new Date().getTime()/1000 );
-                    message.push( MarshalUtils.marshalNumberFixed(finalOut.time, 7) );
-                }
-
-                message = Buffer.concat(message);
-                if (message.length !== 32)
-                    message = CryptoUtils.sha256(message);
-
-                finalOut.signature = ECCUtils.sign(privateKey, message );
-
-
-            }
-            else {
-
-                const out = await options.PluginSybilProtectSign.sign( uri,  data, params);
-
-                if (typeof out.signature !== "string" || out.signature.length !== 128)
-                    throw 'Signature has to be 64 bytes. Try again';
-
-                finalOut.signature = Buffer.from(out.signature, 'hex');
-
-                if (params.includeTime) {
-
-                    if (typeof out.time !== "number" || !out.time)
-                        throw "Invalid time";
-
-                    finalOut.time = out.time;
-                    message.push( MarshalUtils.marshalNumberFixed(finalOut.time, 7) );
-                }
-
-                message = Buffer.concat(message);
-                if (message.length !== 32)
-                    message = CryptoUtils.sha256(message);
-
-            }
-
-            if (!ECCUtils.verify(publicKey, message, finalOut.signature))
-                throw 'Signature is incorrect';
-
-            return finalOut
-        }
-
 
         async createContactArgs ( opts ){
 

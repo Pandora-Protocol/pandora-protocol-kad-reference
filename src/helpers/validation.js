@@ -37,18 +37,24 @@ module.exports = {
         if (table.length > 32) throw `table length is invalid`;
     },
 
-    validateSybilProtectSignature : (sybilProtectIndex = 0, sybilProtectTime = 0, signature, message) =>{
+    validateSybilProtectSignature : (sybilProtectIndex = 0, sybilProtectAdditional, signature, message) =>{
 
         if (sybilProtectIndex !== 0){
 
             if ( sybilProtectIndex > KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS.length) throw "Nonce invalid sybil public key index";
             const sybilPublicKey = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[ sybilProtectIndex-1 ].publicKey;
 
-            if (sybilProtectTime){
-                message = CryptoUtils.sha256( Buffer.concat( [
-                    message,
-                    MarshalUtils.marshalNumberFixed( sybilProtectTime, 7),
-                ]) );
+            if (sybilProtectAdditional.length){
+
+                const args = [ message ];
+
+                for (const arg of sybilProtectAdditional)
+                    if (arg === undefined) continue;
+                    else if (typeof arg === "number")
+                        args.push(MarshalUtils.marshalNumberBufferFast(arg));
+                    else throw "invalid arg"
+
+                message = CryptoUtils.sha256( Buffer.concat( args ));
             }
 
             if ( !ECCUtils.verify( sybilPublicKey, message, signature ))
@@ -56,7 +62,10 @@ module.exports = {
 
         } else {
             if (!signature.equals(KAD_OPTIONS.SIGNATURE_EMPTY)) throw "Nonce needs to be empty"
-            if (sybilProtectTime !== 0) throw "Sybil Time has to be empty"
+            for (const arg of sybilProtectAdditional)
+                if (arg === undefined) continue;
+                else if (typeof arg === "number" && arg === 0) continue;
+                else throw "Invalid arg";
         }
 
     },

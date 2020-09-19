@@ -36,7 +36,9 @@ module.exports = function(options) {
 
         set rendezvous(rendezvous){
             this._rendezvous = rendezvous;
-            this.rendezvousContact = this._kademliaNode.createContact( bencode.decode(this._rendezvous) );
+            if (rendezvous)
+                this.rendezvousContact = this._kademliaNode.createContact( bencode.decode(this._rendezvous) );
+            else this.rendezvousContact = undefined;
         }
 
         get rendezvous(){

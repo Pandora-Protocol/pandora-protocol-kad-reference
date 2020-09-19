@@ -2,22 +2,25 @@ const open = require('open');
 const readlineUtils = require('./../../../helpers/readline-utils');
 const BufferUtils = require('./../../../helpers/buffer-utils')
 
-module.exports.initialize = function (){
+module.exports = function (options){
 
-}
+    return class SybilProtectSignNode extends options.SybilProtectSignBase {
 
-module.exports.sign = async function (origin, data, params){
+        async sign (origin, data, params){
 
-    params.showOutput = true;
-    const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
+            params.showOutput = true;
+            const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
 
-    console.info('Open', finalUri );
+            console.info('Open', finalUri );
 
-    open(finalUri);
+            open(finalUri);
 
-    const input = await readlineUtils.readline('Paste the answer\n');
-    if (typeof input !== "string" || !input.length)
-        throw 'Input is not a string';
+            const input = await readlineUtils.readline('Paste the answer\n');
+            if (typeof input !== "string" || !input.length)
+                throw 'Input is not a string';
 
-    return JSON.parse(input);
+            return JSON.parse(input);
+        }
+
+    }
 }
