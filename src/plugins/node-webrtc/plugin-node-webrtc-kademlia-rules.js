@@ -48,7 +48,6 @@ module.exports = function (options) {
             const webRTC = new WebRTCConnectionInitiator(this, null, dstContact);
 
             webRTC._rtcPeerConnection.onicecandidate = e => {
-                console.log("onicecandidate", e)
                 if (e.candidate)
                     this.sendRendezvousIceCandidateWebRTConnection(dstContact.rendezvousContact, dstContact.identity, webRTC.processDataOut(e.candidate), (err, out) =>{})
             }

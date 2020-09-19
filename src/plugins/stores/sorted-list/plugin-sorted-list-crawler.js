@@ -17,12 +17,13 @@ module.exports = function (options) {
                     for (const value of data){
 
                         const key = value[0].toString('hex');
-                        const out = allowedSortedListTable.validation(contact, allowedSortedListTable, [table, masterKey, value[0], value[1], value[2] ], finalOutputs[key] );
+                        const out = allowedSortedListTable.validation(contact, allowedSortedListTable, [table, masterKey, value[0], value[1], value[2] ], finalOutputs[key] ? finalOutputs[key].extra : undefined );
 
                         if (out) {
                             finalOutputs[key] = {
                                 value: out.value,
                                 score: out.score,
+                                extra: out.extra,
                                 contact,
 
                                 data: value,

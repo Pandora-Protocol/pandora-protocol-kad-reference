@@ -13,6 +13,8 @@ module.exports = function (options){
             this._keys = new Map();
             this._expiration = new Map();
 
+            this._extra = {};
+
         }
 
         iterator(){
@@ -30,12 +32,12 @@ module.exports = function (options){
             return this._keys.get(table.toString() + ':'+ key.toString('hex'));
         }
 
-        hasKey(table, key){
+        getKeyExtra(table, key){
 
             Validation.validateTable(table);
             Validation.validateKey(key);
 
-            return this._keys.has(table.toString() + ':'+ key.toString('hex'));
+            return this._extra[ table.toString() + ':'+ key.toString('hex') ];
         }
 
         getKey(table, key){
@@ -46,7 +48,7 @@ module.exports = function (options){
             return this._keys.get(table.toString() + ':'+ key.toString('hex'));
         }
 
-        put(table, key, value, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY ){
+        put(table, key, value, extra, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY ){
 
             Validation.validateTable(table);
             Validation.validateKey(key);
@@ -55,6 +57,9 @@ module.exports = function (options){
             const id =  table.toString() + ':'+key.toString('hex');
 
             this._keys.set( id,  value);
+            if (extra)
+                this._extra[id] = extra;
+
             this._expiration.set( id, new Date().getTime() + expiry );
 
             return 1;
@@ -72,10 +77,13 @@ module.exports = function (options){
 
         _del(table, key){
 
-            if (!this._keys.get( table+':'+key )) return 0;
+            const id = table+':'+key;
 
-            this._keys.delete(key);
-            this._expiration.delete(key);
+            if (!this._keys.get( id )) return 0;
+
+            this._keys.delete(id);
+            this._expiration.delete(id);
+            delete this._extra[id];
 
             return 1;
         }

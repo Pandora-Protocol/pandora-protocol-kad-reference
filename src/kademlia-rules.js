@@ -17,16 +17,6 @@ module.exports = class KademliaRules {
             'FIND_NODE': this._findNode,
         }
 
-        this._allowedStoreTables = {
-            '': {
-                validation:  (srcContact, self, [table, key, value], old ) => {
-                    return value;
-                },
-                expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
-                immutable: true,
-            }
-        };
-
         this._protocolSpecifics = {
 
         }

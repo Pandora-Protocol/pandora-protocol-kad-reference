@@ -12,8 +12,9 @@ module.exports = function (options){
             super(...arguments)
 
             this._memorySortedList = {};
-            this._memorySortedListKeyNodesMap = new Map();
+            this._memorySortedListExtra = {};
 
+            this._memorySortedListKeyNodesMap = new Map();
             this._memoryExpirationSortedList = new Map();
 
         }
@@ -32,14 +33,13 @@ module.exports = function (options){
             return out;
         }
 
-        hasSortedListKey(table, masterKey, key){
+        getSortedListKeyExtra(table, masterKey, key){
 
             Validation.validateTable(table);
             Validation.validateKey(masterKey);
             Validation.validateKey(key);
 
-            return this._memorySortedListKeyNodesMap.has(table.toString() +':'+ masterKey.toString('hex') + ':' + key.toString('hex')  );
-
+            return this._memorySortedListExtra[ table.toString() +':'+ masterKey.toString('hex') + ':' + key.toString('hex') ];
         }
 
         getSortedListKey(table, masterKey, key){
@@ -58,7 +58,7 @@ module.exports = function (options){
 
         }
 
-        putSortedList(table, masterKey, key, value, score, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY){
+        putSortedList(table, masterKey, key, value, score, extra, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY){
 
             Validation.validateTable(table);
             Validation.validateKey(masterKey);
@@ -78,42 +78,35 @@ module.exports = function (options){
                 tree = new RedBlackTree();
             }
 
-            let node = this._memorySortedListKeyNodesMap.get(table +':'+ masterKey + ':' + key  ),
-                save = true;
+            let node = this._memorySortedListKeyNodesMap.get(table +':'+ masterKey + ':' + key  );
 
             if (node) {
 
-                if (node.value !== value) node.value = value;
-
-                if (node.key === score)
-                    save = false;
-                else {
-                    //TODO optimization to avoid removing and inserting
-                    //TODO thus saving O(logN)
-                    tree.removeNode(node);
-                    this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + key, node);
-                    this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + key, node);
-                }
+                //TODO optimization to avoid removing and inserting
+                //TODO thus saving O(logN)
+                tree.removeNode(node);
+                this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + key);
+                this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + key);
+                this._memorySortedListExtra.delete(table + ':' + masterKey + ':' + key);
 
             }
 
-            if (save) {
-
-                if (tree.count > 1500 ){
-                    const min = tree.min(tree.root);
-                    if (score > min.key ) {
-                        tree.removeNode(min);
-                        this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + min.id);
-                        this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + min.id);
-                    }
+            if (tree.count > 1500 ){
+                const min = tree.min(tree.root);
+                if (score > min.key ) {
+                    tree.removeNode(min);
+                    this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + min.id);
+                    this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + min.id);
+                    this._memorySortedListExtra.delete(table + ':' + masterKey + ':' + min.id);
                 }
-
-                node = tree.insert(score, value, key);
-                this._memorySortedListKeyNodesMap.set(table + ':' + masterKey + ':' + key, node);
-
-                if (saveTree)
-                    this._memorySortedList[table + ':' + masterKey] = tree;
             }
+
+            node = tree.insert(score, value, key);
+            this._memorySortedListKeyNodesMap.set(table + ':' + masterKey + ':' + key, node);
+            this._memorySortedListExtra[table + ':' + masterKey + ':' + key] = extra;
+
+            if (saveTree)
+                this._memorySortedList[table + ':' + masterKey] = tree;
 
             this._memoryExpirationSortedList.set( table + ':' + masterKey + ':' + key, {
                 node,
@@ -137,6 +130,7 @@ module.exports = function (options){
 
             this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + key);
             this._memoryExpirationSortedList.delete(table + ':' + masterKey+':'+key);
+            delete this._memorySortedListExtra[table + ':' + masterKey+':'+key];
 
             return 1;
         }

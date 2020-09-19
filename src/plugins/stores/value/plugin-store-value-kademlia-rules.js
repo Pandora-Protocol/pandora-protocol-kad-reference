@@ -1,9 +1,7 @@
-const Validation = require('../../../helpers/validation')
 const {setAsyncInterval, clearAsyncInterval} = require('../../../helpers/async-interval')
 const NextTick = require('../../../helpers/next-tick')
 const {preventConvoy} = require('../../../helpers/utils')
 const BufferUtils = require('../../../helpers/buffer-utils')
-const bencode = require('bencode');
 
 module.exports = function (options) {
 
@@ -13,6 +11,16 @@ module.exports = function (options) {
             super(...arguments);
 
             this._replicatedStoreToNewNodesAlready = {};
+
+            this._allowedStoreTables = {
+                '': {
+                    validation:  (srcContact, self, [table, key, value], oldExtra ) => {
+                        return {value, extra: null};
+                    },
+                    expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
+                    immutable: true,
+                }
+            };
 
             this._commands.STORE = this._storeCommand.bind(this);
             this._commands.FIND_VALUE = this._findValue.bind(this);
@@ -81,19 +89,13 @@ module.exports = function (options) {
             const allowedTable = this._allowedStoreTables[table.toString()];
             if (!allowedTable) throw 'Table is not allowed';
 
-            let old;
+            const extra = await this._store.getKeyExtra( table, key );
 
-            if (allowedTable.immutable){
+            if (allowedTable.immutable && extra)
+                return this._store.putExpiration(table, key, allowedTable.expiry);
 
-                const has = await this._store.hasKey( table,  key);
-                if (has) return this._store.putExpiration(table, key, allowedTable.expiry);
-
-            } else {
-                old = await this._store.getKey( table, key);
-            }
-
-            const data = allowedTable.validation( srcContact, allowedTable, [table,  key, value], old );
-            if ( data ) return this._store.put( table, key, data, allowedTable.expiry);
+            const out = allowedTable.validation( srcContact, allowedTable, [table,  key, value], extra );
+            if ( out ) return this._store.put( table, key, out.value, out.extra, allowedTable.expiry);
 
             return 0;
 

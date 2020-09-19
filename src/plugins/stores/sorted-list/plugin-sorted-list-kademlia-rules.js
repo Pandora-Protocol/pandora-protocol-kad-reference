@@ -1,5 +1,3 @@
-const bencode = require('bencode');
-
 module.exports = function (options) {
 
     return class MyRules extends options.Rules {
@@ -13,10 +11,10 @@ module.exports = function (options) {
 
             this._allowedStoreSortedListTables = {
                 '':{
-                    validation:  ( srcContact, self, [table, masterKey, key, value, score], old ) => {
+                    validation:  ( srcContact, self, [table, masterKey, key, value, score], oldExtra ) => {
 
-                        if (  old && old.score >= score ) return null;
-                        return {value, score};
+                        if (  oldExtra && oldExtra[0] >= score ) return null;
+                        return {value, score, extra: [score] };
 
                     },
                     expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
@@ -31,18 +29,13 @@ module.exports = function (options) {
             const allowedSortedListTable = this._allowedStoreSortedListTables[table.toString()];
             if (!allowedSortedListTable) throw 'Table is not allowed';
 
-            let old;
+            const extra = await this._store.getSortedListKeyExtra( table, masterKey, key );
 
-            if (allowedSortedListTable.immutable){
+            if (allowedSortedListTable.immutable && extra)
+                return this._store.putExpiration(table, key, allowedSortedListTable.expiry);
 
-                const has = await this._store.hasSortedListKey( table,  masterKey, key );
-                if (has) return this._store.putExpiration(table, key, allowedSortedListTable.expiry);
-
-            } else
-                old = await this._store.getSortedListKey(table, masterKey, key);
-
-            const data = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], old );
-            if ( data ) return this._store.putSortedList(table, masterKey, key, data.value, data.score, allowedSortedListTable.expiry);
+            const out = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], extra );
+            if ( out ) return this._store.putSortedList(table, masterKey, key, out.value, out.score, out.extra, allowedSortedListTable.expiry);
 
             return 0;
 

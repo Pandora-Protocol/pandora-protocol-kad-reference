@@ -13,12 +13,15 @@ module.exports = function (options) {
                 findMerge: (table, key, data, contact, method, finalOutputs) => {
 
                     const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
-                    if ( finalOutputs.result && allowedTable.immutable ) return;
+                    if ( finalOutputs.value && allowedTable.immutable ) return;
 
-                    const value = allowedTable.validation(contact, allowedTable,[table, key, data], finalOutputs.result );
-                    if (value) {
-                        finalOutputs.value = value;
+                    const out = allowedTable.validation(contact, allowedTable,[table, key, data], finalOutputs.extra );
+                    if (out) {
+
+                        finalOutputs.value = out.value;
+                        finalOutputs.extra = out.extra;
                         finalOutputs.contact = contact;
+
                         finalOutputs.data = data;
 
                         return true;
