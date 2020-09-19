@@ -70,7 +70,7 @@ module.exports = {
                     const v = it.map( it => it.toJSON(hex) );
                     obj[key] = v;
 
-                }else if (typeof it === "object" && it.toArray  ) {
+                }else if (!Buffer.isBuffer(it) && typeof it === "object" && it.toJSON  ) {
 
                     obj[key] = it.toJSON(hex);
 

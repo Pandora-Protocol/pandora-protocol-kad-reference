@@ -53,7 +53,7 @@ module.exports = function (options){
 
             return {
                 value: node.value,
-                score: node.score,
+                score: key,
             };
 
         }
