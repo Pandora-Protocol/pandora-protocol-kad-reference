@@ -13,7 +13,8 @@ module.exports = function (options) {
                 '':{
                     validation:  ( srcContact, self, [table, masterKey, key, value, score], oldExtra ) => {
 
-                        if (  oldExtra && oldExtra[0] >= score ) return null;
+                        if (  oldExtra && oldExtra[0] >= score ) return;
+
                         return {value, score, extra: [score] };
 
                     },

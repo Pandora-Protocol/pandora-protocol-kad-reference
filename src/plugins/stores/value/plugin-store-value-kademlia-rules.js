@@ -15,7 +15,7 @@ module.exports = function (options) {
             this._allowedStoreTables = {
                 '': {
                     validation:  (srcContact, self, [table, key, value], oldExtra ) => {
-                        return {value, extra: null};
+                        return {value, extra: true };
                     },
                     expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
                     immutable: true,

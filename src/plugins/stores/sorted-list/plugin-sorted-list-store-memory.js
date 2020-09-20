@@ -87,7 +87,7 @@ module.exports = function (options){
                 tree.removeNode(node);
                 this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + key);
                 this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + key);
-                this._memorySortedListExtra.delete(table + ':' + masterKey + ':' + key);
+                delete this._memorySortedListExtra [ table + ':' + masterKey + ':' + key];
 
             }
 
@@ -97,7 +97,7 @@ module.exports = function (options){
                     tree.removeNode(min);
                     this._memorySortedListKeyNodesMap.delete(table + ':' + masterKey + ':' + min.id);
                     this._memoryExpirationSortedList.delete(table + ':' + masterKey + ':' + min.id);
-                    this._memorySortedListExtra.delete(table + ':' + masterKey + ':' + min.id);
+                    delete this._memorySortedListExtra[table + ':' + masterKey + ':' + min.id];
                 }
             }
 
