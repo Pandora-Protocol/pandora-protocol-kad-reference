@@ -13,7 +13,7 @@ module.exports = function(options) {
 
             this._keys.push('sybilProtectIndex');
 
-            this._kademliaNode.sybilProtectSign.validateSignature(this.sybilProtectIndex, [], this.nonce, this.getNonceMessage() );
+            this._kademliaNode.sybilProtectSigner.validateSignature(this.sybilProtectIndex, [], this.nonce, this.getNonceMessage() );
 
         }
 

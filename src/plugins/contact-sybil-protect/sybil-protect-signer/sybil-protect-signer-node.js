@@ -4,7 +4,7 @@ const BufferUtils = require('./../../../helpers/buffer-utils')
 
 module.exports = function (options){
 
-    return class SybilProtectSignNode extends options.SybilProtectSignBase {
+    return class SybilProtectSignerNode extends options.SybilProtectSignerBase {
 
         async signNow (origin, data = {}, params = {}){
 

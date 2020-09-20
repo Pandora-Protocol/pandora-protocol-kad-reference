@@ -4,7 +4,7 @@ const ECCUtils = require('../../../helpers/ecc-utils')
 
 module.exports = function (options) {
 
-    return class MySybilProtectSignBase extends (options.SybilProtectSignBase || Object){
+    return class MySybilProtectSignerBase extends (options.SybilProtectSignerBase || Object){
 
         getRandomSybilIndex(){
 

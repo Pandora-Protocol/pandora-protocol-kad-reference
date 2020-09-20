@@ -4,7 +4,7 @@ const map = {};
 
 module.exports = function (options){
 
-    return class SybilProtectSignBrowser extends options.SybilProtectSignBase {
+    return class SybilProtectSignerBrowser extends options.SybilProtectSignerBase {
 
         constructor() {
             super();
