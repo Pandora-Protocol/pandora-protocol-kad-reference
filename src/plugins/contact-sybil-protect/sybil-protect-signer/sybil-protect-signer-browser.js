@@ -14,13 +14,13 @@ module.exports = function (options){
         sybilCallback (event){
 
             if (!event || !event.data) return;
-            const data = event.data;
+            const out = event.data;
 
             const array = map[event.origin];
             if ( array )
                 for (let i=0; i < array.length; i++ )
-                    if (array[i].message === data.message ){
-                        array[i].resolve(data.out);
+                    if (array[i].data.message === out.data.message ){
+                        array[i].resolve(out.out);
                         break;
                     }
 
@@ -53,9 +53,9 @@ module.exports = function (options){
                 this.onCloseWindow(obj);
         }
 
-        signNow (origin, data = {}, params = {}){
+        signNow (origin, uri, data = {}, params = {}){
 
-            const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
+            const finalUri = uri + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
 
             let resolve, reject;
 

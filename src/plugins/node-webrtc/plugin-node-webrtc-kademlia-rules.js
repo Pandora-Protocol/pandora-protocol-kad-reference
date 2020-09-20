@@ -72,7 +72,7 @@ module.exports = function (options) {
 
                         const info = await this.sendRendezvousWebRTCConnection(dstContact.rendezvousContact, dstContact.identity, processedData);
 
-                        if ( !info || !info.length) throw 'Rendezvous error';
+                        if ( !info ) throw 'Rendezvous error';
 
                         const received = await this._kademliaNode.rules._receivedProcess( dstContact, ContactAddressProtocolType.CONTACT_ADDRESS_PROTOCOL_TYPE_WEBSOCKET, info, {forceEncryption:  true} );
 

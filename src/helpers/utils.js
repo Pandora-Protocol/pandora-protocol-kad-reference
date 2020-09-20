@@ -33,11 +33,14 @@ module.exports = {
 
     },
 
-    toArray(object, keys, keysFilter){
+    toArray(object, keys, keysFilter = {}, keysFilter2){
+
+        if (keysFilter2)
+            keysFilter = {...keysFilter, ...keysFilter2 };
 
         const arr = [];
         for (const key of keys)
-            if (!keysFilter[key]) {
+            if ( !keysFilter[key]) {
 
                 const it = object[key]
 
@@ -57,7 +60,7 @@ module.exports = {
 
     },
 
-    toJSON(object, keys, keysFilter, hex = false){
+    toJSON(object, keys, keysFilter = {}, hex = false){
         const obj = {};
 
         for (const key of keys)

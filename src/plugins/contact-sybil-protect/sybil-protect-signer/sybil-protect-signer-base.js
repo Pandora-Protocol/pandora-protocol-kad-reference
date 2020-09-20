@@ -29,7 +29,7 @@ module.exports = function (options) {
             const finalOut = {};
             finalOut.index = initialIndex || this.getRandomSybilIndex()
 
-            const {privateKey, publicKey, uri} = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[finalOut.index];
+            const {privateKey, publicKey, origin, uri} = KAD_OPTIONS.PLUGINS.CONTACT_SYBIL_PROTECT.SYBIL_PUBLIC_KEYS[finalOut.index];
 
             let message = [
                 data.message,
@@ -52,7 +52,7 @@ module.exports = function (options) {
             }
             else {
 
-                const out = await this.signNow( uri,  data, params);
+                const out = await this.signNow( origin, uri,  data, params);
 
                 if (typeof out.signature !== "string" || out.signature.length !== 128)
                     throw 'Signature has to be 64 bytes. Try again';

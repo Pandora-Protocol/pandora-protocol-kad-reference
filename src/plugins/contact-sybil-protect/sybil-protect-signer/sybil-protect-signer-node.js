@@ -6,10 +6,10 @@ module.exports = function (options){
 
     return class SybilProtectSignerNode extends options.SybilProtectSignerBase {
 
-        async signNow (origin, data = {}, params = {}){
+        async signNow (origin, uri, data = {}, params = {}){
 
             params.showOutput = true;
-            const finalUri = origin + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
+            const finalUri = uri + encodeURIComponent( JSON.stringify({ data: BufferUtils.serializeBuffers(data), params: BufferUtils.serializeBuffers(params) }) );
 
             console.info('Open', finalUri );
 
