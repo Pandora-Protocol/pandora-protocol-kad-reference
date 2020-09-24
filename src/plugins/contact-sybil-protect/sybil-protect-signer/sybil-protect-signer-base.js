@@ -39,7 +39,29 @@ module.exports = function (options) {
 
                 if (params.includeTime) {
                     finalOut.time = Math.floor( new Date().getTime()/1000 );
-                    message.push( MarshalUtils.marshalNumberBufferFast(finalOut.time) );
+                    message.push( MarshalUtils.marshalNumberFixed(finalOut.time) );
+                }
+                if (params.includeVotes){
+
+                    if (typeof params.oldVotes.votesCount !== "number") throw "votes count is invalid";
+                    if (typeof params.oldVotes.votesDown !== "number") throw "votes down is invalid";
+
+                    const oldMessage = [
+                        data.message,
+                        MarshalUtils.marshalNumberFixed(params.oldVotes.time),
+                        MarshalUtils.marshalNumberFixed(params.oldVotes.votesCount),
+                        MarshalUtils.marshalNumberFixed(params.oldVotes.votesDown),
+                    ]
+
+                    const signature = Buffer.from(params.oldVotes.signature, 'hex');
+                    const verify = ECCUtils.verify( publicKey, Buffer.concat(oldMessage), signature);
+                    if (!verify) throw "Signature is invalid";
+
+                    const votesCount = params.oldVotes.votesCount + 1;
+                    const votesDown  = params.oldVotes.votesDown + ( params.vote ? 0 : 1 );
+
+                    message.push( MarshalUtils.marshalNumberFixed( votesCount ) );
+                    message.push( MarshalUtils.marshalNumberFixed( votesDown ) );
                 }
 
                 message = Buffer.concat(message);
@@ -65,7 +87,19 @@ module.exports = function (options) {
                         throw "Invalid time";
 
                     finalOut.time = out.time;
-                    message.push( MarshalUtils.marshalNumberBufferFast(finalOut.time) );
+                    message.push( MarshalUtils.marshalNumberFixed(finalOut.time) );
+                }
+                if (params.includeVotes){
+
+                    finalOut.votesCount = out.votesCount;
+                    finalOut.votesDown = out.votesDown;
+
+                    if (finalOut.votesCount !== params.oldVotes.votesCount + 1 ) throw "Final VotesCount is invalid";
+                    if (finalOut.votesDown !== params.oldVotes.votesDown + (params.vote ? 0 : 1) ) throw "Final VotesDown is invalid";
+
+                    message.push( MarshalUtils.marshalNumberFixed( finalOut.votesCount ) );
+                    message.push( MarshalUtils.marshalNumberFixed( finalOut.votesDown ) );
+
                 }
 
                 message = Buffer.concat(message);
@@ -95,7 +129,7 @@ module.exports = function (options) {
                     for (const arg of sybilProtectAdditional)
                         if (arg === undefined) continue;
                         else if (typeof arg === "number")
-                            args.push(MarshalUtils.marshalNumberBufferFast(arg));
+                            args.push(MarshalUtils.marshalNumberFixed(arg));
                         else throw "invalid arg"
 
                     message = CryptoUtils.sha256( Buffer.concat( args ));
