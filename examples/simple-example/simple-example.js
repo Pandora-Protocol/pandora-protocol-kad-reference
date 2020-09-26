@@ -44,7 +44,7 @@ async function execute(){
 
     let query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     let out = await nodes[4].crawler.iterativeFindValue( '', query);
-    console.log("iterativeFindValue", out.result, out.length);
+    console.log("iterativeFindValue", out);
 
     let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     out = await nodes[3].crawler.iterativeStoreValue( '', query2, 'VALUE');
@@ -52,10 +52,10 @@ async function execute(){
     console.log("iterativeStoreValue", out );
 
     out = await nodes[4].crawler.iterativeFindValue( '', query2);
-    console.log("iterativeFindValue2_1", out.result);
+    console.log("iterativeFindValue2_1", out);
 
     out = await nodes[5].crawler.iterativeFindValue( '', query2);
-    console.log("iterativeFindValue2_2", out.result);
+    console.log("iterativeFindValue2_2", out);
 
     out = await nodes[3].rules.sendPing(nodes[5].contact);
     console.log("reverse connection", out === 1 );

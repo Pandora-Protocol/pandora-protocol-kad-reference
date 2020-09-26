@@ -64,13 +64,11 @@ module.exports = class Crawler {
     async iterativeFindNode(key ){
 
         Validation.validateIdentity(key);
-        return this._iterativeFind('', 'FIND_NODE', 'STORE', key, false);
+        return this._iterativeFind('', 'FIND_NODE', 'STORE', key, [key], false);
 
     }
 
-    async _iterativeFind( table, method, methodStore, key, finishWhenValueFound ){
-
-        const data = ( method === 'FIND_NODE' ) ? [key] : [table, key];
+    async _iterativeFind( table, method, methodStore, key, data, finishWhenValueFound ){
 
         this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = new Date().getTime();
 
@@ -178,10 +176,10 @@ module.exports = class Crawler {
 
                 }
 
-                return {result: finalOutputs}
+                return finalOutputs;
             }
 
-            return out;
+            return null;
         }
 
     }

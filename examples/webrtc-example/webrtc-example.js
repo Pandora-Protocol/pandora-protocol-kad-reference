@@ -56,14 +56,14 @@ async function execute(){
 
     const query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     let out = await nodes[4].crawler.iterativeFindValue( '', query);
-    console.log("iterativeFindValue", out.result, out.length);
+    console.log("iterativeFindValue", out);
 
     const query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     out = await nodes[3].crawler.iterativeStoreValue( '', query2,  'query2');
     console.log("iterativeStoreValue", out);
 
     out = await nodes[5].crawler.iterativeFindValue( '', query2);
-    console.log("iterativeFindValue2", out.result);
+    console.log("iterativeFindValue2", out);
 
     out = await nodes[4].rules.sendPing( nodes[5].contact ); //via webRTC
     console.log("ping out",  out);

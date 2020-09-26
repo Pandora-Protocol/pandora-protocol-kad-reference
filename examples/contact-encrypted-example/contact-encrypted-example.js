@@ -60,7 +60,8 @@ async function execute() {
 
     const query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     let out = await nodes[4].crawler.iterativeFindValue( '', query);
-    console.log("iterativeFindValue", out.result, out.length);
+    console.log("iterativeFindValue", out);
+    if (out) console.error('ERROR. Answer should have been undefined')
 
     const query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     out = await nodes[3].crawler.iterativeStoreValue( '', query2,  'query2');
@@ -68,7 +69,7 @@ async function execute() {
     console.log("iterativeStoreValue", out);
 
     out = await nodes[5].crawler.iterativeFindValue( '', query2)
-    console.log("iterativeFindValue2", out.result);
+    console.log("iterativeFindValue2", out);
 
 }
 

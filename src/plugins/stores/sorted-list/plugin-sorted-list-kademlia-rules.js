@@ -19,6 +19,7 @@ module.exports = function (options) {
 
                     },
                     expiry: KAD_OPTIONS.T_STORE_KEY_EXPIRY,
+                    maxCount: KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_COUNT,
                     immutable: true,
                 },
             };
@@ -36,7 +37,7 @@ module.exports = function (options) {
                 return this._store.putExpiration(table, key, allowedSortedListTable.expiry);
 
             const out = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], extra );
-            if ( out ) return this._store.putSortedList(table, masterKey, key, out.value, out.score, out.extra, allowedSortedListTable.expiry);
+            if ( out ) return this._store.putSortedList(table, masterKey, key, out.value, out.score, out.extra, allowedSortedListTable.expiry, allowedSortedListTable.maxCount);
 
             return 0;
 
@@ -47,7 +48,7 @@ module.exports = function (options) {
             if (!this._allowedStoreSortedListTables[table.toString()])
                 throw 'Table is not allowed';
 
-            return this.send(contact,'STORE_SORTED_LIST_VALUE', [table, masterKey, key, value, score])
+            return this.send(contact,'STORE_SORTED_LIST_VALUE', [table, masterKey, key, value, score]);
         }
 
 
@@ -55,9 +56,9 @@ module.exports = function (options) {
          * Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding value.
          * @param masterKey
          */
-        async _findSortedList(req, srcContact, [table, masterKey]){
+        async _findSortedList(req, srcContact, [table, masterKey, index, count]){
 
-            const out = await this._store.getSortedList(table, masterKey);
+            const out = await this._store.getSortedList(table, masterKey, index, count);
 
             //found the data
             if (out) return [ 1, out ];
@@ -69,9 +70,6 @@ module.exports = function (options) {
             return this.send(contact, 'FIND_SORTED_LIST', [table, key]);
         }
 
-
-
     }
-
 
 }

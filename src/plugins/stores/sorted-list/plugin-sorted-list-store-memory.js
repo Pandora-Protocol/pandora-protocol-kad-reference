@@ -19,17 +19,23 @@ module.exports = function (options){
 
         }
 
-        getSortedList(table, masterKey){
+        getSortedList(table, masterKey, index  = Number.MAX_SAFE_INTEGER, count  = KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN ){
 
             Validation.validateTable(table);
             Validation.validateKey(masterKey);
 
+            if ( typeof index !== "number" ||  typeof count !== "number" ) throw "Invalid index or count";
+            if ( index === Number.MAX_SAFE_INTEGER ) index = undefined;
+            if ( count < 5 || count > KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN) throw "Invalid count";
+
             const tree = this._memorySortedList[table.toString() + ':' + masterKey.toString('hex')];
             if (!tree) return undefined;
 
-            const out = tree.toSortedArrayInverted('getValueKeyArray');
+            const out = tree.getSortedBefore(index, count, 'getValueKeyArray');
+
             for (let i=0; i < out.length; i++)
                 out[i][0] = Buffer.from(out[i][0], 'hex');
+
             return out;
         }
 
@@ -58,7 +64,7 @@ module.exports = function (options){
 
         }
 
-        putSortedList(table, masterKey, key, value, score, extra, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY){
+        putSortedList(table, masterKey, key, value, score, extra, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, maxCount = KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_COUNT){
 
             Validation.validateTable(table);
             Validation.validateKey(masterKey);
@@ -91,7 +97,7 @@ module.exports = function (options){
 
             }
 
-            if (tree.count > 1500 ){
+            if (tree.count > KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_COUNT ){
                 const min = tree.min(tree.root);
                 if (score > min.key ) {
                     tree.removeNode(min);

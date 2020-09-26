@@ -4,7 +4,7 @@ module.exports = {
 
     VERSION:{
         APP: "research",
-        VERSION: "0.1017",
+        VERSION: "0.1018",
         VERSION_COMPATIBILITY: "0.101",
     },
 
@@ -107,6 +107,14 @@ module.exports = {
             ],
 
         },
+
+        STORES:{
+            SORTED_LIST: {
+                MAX_SORTED_LIST_COUNT: 2500,
+                MAX_SORTED_LIST_RETURN: 40,
+            }
+        }
+
     }
 
 }

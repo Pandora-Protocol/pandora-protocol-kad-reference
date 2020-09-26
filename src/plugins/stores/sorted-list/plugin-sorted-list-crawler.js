@@ -42,7 +42,7 @@ module.exports = function (options) {
 
         }
 
-        iterativeFindSortedList(table, masterKey){
+        async iterativeFindSortedList(table, masterKey, index = Number.MAX_SAFE_INTEGER, count = KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN ){
 
             if (typeof table === 'string') table = Buffer.from(table);
             if (typeof masterKey === 'string') masterKey = Buffer.from(masterKey, 'hex');
@@ -50,7 +50,17 @@ module.exports = function (options) {
             Validation.validateTable(table);
             Validation.validateKey(masterKey);
 
-            return this._iterativeFind(table, 'FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE', masterKey, false);
+            const data = [table, masterKey];
+
+            if (index !== Number.MAX_SAFE_INTEGER) data.push(index);
+            if (count !== KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN ) data.push(count);
+
+            const out = await this._iterativeFind(table, 'FIND_SORTED_LIST', 'STORE_SORTED_LIST_VALUE',  masterKey, data, false);
+            if (out){
+                const array = Object.values(out);
+                array.sort((a,b) => b.score - a.score);
+                return array.splice(0, count);
+            }
 
         }
 

@@ -49,11 +49,11 @@ module.exports = function (options) {
             if (allowedTable.immutable){
 
                 const out = await this._kademliaNode._store.get(table, key );
-                if (out) return {result: {value: out, contact: this._kademliaNode.contact }, };
+                if (out) return { value: out, contact: this._kademliaNode.contact };
 
             }
 
-            return this._iterativeFind( table,'FIND_VALUE', 'STORE', key, allowedTable.immutable);
+            return this._iterativeFind( table,'FIND_VALUE', 'STORE', key, [table, key], allowedTable.immutable);
 
         }
 

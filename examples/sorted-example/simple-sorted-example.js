@@ -46,8 +46,8 @@ async function execute(){
     let masterKey = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
 
     let out = await nodes[4].crawler.iterativeFindSortedList( '', masterKey);
-    console.log("iterativeFindSortedList", out.result);
-    if (out.result) console.error('ERROR. Answer should have been undefined')
+    console.log("iterativeFindSortedList", out);
+    if (out) console.error('ERROR. Answer should have been undefined')
 
     let query2 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
     let query3 = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
@@ -67,7 +67,31 @@ async function execute(){
     console.log("iterativeStoreSortedListValue", out);
 
     out = await nodes[5].crawler.iterativeFindSortedList( '', masterKey);
-    console.log("iterativeFindSortedList", out.result);
+    console.log("iterativeFindSortedList", out);
+
+    masterKey = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH);
+
+    const n = 4*KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN;
+    for (let i=0; i < n; i++ ) {
+        const query = KAD.helpers.BufferUtils.genBuffer(KAD_OPTIONS.NODE_ID_LENGTH );
+        out = await nodes[4].crawler.iterativeStoreSortedListValue('', masterKey, query, 'query3_'+i.toString(), i);
+        console.log("iterativeStoreSortedListValue", i, out)
+    }
+
+    let lastIndex = undefined;
+    let i = n-1;
+    while ( i > 10){
+        out = await nodes[5].crawler.iterativeFindSortedList( '', masterKey, lastIndex );
+        if (out.length !== KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN) throw "out length is invalid";
+        for (let j=0; j < out.length; j++) {
+            if (out[j].score !== i)
+                throw "score index is invalid"
+            i--;
+        }
+        i++;
+        console.log("iterativeFindSortedList", out.length);
+        lastIndex = out[out.length-1].score;
+    }
 
 }
 

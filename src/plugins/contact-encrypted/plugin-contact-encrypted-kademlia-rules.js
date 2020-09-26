@@ -60,7 +60,7 @@ module.exports = function (options) {
 
             const decoded = Buffer.isBuffer(buffer) ? bencode.decode(buffer) : buffer;
             if (decoded === undefined || decoded === null) throw 'Error decoding data. Invalid bencode';  // ! can not be used as numbers like 0 or empty strings can be sent.
-
+            
             const decrypted = await ECCUtils.decrypt(this._kademliaNode.contact.privateKey, decoded);
 
             const info = bencode.decode(decrypted);
