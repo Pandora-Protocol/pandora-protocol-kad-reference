@@ -91,7 +91,7 @@ module.exports = function (options) {
 
             const out = await this._iterativeStoreValue(  [table, key, value], 'sendStore' );
             if (out)
-                await this._kademliaNode._store.put( table, key, value, allowedTable.expiry );
+                await this._kademliaNode.rules._storeCommand(null, null, [table, key, value ]);
 
             return out;
         }

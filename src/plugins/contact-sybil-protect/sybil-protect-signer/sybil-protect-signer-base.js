@@ -46,15 +46,18 @@ module.exports = function (options) {
                     if (typeof params.oldVotes.votesCount !== "number") throw "votes count is invalid";
                     if (typeof params.oldVotes.votesDown !== "number") throw "votes down is invalid";
 
-                    const oldMessage = [
+                    let oldMessage = [
                         data.message,
                         MarshalUtils.marshalNumberFixed(params.oldVotes.time),
                         MarshalUtils.marshalNumberFixed(params.oldVotes.votesCount),
                         MarshalUtils.marshalNumberFixed(params.oldVotes.votesDown),
                     ]
 
+                    oldMessage = Buffer.concat(oldMessage);
+                    if (oldMessage.length !== 32) oldMessage = CryptoUtils.sha256(oldMessage);
+
                     const signature = Buffer.from(params.oldVotes.signature, 'hex');
-                    const verify = ECCUtils.verify( publicKey, Buffer.concat(oldMessage), signature);
+                    const verify = ECCUtils.verify( publicKey, oldMessage, signature);
                     if (!verify) throw "Signature is invalid";
 
                     const votesCount = params.oldVotes.votesCount + 1;
@@ -103,8 +106,7 @@ module.exports = function (options) {
                 }
 
                 message = Buffer.concat(message);
-                if (message.length !== 32)
-                    message = CryptoUtils.sha256(message);
+                if (message.length !== 32) message = CryptoUtils.sha256(message);
 
             }
 

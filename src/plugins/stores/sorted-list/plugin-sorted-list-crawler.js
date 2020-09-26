@@ -70,7 +70,7 @@ module.exports = function (options) {
 
             const out = await this._iterativeStoreValue( [table, masterKey, key, value, score], 'sendStoreSortedListValue' );
             if (out)
-                await this._kademliaNode._store.putSortedList( table, masterKey, key, value, score, allowedSortedListTable.expiry )
+                await this._kademliaNode.rules._storeSortedListValue(null, null, [table, masterKey, key, value, score]);
 
             return out;
         }
