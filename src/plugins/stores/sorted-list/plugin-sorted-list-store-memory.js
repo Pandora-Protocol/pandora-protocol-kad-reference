@@ -19,7 +19,7 @@ module.exports = function (options){
 
         }
 
-        getSortedList(table, masterKey, index  = Number.MAX_SAFE_INTEGER, count  = KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN ){
+        getSortedList(table, masterKey, index  = Number.MAX_SAFE_INTEGER, count  = KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_RETURN, onlyKeys ){
 
             Validation.validateTable(table);
             Validation.validateKey(masterKey);
@@ -31,7 +31,7 @@ module.exports = function (options){
             const tree = this._memorySortedList[table.toString() + ':' + masterKey.toString('hex')];
             if (!tree) return undefined;
 
-            const out = tree.getSortedBefore(index, count, 'getValueKeyArray');
+            const out = tree.getSortedBefore(index, count, onlyKeys ? 'getIdKeyArray' : 'getValueKeyArray');
 
             for (let i=0; i < out.length; i++)
                 out[i][0] = Buffer.from(out[i][0], 'hex');
@@ -48,20 +48,26 @@ module.exports = function (options){
             return this._memorySortedListExtra[ table.toString() +':'+ masterKey.toString('hex') + ':' + key.toString('hex') ];
         }
 
-        getSortedListKey(table, masterKey, key){
+        getSortedListKeysMultiple(table, masterKey, keys){
 
             Validation.validateTable(table);
             Validation.validateKey(masterKey);
-            Validation.validateKey(key);
 
-            const node = this._memorySortedListKeyNodesMap.get(table.toString() +':'+ masterKey.toString('hex') + ':' + key.toString('hex')  );
-            if (!node) return undefined;
+            for (const key of keys)
+                Validation.validateKey(key);
 
-            return {
-                value: node.value,
-                score: key,
-            };
+            const prefix = table.toString() +':'+ masterKey.toString('hex');
 
+            const out = [];
+
+            for (const key of keys){
+                const node = this._memorySortedListKeyNodesMap.get( prefix + ':' + key.toString('hex')  );
+                if (!node) return undefined;
+
+                out.push( node.value );
+            }
+
+            return out;
         }
 
         putSortedList(table, masterKey, key, value, score, extra, expiry = KAD_OPTIONS.T_STORE_KEY_EXPIRY, maxCount = KAD_OPTIONS.PLUGINS.STORES.SORTED_LIST.MAX_SORTED_LIST_COUNT){

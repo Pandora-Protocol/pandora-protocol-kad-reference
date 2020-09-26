@@ -50,6 +50,7 @@ Later on, a new reference code can be implemented in GO and compiled into web as
    
     `STORE_SORTED_LIST_VALUE` - Stores a (key, value, score) pair in one node.
     `FIND_SORTED_LIST` — Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return the corresponding stored_list.
+    `FIND_SORTED_LIST_KEYS_MULTIPLE` — Same as FIND_NODE, but if the recipient of the request has the requested key in its store, it will return only the keys and score of the corresponding stored_list.
 
     Complexities:
    

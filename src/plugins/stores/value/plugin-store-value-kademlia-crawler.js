@@ -10,12 +10,12 @@ module.exports = function (options) {
 
             this._methods.FIND_VALUE = {
 
-                findMerge: (table, key, data, contact, method, finalOutputs) => {
+                findMerge: (table, key, data, contact, finalOutputs) => {
 
                     const allowedTable = this._kademliaNode.rules._allowedStoreTables[table.toString()];
                     if ( finalOutputs.value && allowedTable.immutable ) return;
 
-                    const out = allowedTable.validation(contact, allowedTable,[table, key, data], finalOutputs.extra );
+                    const out = allowedTable.validation(contact, allowedTable, [table, key, data], finalOutputs.extra );
                     if (out) {
 
                         finalOutputs.value = out.value;
@@ -30,6 +30,8 @@ module.exports = function (options) {
                 },
 
                 decode: this._methods.FIND_NODE.decode,
+
+                storeMethod: 'STORE',
 
             }
 
@@ -53,7 +55,7 @@ module.exports = function (options) {
 
             }
 
-            return this._iterativeFind( table,'FIND_VALUE', 'STORE', key, [table, key], allowedTable.immutable);
+            return this._iterativeFind( table,'FIND_VALUE', key, [table, key], allowedTable.immutable);
 
         }
 

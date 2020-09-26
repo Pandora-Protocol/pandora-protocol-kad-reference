@@ -7,6 +7,9 @@ module.exports = function (options) {
             super(...arguments);
 
             this._commands.FIND_SORTED_LIST = this._findSortedList.bind(this);
+            this._commands.FIND_SORTED_LIST_KEYS = this._findSortedListKeys.bind(this);
+            this._commands.FIND_SORTED_LIST_KEYS_MULTIPLE = this._findSortedListKeysMultiple.bind(this);
+
             this._commands.STORE_SORTED_LIST_VALUE = this._storeSortedListValue.bind(this);
 
             this._allowedStoreSortedListTables = {
@@ -66,9 +69,24 @@ module.exports = function (options) {
 
         }
 
-        sendFindSortedList(contact, table, key){
-            return this.send(contact, 'FIND_SORTED_LIST', [table, key]);
+        async _findSortedListKeys(req, srcContact, [table, masterKey, index, count]){
+
+            const out = await this._store.getSortedList(table, masterKey, index, count, true);
+
+            //found the data
+            if (out) return [ 1, out ];
+            else return [ 0, this._kademliaNode.routingTable.getClosestToKey(masterKey) ];
+
         }
+
+        async _findSortedListKeysMultiple(req, srcContact, [table, masterKey, keys ]){
+            return this._store.getSortedListKeysMultiple(table, masterKey, keys);
+        }
+
+        sendFindSortedListKeysMultiple(contact, table, masterKey, keys){
+            return this.send(contact, 'FIND_SORTED_LIST_KEYS_MULTIPLE', [table, masterKey, keys]);
+        }
+
 
     }
 

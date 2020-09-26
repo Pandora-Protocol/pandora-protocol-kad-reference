@@ -21,7 +21,7 @@ module.exports = class Crawler {
                             data[1][i] = this._kademliaNode.createContact ( data[1][i] );
 
                     return data;
-                }
+                },
             }
         };
 
@@ -64,19 +64,20 @@ module.exports = class Crawler {
     async iterativeFindNode(key ){
 
         Validation.validateIdentity(key);
-        return this._iterativeFind('', 'FIND_NODE', 'STORE', key, [key], false);
+        return this._iterativeFind('', 'FIND_NODE',  key, [key], false);
 
     }
 
-    async _iterativeFind( table, method, methodStore, key, data, finishWhenValueFound ){
+    async _iterativeFind( table, method,  key, data, finishWhenValueFound ){
+
+        const methodObj = this._methods[method];
 
         this._kademliaNode.routingTable.bucketsLookups[ this._kademliaNode.routingTable.getBucketIndex( key ) ] = new Date().getTime();
 
         const shortlist = new ContactList( key, this._kademliaNode.routingTable.getClosestToKey(key, KAD_OPTIONS.ALPHA_CONCURRENCY ) );
         let closest = shortlist.closest;
 
-        let finished, finishedSilent = false;
-        const finalOutputs = {};
+        let finished, finishedSilent = false, finalOutputs = {};
 
         const dispatchFindNode = async (contact) => {
 
@@ -97,7 +98,7 @@ module.exports = class Crawler {
                 if (!out || (Array.isArray(out) && !out.length))
                     return null;
 
-                const result = this._methods[method].decode( out );
+                const result = methodObj.decode( out );
 
                 //If the result is a contact/node list, just keep track of it
                 if ( result[0] === 0 ){
@@ -109,7 +110,7 @@ module.exports = class Crawler {
 
                 } else if ( result[0] === 1 && method !== 'FIND_NODE' )
                     //let's validate the data
-                    if ( this._methods[method].findMerge(table, key, result[1], contact, method, finalOutputs) ) {
+                    if ( methodObj.findMerge(table, key, result[1], contact, finalOutputs) ) {
 
                         finishedSilent = true;
 
@@ -160,6 +161,9 @@ module.exports = class Crawler {
         if (method === 'FIND_NODE') return out;
         else {
 
+            if ( methodObj.collectFinalData)
+                finalOutputs = await methodObj.collectFinalData(finalOutputs, data);
+
             if (finishedSilent) {
 
                 //If we did get an item back, get the closest node we contacted
@@ -169,10 +173,10 @@ module.exports = class Crawler {
                 if (closestMissingValue) {
 
                     if (finalOutputs.value)
-                        this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, finalOutputs.data )
+                        this._sendStoreMissingKey(table, closestMissingValue, methodObj.storeMethod, key, finalOutputs.data )
                     else
                         for (const it in finalOutputs)
-                            this._sendStoreMissingKey(table, closestMissingValue, methodStore, key, finalOutputs[it].data )
+                            this._sendStoreMissingKey(table, closestMissingValue, methodObj.storeMethod, key, finalOutputs[it].data )
 
                 }
 
@@ -218,13 +222,13 @@ module.exports = class Crawler {
         }
 
     }
-    _sendStoreMissingKey( table, closestMissingValue, methodStore, key, data ){
+    _sendStoreMissingKey( table, closestMissingValue, storeMethod, key, data ){
 
         if (Array.isArray(data)) data = [table, key, ...data]
         else data = [table,  key, data];
 
         this._storeMissingKeysQueue.add( () => {
-            this._kademliaNode.rules.send( closestMissingValue, methodStore, data);
+            this._kademliaNode.rules.send( closestMissingValue, storeMethod, data);
         } );
     }
 
