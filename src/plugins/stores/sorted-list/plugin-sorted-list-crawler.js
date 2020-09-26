@@ -79,13 +79,18 @@ module.exports = function (options) {
                         const arr = [];
                         for (const key in output[i])
                             if (key !== "_key"){
-                                arr.push(Number.parseInt(key));
+                                const score = Number.parseInt(key);
+                                if (score > index){
+                                    delete output[i][score];
+                                }else
+                                    arr.push(score);
                             }
                         output[i].array = arr.sort((a,b)=>b-a);
                     }
 
                     let done = false;
                     while (!done && output.length){
+
                         output.sort((a,b)=>b.array[0]-a.array[0]);
 
                         const contactingContacts = {};
