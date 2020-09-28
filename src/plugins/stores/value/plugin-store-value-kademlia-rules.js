@@ -97,6 +97,8 @@ module.exports = function (options) {
             const out = allowedTable.validation( srcContact, allowedTable, [table,  key, value], extra );
             if ( out ) return this._store.put( table, key, out.value, out.extra, allowedTable.expiry);
 
+            if (extra && !out) return this._store.putExpiration(table, key, allowedTable.expiry);
+
             return 0;
 
         }

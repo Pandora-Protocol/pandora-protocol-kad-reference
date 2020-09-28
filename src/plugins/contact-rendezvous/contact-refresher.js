@@ -17,10 +17,17 @@ module.exports = class ContactRefresher {
 
     async _refreshContactUpdate(contact, updateId){
 
-        if (updateId !== this._updateId)
-            throw 'Changed';
+        try{
 
-        return this._kademliaNode.rules.sendUpdateContact(contact);
+            if (updateId !== this._updateId)
+                throw 'Changed';
+
+            const out = await this._kademliaNode.rules.sendUpdateContact(contact);
+
+            return out;
+        }catch(err){
+
+        }
 
     }
 

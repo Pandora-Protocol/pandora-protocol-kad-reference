@@ -42,6 +42,8 @@ module.exports = function (options) {
             const out = allowedSortedListTable.validation( srcContact, allowedSortedListTable, [table, masterKey, key, value, score], extra );
             if ( out ) return this._store.putSortedList(table, masterKey, key, out.value, out.score, out.extra, allowedSortedListTable.expiry, allowedSortedListTable.maxCount);
 
+            if (extra && !out) return this._store.putExpiration(table, key, allowedSortedListTable.expiry);
+
             return 0;
 
         }
