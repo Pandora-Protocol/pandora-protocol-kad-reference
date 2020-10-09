@@ -3,7 +3,7 @@ const KademliaRules = require('./kademlia-rules')
 const Crawler = require('./crawler/crawler')
 const EventEmitter = require('events');
 const Contact = require('./contact/contact')
-
+const bencode = require('bencode');
 const Store = require('./store/store')
 const Storage = require('./storage/storage')
 const ContactStorage = require('./contact/contact-storage')
@@ -98,6 +98,9 @@ module.exports = class KademliaNode extends EventEmitter {
      * be in the occupied bucket with the lowest index
      */
     async join(contact, first = false ) {
+
+        if (typeof contact === "string") contact = Buffer.from(contact, "base64");
+        if (Buffer.isBuffer(contact)) contact = this.createContact( bencode.decode(contact)  );
 
         contact = this.contactsMap.updateContact(contact);
         this.routingTable.addContact(contact);
