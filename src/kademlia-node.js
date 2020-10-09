@@ -99,7 +99,7 @@ module.exports = class KademliaNode extends EventEmitter {
      */
     async join(contact, first = false ) {
 
-        if (typeof contact === "string") contact = Buffer.from(contact, "base64");
+        if (typeof contact === "string") contact = Buffer.from(contact, "hex");
         if (Buffer.isBuffer(contact)) contact = this.createContact( bencode.decode(contact)  );
 
         contact = this.contactsMap.updateContact(contact);
